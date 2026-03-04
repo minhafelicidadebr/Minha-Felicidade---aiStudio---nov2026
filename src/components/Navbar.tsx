@@ -8,6 +8,10 @@ const links = [
   { href: "/quiz", label: "Quiz" },
   { href: "/flashcards", label: "Flashcards" },
   { href: "/evidence", label: "Evidências" },
+  { href: "/simulator", label: "Simulador" },
+  { href: "/debate", label: "Debate" },
+  { href: "/poetry", label: "Poesia" },
+  { href: "/codesign", label: "Co-design" },
 ];
 
 export default function Navbar() {
