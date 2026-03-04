@@ -11,12 +11,16 @@ const colorMap = {
 export default function DynamicsShowcase() {
   const navigate = useNavigate();
 
-  const getRoute = (id: string) => {
-    if (id === "quiz") return "/quiz";
-    if (id === "flashcards") return "/flashcards";
-    if (id === "evidence") return "/evidence";
-    return "#";
+  const routeMap: Record<string, string> = {
+    quiz: "/quiz",
+    flashcards: "/flashcards",
+    evidence: "/evidence",
+    simulator: "/simulator",
+    debate: "/debate",
+    poetry: "/poetry",
+    codesign: "/codesign",
   };
+  const getRoute = (id: string) => routeMap[id] || "#";
 
   return (
     <section id="dynamics" className="py-24 bg-muted/30">
