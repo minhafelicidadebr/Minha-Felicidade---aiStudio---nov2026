@@ -1,0 +1,4 @@
+project_id = "fvmwoolxruazeqjkaity"
+
+[functions.aledria-chat]
+verify_jwt = false
