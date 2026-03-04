@@ -12,7 +12,7 @@ import SimulatorPage from "./pages/SimulatorPage";
 import DebatePage from "./pages/DebatePage";
 import PoetryPage from "./pages/PoetryPage";
 import CoDesignPage from "./pages/CoDesignPage";
-import AledriaPage from "./pages/AledriaPage";
+import AlegriaPage from "./pages/AlegriaPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,7 +33,7 @@ const App = () => (
           <Route path="/debate" element={<DebatePage />} />
           <Route path="/poetry" element={<PoetryPage />} />
           <Route path="/codesign" element={<CoDesignPage />} />
-          <Route path="/aledria" element={<AledriaPage />} />
+          <Route path="/alegria" element={<AlegriaPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

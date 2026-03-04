@@ -12,6 +12,7 @@ export default function DynamicsShowcase() {
   const navigate = useNavigate();
 
   const routeMap: Record<string, string> = {
+    chatbot: "/alegria",
     quiz: "/quiz",
     flashcards: "/flashcards",
     evidence: "/evidence",

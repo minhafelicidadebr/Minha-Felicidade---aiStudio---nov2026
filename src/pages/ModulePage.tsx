@@ -1,12 +1,12 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { modules } from "@/data/courseData";
-import { moduleContents } from "@/data/moduleContents";
-import { ArrowLeft, Clock, BookOpen, AlertTriangle, CheckCircle2, Info, Lightbulb, ArrowRight } from "lucide-react";
+import { modules, quizQuestions, flashcards, evidenceItems } from "@/data/courseData";
+import { moduleContents, simulatorScenarios, debateTopics, poems, coDesignTemplates } from "@/data/moduleContents";
+import { ArrowLeft, Clock, AlertTriangle, CheckCircle2, Info, Lightbulb, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
 const statusIcon = {
-  verificado: <CheckCircle2 className="w-4 h-4 text-success shrink-0" />, 
+  verificado: <CheckCircle2 className="w-4 h-4 text-success shrink-0" />,
   parcial: <Info className="w-4 h-4 text-secondary shrink-0" />,
   simplificação: <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />,
 };
@@ -15,6 +15,17 @@ const statusLabel = {
   parcial: "bg-secondary/20 text-secondary-foreground",
   simplificação: "bg-destructive/10 text-destructive",
 };
+
+const activityDefs = [
+  { key: "alegria", icon: "🤖", title: "AlegrIA", path: "/alegria", check: () => true },
+  { key: "quiz", icon: "🎯", title: "Quiz", path: "/quiz", check: (id: string) => quizQuestions.some(q => q.module === id) },
+  { key: "flashcards", icon: "🃏", title: "Flashcards", path: "/flashcards", check: (id: string) => flashcards.some(f => f.module === id) },
+  { key: "evidence", icon: "📊", title: "Evidências", path: "/evidence", check: (id: string) => evidenceItems.some(e => e.module === id) },
+  { key: "simulator", icon: "🎮", title: "Simulador", path: "/simulator", check: (id: string) => simulatorScenarios.some(s => s.module === id) },
+  { key: "debate", icon: "⚔️", title: "Debate", path: "/debate", check: (id: string) => debateTopics.some(d => d.module === id) },
+  { key: "poetry", icon: "🎭", title: "Poesia", path: "/poetry", check: (id: string) => poems.some(p => p.module === id) },
+  { key: "codesign", icon: "🏗️", title: "Co-design", path: "/codesign", check: (id: string) => coDesignTemplates.some(c => c.module === id) },
+];
 
 export default function ModulePage() {
   const { id } = useParams<{ id: string }>();
@@ -34,12 +45,13 @@ export default function ModulePage() {
     );
   }
 
+  const available = activityDefs.filter(a => a.key === "alegria" || a.check(id!));
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container pt-24 pb-16 max-w-4xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          {/* Back */}
           <button onClick={() => navigate("/")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Voltar à trilha
           </button>
@@ -65,6 +77,23 @@ export default function ModulePage() {
               </div>
             </div>
           </div>
+
+          {/* 🚀 Learning Activities CTAs */}
+          <section className="mb-10">
+            <h2 className="text-2xl font-display font-bold mb-4">🚀 Atividades de Aprendizagem</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {available.map((act) => (
+                <button
+                  key={act.key}
+                  onClick={() => navigate(act.key === "alegria" ? act.path : `${act.path}?module=${id}`)}
+                  className="group p-4 rounded-2xl bg-card border border-border hover:shadow-warm hover:-translate-y-1 transition-all text-left"
+                >
+                  <span className="text-2xl block mb-2">{act.icon}</span>
+                  <h4 className="font-display font-bold text-sm">{act.title}</h4>
+                </button>
+              ))}
+            </div>
+          </section>
 
           {/* Overview */}
           <section className="mb-10">
@@ -104,19 +133,6 @@ export default function ModulePage() {
             </div>
           </section>
 
-          {/* Slide References */}
-          <section className="mb-10">
-            <h2 className="text-2xl font-display font-bold mb-4">📑 Referências dos Slides</h2>
-            <div className="bg-muted/50 rounded-xl p-4">
-              {content.slideReferences.map((ref, i) => (
-                <div key={i} className="flex items-center gap-2 py-1.5 text-sm">
-                  <BookOpen className="w-3.5 h-3.5 text-primary shrink-0" />
-                  <span>{ref}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-
           {/* Scientific Audit */}
           <section className="mb-10">
             <h2 className="text-2xl font-display font-bold mb-4">🔬 Auditoria Científica</h2>
@@ -127,9 +143,7 @@ export default function ModulePage() {
                     {statusIcon[note.status]}
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className={`px-2 py-0.5 rounded-md text-xs font-semibold ${statusLabel[note.status]}`}>
-                          {note.status}
-                        </span>
+                        <span className={`px-2 py-0.5 rounded-md text-xs font-semibold ${statusLabel[note.status]}`}>{note.status}</span>
                       </div>
                       <p className="text-sm font-medium">"{note.claim}"</p>
                     </div>
