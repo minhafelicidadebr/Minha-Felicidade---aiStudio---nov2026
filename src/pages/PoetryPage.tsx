@@ -47,7 +47,7 @@ export default function PoetryPage() {
                 {mod && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-semibold mb-3">{mod.icon} Módulo {mod.number}</span>}
                 <h2 className="font-display font-bold text-xl mb-1">{poem.title}</h2>
                 <p className="text-xs text-muted-foreground mb-6">{poem.author}</p>
-                <div className="font-display text-lg leading-[1.8] whitespace-pre-line italic">{poem.poem}</div>
+                <div className="font-display text-lg leading-[1.8] whitespace-pre-line italic">{poem.text}</div>
               </div>
 
               <div className="bg-card rounded-2xl p-6 border border-border mb-6">
