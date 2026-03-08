@@ -50,7 +50,7 @@ export default function DebatePage() {
                 }`}
                 onClick={() => setSelectedPosition("A")}
               >
-                <h3 className="font-display font-bold text-lg mb-3 text-primary">{topic.positionA.name}</h3>
+                <h3 className="font-display font-bold text-lg mb-3 text-primary">{topic.positionA.title}</h3>
                 <div className="space-y-2 mb-4">
                   {topic.positionA.arguments.map((arg, i) => (
                     <div key={i} className="flex items-start gap-2 text-sm">
