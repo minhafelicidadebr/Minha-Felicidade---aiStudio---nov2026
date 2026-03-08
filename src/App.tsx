@@ -3,11 +3,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import LandingPage from "./pages/LandingPage";
+import AuthPage from "./pages/AuthPage";
+import DashboardPage from "./pages/DashboardPage";
+import ModulePage from "./pages/ModulePage";
 import QuizPage from "./pages/QuizPage";
 import FlashcardsPage from "./pages/FlashcardsPage";
 import EvidencePage from "./pages/EvidencePage";
-import ModulePage from "./pages/ModulePage";
 import SimulatorPage from "./pages/SimulatorPage";
 import DebatePage from "./pages/DebatePage";
 import PoetryPage from "./pages/PoetryPage";
@@ -24,7 +26,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/module/:id" element={<ModulePage />} />
           <Route path="/quiz" element={<QuizPage />} />
           <Route path="/flashcards" element={<FlashcardsPage />} />
