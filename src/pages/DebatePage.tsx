@@ -38,7 +38,7 @@ export default function DebatePage() {
           <div className="bg-card rounded-2xl p-8 shadow-warm mb-8">
             <div className="text-center mb-8">
               <span className="text-xs font-semibold text-primary uppercase tracking-wider">Questão Central</span>
-              <h2 className="text-2xl font-display font-bold mt-2">{topic.question}</h2>
+              <h2 className="text-2xl font-display font-bold mt-2">{topic.title}</h2>
             </div>
 
             {/* Two positions */}
@@ -50,7 +50,7 @@ export default function DebatePage() {
                 }`}
                 onClick={() => setSelectedPosition("A")}
               >
-                <h3 className="font-display font-bold text-lg mb-3 text-primary">{topic.positionA.name}</h3>
+                <h3 className="font-display font-bold text-lg mb-3 text-primary">{topic.positionA.title}</h3>
                 <div className="space-y-2 mb-4">
                   {topic.positionA.arguments.map((arg, i) => (
                     <div key={i} className="flex items-start gap-2 text-sm">
@@ -75,7 +75,7 @@ export default function DebatePage() {
                 }`}
                 onClick={() => setSelectedPosition("B")}
               >
-                <h3 className="font-display font-bold text-lg mb-3 text-secondary">{topic.positionB.name}</h3>
+                <h3 className="font-display font-bold text-lg mb-3 text-secondary">{topic.positionB.title}</h3>
                 <div className="space-y-2 mb-4">
                   {topic.positionB.arguments.map((arg, i) => (
                     <div key={i} className="flex items-start gap-2 text-sm">

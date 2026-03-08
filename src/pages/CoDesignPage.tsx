@@ -69,7 +69,7 @@ export default function CoDesignPage() {
                   <textarea
                     value={getField(section.title)}
                     onChange={(e) => updateField(section.title, e.target.value)}
-                    placeholder={section.placeholder}
+                    placeholder={section.prompt}
                     rows={3}
                     className="w-full p-4 rounded-xl bg-muted border border-border focus:ring-2 focus:ring-primary/20 outline-none text-sm resize-none"
                   />

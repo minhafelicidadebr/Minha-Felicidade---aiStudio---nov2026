@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Brain, Menu, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Brain, Menu, X, Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
 const links = [
-  { href: "/", label: "Início" },
+  { href: "/dashboard", label: "Dashboard" },
   { href: "/alegria", label: "🤖 AlegrIA" },
   { href: "/quiz", label: "Quiz" },
   { href: "/flashcards", label: "Flashcards" },
@@ -17,16 +18,31 @@ const links = [
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [totalXp, setTotalXp] = useState(0);
   const location = useLocation();
+
+  useEffect(() => {
+    const fetchXp = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data } = await supabase
+          .from("user_progress")
+          .select("xp_earned")
+          .eq("user_id", session.user.id);
+        if (data) setTotalXp(data.reduce((s, r) => s + (r.xp_earned || 0), 0));
+      }
+    };
+    fetchXp();
+  }, [location.pathname]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
       <div className="container flex items-center justify-between h-16">
-        <Link to="/" className="flex items-center gap-2.5">
+        <Link to="/dashboard" className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl gradient-warm flex items-center justify-center">
             <Brain className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="font-display font-bold text-lg">Felicidade<span className="text-primary">.lab</span></span>
+          <span className="font-display font-bold text-lg">Ciência do <span className="text-primary">Bem-Estar</span></span>
         </Link>
 
         {/* Desktop */}
@@ -35,7 +51,7 @@ export default function Navbar() {
             <Link
               key={l.href}
               to={l.href}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                 location.pathname === l.href
                   ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -48,7 +64,8 @@ export default function Navbar() {
 
         {/* XP Badge */}
         <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/20 text-secondary-foreground">
-          <span className="text-sm font-bold">✨ 0 XP</span>
+          <Trophy className="w-3.5 h-3.5" />
+          <span className="text-sm font-bold">✨ {totalXp} XP</span>
         </div>
 
         {/* Mobile toggle */}
