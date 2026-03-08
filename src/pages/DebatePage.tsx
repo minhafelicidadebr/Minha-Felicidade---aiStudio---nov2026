@@ -38,7 +38,7 @@ export default function DebatePage() {
           <div className="bg-card rounded-2xl p-8 shadow-warm mb-8">
             <div className="text-center mb-8">
               <span className="text-xs font-semibold text-primary uppercase tracking-wider">Questão Central</span>
-              <h2 className="text-2xl font-display font-bold mt-2">{topic.question}</h2>
+              <h2 className="text-2xl font-display font-bold mt-2">{topic.title}</h2>
             </div>
 
             {/* Two positions */}
