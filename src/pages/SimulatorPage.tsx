@@ -5,6 +5,7 @@ import { simulatorScenarios } from "@/data/moduleContents";
 import { modules } from "@/data/courseData";
 import { ArrowRight, RotateCcw, Zap, CheckCircle2, XCircle, MinusCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import { useProgress } from "@/hooks/useProgress";
 
 const impactConfig = {
   positivo: { icon: CheckCircle2, color: "text-success", bg: "bg-success/10", border: "border-success" },
@@ -16,10 +17,10 @@ export default function SimulatorPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeModule = searchParams.get("module");
   const scenarios = useMemo(() => activeModule ? simulatorScenarios.filter(s => s.module === activeModule) : simulatorScenarios, [activeModule]);
-
   const [scenarioIdx, setScenarioIdx] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [totalXp, setTotalXp] = useState(0);
+  const { trackActivity } = useProgress();
 
   const scenario = scenarios[scenarioIdx];
   const availableModules = useMemo(() => [...new Set(simulatorScenarios.map(s => s.module))], []);
@@ -28,7 +29,20 @@ export default function SimulatorPage() {
     <div className="min-h-screen bg-background"><Navbar /><div className="container pt-24 text-center text-muted-foreground">Nenhum cenário disponível para este módulo.</div></div>
   );
 
-  const handleSelect = (i: number) => { if (selected !== null) return; setSelected(i); setTotalXp((x) => x + scenario.options[i].xp); };
+  const handleSelect = (i: number) => {
+    if (selected !== null) return;
+    setSelected(i);
+    const xpGained = scenario.options[i].xp;
+    setTotalXp((x) => x + xpGained);
+    trackActivity({
+      moduleId: scenario.module,
+      activityType: "simulator",
+      activityId: scenario.id,
+      score: xpGained,
+      data: { choice: i, impact: scenario.options[i].impact },
+    });
+  };
+
   const next = () => { setSelected(null); setScenarioIdx((i) => (i + 1) % scenarios.length); };
   const mod = modules.find(m => m.id === scenario.module);
 
@@ -42,14 +56,13 @@ export default function SimulatorPage() {
               <h1 className="text-3xl font-display font-bold">🎮 Simulador de Decisões</h1>
               <p className="text-muted-foreground mt-1">Cenários reais com consequências baseadas em evidências</p>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/20">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/20" aria-label={`${totalXp} XP`}>
               <Zap className="w-4 h-4 text-secondary" />
               <span className="font-bold text-sm">{totalXp} XP</span>
             </div>
           </div>
 
-          {/* Module filter */}
-          <div className="flex flex-wrap gap-2 mb-6">
+          <div className="flex flex-wrap gap-2 mb-6" role="group" aria-label="Filtrar por módulo">
             <button onClick={() => { setSearchParams({}); setScenarioIdx(0); setSelected(null); }} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${!activeModule ? "gradient-warm text-primary-foreground shadow-warm" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}>Todos</button>
             {availableModules.map(mid => {
               const m = modules.find(mod => mod.id === mid);
@@ -65,13 +78,13 @@ export default function SimulatorPage() {
               <h2 className="text-xl font-display font-bold mb-3">{scenario.title}</h2>
               <p className="text-foreground/90 leading-relaxed mb-8 p-4 rounded-xl bg-muted/50">{scenario.context}</p>
 
-              <div className="space-y-3 mb-6">
+              <div className="space-y-3 mb-6" role="group" aria-label="Opções de decisão">
                 {scenario.options.map((opt, i) => {
                   const isSelected = selected === i;
                   const cfg = impactConfig[opt.impact];
                   const Icon = cfg.icon;
                   return (
-                    <button key={i} onClick={() => handleSelect(i)} className={`w-full text-left p-4 rounded-xl border-2 transition-all ${selected === null ? "border-border hover:border-primary/40 hover:bg-primary/5 cursor-pointer" : isSelected ? `${cfg.border} ${cfg.bg}` : "border-border opacity-40"}`}>
+                    <button key={i} onClick={() => handleSelect(i)} className={`w-full text-left p-4 rounded-xl border-2 transition-all ${selected === null ? "border-border hover:border-primary/40 hover:bg-primary/5 cursor-pointer" : isSelected ? `${cfg.border} ${cfg.bg}` : "border-border opacity-40"}`} disabled={selected !== null && !isSelected}>
                       <p className="text-sm font-medium">{opt.text}</p>
                       {selected !== null && isSelected && (
                         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-3">
