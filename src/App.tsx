@@ -15,6 +15,7 @@ import DebatePage from "./pages/DebatePage";
 import PoetryPage from "./pages/PoetryPage";
 import CoDesignPage from "./pages/CoDesignPage";
 import AlegriaPage from "./pages/AlegriaPage";
+import AdminPage from "./pages/AdminPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/poetry" element={<PoetryPage />} />
           <Route path="/codesign" element={<CoDesignPage />} />
           <Route path="/alegria" element={<AlegriaPage />} />
+          <Route path="/admin" element={<AdminPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -3,9 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { modules, quizQuestions, flashcards, evidenceItems, videoLessons } from "@/data/courseData";
 import { moduleContents, simulatorScenarios, debateTopics, poems, coDesignTemplates } from "@/data/moduleContents";
-import { ArrowLeft, Clock, AlertTriangle, CheckCircle2, Info, Lightbulb, ArrowRight, Play, X, ExternalLink, Zap } from "lucide-react";
+import { ArrowLeft, Clock, AlertTriangle, CheckCircle2, Info, Lightbulb, ArrowRight, Play, ExternalLink, Zap, Eye } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useProgress } from "@/hooks/useProgress";
 
 const statusIcon = {
   verificado: <CheckCircle2 className="w-4 h-4 text-success shrink-0" />,
@@ -36,6 +37,7 @@ export default function ModulePage() {
   const content = id ? moduleContents[id] : undefined;
   const videos = id ? videoLessons.filter((v) => v.module === id) : [];
   const [selectedVideo, setSelectedVideo] = useState<typeof videoLessons[0] | null>(null);
+  const { trackActivity } = useProgress();
 
   if (!mod || !content) {
     return (
@@ -51,6 +53,17 @@ export default function ModulePage() {
 
   const available = activityDefs.filter(a => a.key === "alegria" || a.check(id!));
 
+  const handleWatchVideo = (video: typeof videoLessons[0]) => {
+    setSelectedVideo(video);
+    // Track video view
+    trackActivity({
+      moduleId: id!,
+      activityType: "video",
+      activityId: video.id,
+      data: { title: video.titlePt },
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -61,18 +74,18 @@ export default function ModulePage() {
           </button>
 
           {/* Header */}
-          <div className="mb-10">
+          <header className="mb-10">
             <div className="flex items-center gap-3 mb-3">
-              <span className="text-4xl">{mod.icon}</span>
+              <span className="text-4xl" aria-hidden="true">{mod.icon}</span>
               <span className="text-xs font-semibold text-primary uppercase tracking-wider">Módulo {mod.number} • Semana {mod.week}</span>
               <span className="flex items-center gap-1 text-xs text-muted-foreground"><Clock className="w-3 h-3" /> {mod.duration}</span>
             </div>
             <h1 className="text-4xl font-display font-bold mb-2">{mod.title}</h1>
             <p className="text-lg text-muted-foreground">{mod.subtitle}</p>
-          </div>
+          </header>
 
           {/* Key Insight */}
-          <div className="gradient-card-gold rounded-2xl p-6 mb-8">
+          <div className="gradient-card-gold rounded-2xl p-6 mb-8" role="note">
             <div className="flex items-start gap-3">
               <Lightbulb className="w-5 h-5 text-secondary mt-0.5 shrink-0" />
               <div>
@@ -83,14 +96,15 @@ export default function ModulePage() {
           </div>
 
           {/* 📹 VIDEO LESSONS */}
-          <section className="mb-10">
+          <section className="mb-10" aria-label="Aulas em vídeo">
             <h2 className="text-2xl font-display font-bold mb-4">📹 Aulas em Vídeo</h2>
             <div className="space-y-3">
-              {videos.map((video, i) => (
+              {videos.map((video) => (
                 <button
                   key={video.id}
-                  onClick={() => setSelectedVideo(video)}
+                  onClick={() => handleWatchVideo(video)}
                   className="w-full group p-4 rounded-2xl bg-card border border-border hover:shadow-warm hover:-translate-y-0.5 transition-all text-left flex items-center gap-4"
+                  aria-label={`Assistir aula ${video.order}: ${video.titlePt}`}
                 >
                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
                     <Play className="w-5 h-5 text-primary" />
@@ -110,16 +124,17 @@ export default function ModulePage() {
           </section>
 
           {/* 🚀 Learning Activities CTAs */}
-          <section className="mb-10">
+          <section className="mb-10" aria-label="Atividades de aprendizagem">
             <h2 className="text-2xl font-display font-bold mb-4">🚀 Atividades de Aprendizagem</h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {available.map((act) => (
                 <button
                   key={act.key}
-                  onClick={() => navigate(act.key === "alegria" ? act.path : `${act.path}?module=${id}`)}
+                  onClick={() => navigate(act.key === "alegria" ? `${act.path}?module=${id}` : `${act.path}?module=${id}`)}
                   className="group p-4 rounded-2xl bg-card border border-border hover:shadow-warm hover:-translate-y-1 transition-all text-left"
+                  aria-label={`Abrir ${act.title} para módulo ${mod.number}`}
                 >
-                  <span className="text-2xl block mb-2">{act.icon}</span>
+                  <span className="text-2xl block mb-2" aria-hidden="true">{act.icon}</span>
                   <h4 className="font-display font-bold text-sm">{act.title}</h4>
                 </button>
               ))}
@@ -127,7 +142,7 @@ export default function ModulePage() {
           </section>
 
           {/* Rewirement */}
-          <section className="mb-10">
+          <section className="mb-10" aria-label="Desafio de ação">
             <div className="gradient-card-coral rounded-2xl p-6">
               <div className="flex items-start gap-3">
                 <Zap className="w-5 h-5 text-primary mt-0.5 shrink-0" />
@@ -148,12 +163,12 @@ export default function ModulePage() {
           </section>
 
           {/* Learning Objectives */}
-          <section className="mb-10">
+          <section className="mb-10" aria-label="Objetivos de aprendizagem">
             <h2 className="text-2xl font-display font-bold mb-4">🎯 Objetivos de Aprendizagem</h2>
             <div className="space-y-3">
               {content.learningObjectives.map((obj, i) => (
                 <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-card border border-border">
-                  <span className="w-6 h-6 rounded-full gradient-warm flex items-center justify-center text-xs font-bold text-primary-foreground shrink-0">{i + 1}</span>
+                  <span className="w-6 h-6 rounded-full gradient-warm flex items-center justify-center text-xs font-bold text-primary-foreground shrink-0" aria-hidden="true">{i + 1}</span>
                   <p className="text-sm">{obj}</p>
                 </div>
               ))}
@@ -161,7 +176,7 @@ export default function ModulePage() {
           </section>
 
           {/* Scientific Audit */}
-          <section className="mb-10">
+          <section className="mb-10" aria-label="Auditoria científica">
             <h2 className="text-2xl font-display font-bold mb-4">🔬 Auditoria Científica</h2>
             <div className="space-y-4">
               {content.scientificNotes.map((note, i) => (
@@ -200,7 +215,7 @@ export default function ModulePage() {
           </section>
 
           {/* Navigation */}
-          <div className="flex justify-between items-center pt-6 border-t border-border">
+          <nav className="flex justify-between items-center pt-6 border-t border-border" aria-label="Navegação entre módulos">
             {mod.number > 1 && (
               <button onClick={() => navigate(`/module/${modules[mod.number - 2].id}`)} className="flex items-center gap-2 px-5 py-3 rounded-xl bg-muted hover:bg-muted/80 text-sm font-medium transition-colors">
                 <ArrowLeft className="w-4 h-4" /> Módulo {mod.number - 1}
@@ -212,7 +227,7 @@ export default function ModulePage() {
                 Módulo {mod.number + 1} <ArrowRight className="w-4 h-4" />
               </button>
             )}
-          </div>
+          </nav>
         </motion.div>
       </div>
 
@@ -228,7 +243,6 @@ export default function ModulePage() {
                 <DialogDescription className="text-sm">{selectedVideo.summary}</DialogDescription>
               </DialogHeader>
               <div className="px-6 pt-4">
-                {/* Video Embed */}
                 <div className="aspect-video rounded-xl overflow-hidden bg-black">
                   <iframe
                     width="100%"
@@ -241,8 +255,6 @@ export default function ModulePage() {
                     allowFullScreen
                   />
                 </div>
-
-                {/* Subtitle Instructions */}
                 <div className="mt-4 p-4 rounded-xl bg-muted">
                   <h4 className="text-sm font-semibold mb-2">🌐 Legendas em Português</h4>
                   <p className="text-xs text-muted-foreground">
@@ -251,35 +263,22 @@ export default function ModulePage() {
                   </p>
                 </div>
               </div>
-
-              {/* Actions */}
               <div className="p-6 pt-4 space-y-3">
                 <div className="flex flex-wrap gap-2">
-                  <a
-                    href={`https://www.youtube.com/watch?v=${selectedVideo.youtubeId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive text-xs font-semibold hover:bg-destructive/20 transition-colors"
-                  >
+                  <a href={`https://www.youtube.com/watch?v=${selectedVideo.youtubeId}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive text-xs font-semibold hover:bg-destructive/20 transition-colors">
                     <Play className="w-3 h-3" /> Ver no YouTube
                   </a>
-                  <button
-                    onClick={() => { setSelectedVideo(null); navigate(`/quiz?module=${id}`); }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors"
-                  >
+                  <button onClick={() => { setSelectedVideo(null); navigate(`/quiz?module=${id}`); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors">
                     🎯 Quiz do Módulo
                   </button>
-                  <button
-                    onClick={() => { setSelectedVideo(null); navigate(`/flashcards?module=${id}`); }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary/10 text-secondary-foreground text-xs font-semibold hover:bg-secondary/20 transition-colors"
-                  >
+                  <button onClick={() => { setSelectedVideo(null); navigate(`/flashcards?module=${id}`); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary/10 text-secondary-foreground text-xs font-semibold hover:bg-secondary/20 transition-colors">
                     🃏 Flashcards
                   </button>
-                  <button
-                    onClick={() => { setSelectedVideo(null); navigate(`/poetry?module=${id}`); }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors"
-                  >
+                  <button onClick={() => { setSelectedVideo(null); navigate(`/poetry?module=${id}`); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors">
                     🎭 Poesia
+                  </button>
+                  <button onClick={() => { setSelectedVideo(null); navigate(`/alegria?module=${id}`); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/10 text-accent text-xs font-semibold hover:bg-accent/20 transition-colors">
+                    🤖 Perguntar à AlegrIA
                   </button>
                 </div>
               </div>
