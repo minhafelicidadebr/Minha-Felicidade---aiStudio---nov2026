@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Brain, Menu, X, Trophy } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { Menu, X, Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import logoIcon from "@/assets/logo-icon.png";
 
 const links = [
   { href: "/dashboard", label: "Dashboard" },
@@ -39,14 +40,12 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
       <div className="container flex items-center justify-between h-16">
         <Link to="/dashboard" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl gradient-warm flex items-center justify-center">
-            <Brain className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <span className="font-display font-bold text-lg">Ciência do <span className="text-primary">Bem-Estar</span></span>
+          <img src={logoIcon} alt="Instituto Felicidade Para Todos" className="w-9 h-9 rounded-lg object-contain" />
+          <span className="font-display font-bold text-lg hidden sm:inline">Ciência do <span className="text-primary">Bem-Estar</span></span>
         </Link>
 
         {/* Desktop */}
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden lg:flex items-center gap-1">
           {links.map((l) => (
             <Link
               key={l.href}
@@ -62,22 +61,24 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* XP Badge */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/20 text-secondary-foreground">
-          <Trophy className="w-3.5 h-3.5" />
-          <span className="text-sm font-bold">✨ {totalXp} XP</span>
-        </div>
+        <div className="flex items-center gap-3">
+          {/* XP Badge */}
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/20 text-secondary-foreground">
+            <Trophy className="w-3.5 h-3.5" />
+            <span className="text-sm font-bold">✨ {totalXp} XP</span>
+          </div>
 
-        {/* Mobile toggle */}
-        <button className="md:hidden p-2" onClick={() => setOpen(!open)}>
-          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+          {/* Mobile toggle */}
+          <button className="lg:hidden p-2" onClick={() => setOpen(!open)} aria-label="Menu">
+            {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       <AnimatePresence>
         {open && (
           <motion.div
-            className="md:hidden bg-background border-b border-border"
+            className="lg:hidden bg-background border-b border-border"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
