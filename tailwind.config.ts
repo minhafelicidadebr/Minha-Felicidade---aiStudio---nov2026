@@ -67,6 +67,11 @@ export default {
         warm: {
           glow: "hsl(var(--warm-glow))",
         },
+        institute: {
+          orange: "hsl(var(--institute-orange))",
+          blue: "hsl(var(--institute-blue))",
+          gold: "hsl(var(--institute-gold))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -104,12 +109,17 @@ export default {
           "0%": { transform: "rotateY(0deg)" },
           "100%": { transform: "rotateY(180deg)" },
         },
+        "count-up": {
+          from: { opacity: "0", transform: "translateY(20px) scale(0.9)" },
+          to: { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "float": "float 4s ease-in-out infinite",
         "pulse-warm": "pulse-warm 3s ease-in-out infinite",
+        "count-up": "count-up 0.8s ease-out forwards",
       },
     },
   },
