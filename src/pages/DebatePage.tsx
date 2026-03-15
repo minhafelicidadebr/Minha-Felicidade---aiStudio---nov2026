@@ -141,6 +141,7 @@ export default function DebatePage() {
           <div className="text-center text-xs text-muted-foreground">Debate {topicIdx + 1} de {filtered.length}</div>
         </motion.div>
       </div>
+      <Footer />
     </div>
   );
 }

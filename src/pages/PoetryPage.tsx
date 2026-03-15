@@ -85,6 +85,7 @@ export default function PoetryPage() {
           </div>
         </motion.div>
       </div>
+      <Footer />
     </div>
   );
 }

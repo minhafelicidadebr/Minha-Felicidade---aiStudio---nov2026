@@ -82,6 +82,7 @@ export default function EvidencePage() {
           </div>
         </motion.div>
       </div>
+      <Footer />
     </div>
   );
 }
