@@ -4,6 +4,7 @@ import { Menu, X, Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import logoIcon from "@/assets/logo-icon.png";
+import DarkModeToggle from "@/components/DarkModeToggle";
 
 const links = [
   { href: "/dashboard", label: "Dashboard" },
@@ -26,10 +27,7 @@ export default function Navbar() {
     const fetchXp = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        const { data } = await supabase
-          .from("user_progress")
-          .select("xp_earned")
-          .eq("user_id", session.user.id);
+        const { data } = await supabase.from("user_progress").select("xp_earned").eq("user_id", session.user.id);
         if (data) setTotalXp(data.reduce((s, r) => s + (r.xp_earned || 0), 0));
       }
     };
@@ -44,31 +42,20 @@ export default function Navbar() {
           <span className="font-display font-bold text-lg hidden sm:inline">Ciência do <span className="text-primary">Bem-Estar</span></span>
         </Link>
 
-        {/* Desktop */}
         <div className="hidden lg:flex items-center gap-1">
           {links.map((l) => (
-            <Link
-              key={l.href}
-              to={l.href}
-              className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                location.pathname === l.href
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
-            >
+            <Link key={l.href} to={l.href} className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${location.pathname === l.href ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
               {l.label}
             </Link>
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* XP Badge */}
+        <div className="flex items-center gap-2">
+          <DarkModeToggle />
           <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/20 text-secondary-foreground">
             <Trophy className="w-3.5 h-3.5" />
             <span className="text-sm font-bold">✨ {totalXp} XP</span>
           </div>
-
-          {/* Mobile toggle */}
           <button className="lg:hidden p-2" onClick={() => setOpen(!open)} aria-label="Menu">
             {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -77,20 +64,10 @@ export default function Navbar() {
 
       <AnimatePresence>
         {open && (
-          <motion.div
-            className="lg:hidden bg-background border-b border-border"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-          >
+          <motion.div className="lg:hidden bg-background border-b border-border" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
             <div className="container py-4 flex flex-col gap-2">
               {links.map((l) => (
-                <Link
-                  key={l.href}
-                  to={l.href}
-                  className="px-4 py-3 rounded-lg text-sm font-medium hover:bg-muted"
-                  onClick={() => setOpen(false)}
-                >
+                <Link key={l.href} to={l.href} className="px-4 py-3 rounded-lg text-sm font-medium hover:bg-muted" onClick={() => setOpen(false)}>
                   {l.label}
                 </Link>
               ))}

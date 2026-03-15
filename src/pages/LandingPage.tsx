@@ -181,6 +181,7 @@ export default function LandingPage() {
       <CourseStructure />
       <DynamicsSection />
       <ImpactNumbers />
+      <TestimonialsSection />
       <InstituteSection />
       <PricingSection />
       <LeadCaptureForm />
