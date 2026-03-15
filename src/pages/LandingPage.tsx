@@ -10,6 +10,7 @@ import ImpactNumbers from "@/components/landing/ImpactNumbers";
 import InstituteSection from "@/components/landing/InstituteSection";
 import LeadCaptureForm from "@/components/landing/LeadCaptureForm";
 import PricingSection from "@/components/landing/PricingSection";
+import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import Footer from "@/components/Footer";
 
 const stats = [
@@ -180,6 +181,7 @@ export default function LandingPage() {
       <CourseStructure />
       <DynamicsSection />
       <ImpactNumbers />
+      <TestimonialsSection />
       <InstituteSection />
       <PricingSection />
       <LeadCaptureForm />

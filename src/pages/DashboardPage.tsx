@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { modules, videoLessons } from "@/data/courseData";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { BookOpen, Play, Trophy, Flame, ArrowRight, LogOut, User, Download, Zap, Star, Calendar, BarChart3, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -141,9 +142,9 @@ export default function DashboardPage() {
   const displayName = profile?.full_name || user?.user_metadata?.full_name || "Estudante";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <div className="container pt-24 pb-16 max-w-5xl">
+      <div className="flex-1 container pt-24 pb-16 max-w-5xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
@@ -300,6 +301,7 @@ export default function DashboardPage() {
           </div>
         </motion.div>
       </div>
+      <Footer />
     </div>
   );
 }

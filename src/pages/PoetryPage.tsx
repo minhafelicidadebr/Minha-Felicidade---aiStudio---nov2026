@@ -5,6 +5,7 @@ import { poems } from "@/data/moduleContents";
 import { modules } from "@/data/courseData";
 import { ChevronLeft, ChevronRight, PenLine } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { useProgress } from "@/hooks/useProgress";
 
 export default function PoetryPage() {
@@ -36,9 +37,9 @@ export default function PoetryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <div className="container pt-24 pb-16 max-w-2xl">
+      <div className="flex-1 container pt-24 pb-16 max-w-2xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="text-3xl font-display font-bold mb-2">🎭 Poesia Pedagógica</h1>
           <p className="text-muted-foreground mb-4">Codificação emocional + memória semântica + sentido</p>
@@ -84,6 +85,7 @@ export default function PoetryPage() {
           </div>
         </motion.div>
       </div>
+      <Footer />
     </div>
   );
 }

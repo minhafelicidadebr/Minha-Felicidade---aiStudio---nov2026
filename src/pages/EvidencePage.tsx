@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { evidenceItems, modules } from "@/data/courseData";
 import { ExternalLink, Search, Filter } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 const levelColors = { alto: "bg-success/10 text-success", médio: "bg-secondary/20 text-secondary-foreground", exploratório: "bg-muted text-muted-foreground" };
 
@@ -27,9 +28,9 @@ export default function EvidencePage() {
   const availableModules = useMemo(() => [...new Set(evidenceItems.map(e => e.module))], []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <div className="container pt-24 pb-16 max-w-4xl">
+      <div className="flex-1 container pt-24 pb-16 max-w-4xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="text-3xl font-display font-bold mb-2">📊 Evidence Explorer</h1>
           <p className="text-muted-foreground mb-6">Biblioteca científica curada com fontes verificáveis — {evidenceItems.length} itens.</p>
@@ -81,6 +82,7 @@ export default function EvidencePage() {
           </div>
         </motion.div>
       </div>
+      <Footer />
     </div>
   );
 }
