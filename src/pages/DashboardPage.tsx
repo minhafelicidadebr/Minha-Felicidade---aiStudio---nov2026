@@ -144,7 +144,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <div className="container pt-24 pb-16 max-w-5xl">
+      <div className="flex-1 container pt-24 pb-16 max-w-5xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
