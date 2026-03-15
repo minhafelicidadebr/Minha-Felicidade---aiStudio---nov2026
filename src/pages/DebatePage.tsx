@@ -50,7 +50,7 @@ export default function DebatePage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <div className="container pt-24 pb-16 max-w-4xl">
+      <div className="flex-1 container pt-24 pb-16 max-w-4xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="text-3xl font-display font-bold mb-2">⚔️ Arena de Debate</h1>
           <p className="text-muted-foreground mb-4">Debate socrático + mapa de argumentos com fontes verificáveis</p>
