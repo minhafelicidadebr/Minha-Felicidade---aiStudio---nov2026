@@ -5,6 +5,7 @@ import { simulatorScenarios } from "@/data/moduleContents";
 import { modules } from "@/data/courseData";
 import { ArrowRight, RotateCcw, Zap, CheckCircle2, XCircle, MinusCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { useProgress } from "@/hooks/useProgress";
 
 const impactConfig = {

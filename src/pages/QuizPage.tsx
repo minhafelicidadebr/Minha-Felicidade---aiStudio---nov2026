@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { quizQuestions, modules } from "@/data/courseData";
 import { CheckCircle2, XCircle, ArrowRight, RotateCcw, Trophy, Zap } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { useProgress } from "@/hooks/useProgress";
 
 export default function QuizPage() {

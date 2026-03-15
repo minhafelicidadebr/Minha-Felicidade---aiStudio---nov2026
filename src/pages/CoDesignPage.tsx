@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { coDesignTemplates } from "@/data/moduleContents";
 import { FileDown, Save, CheckCircle2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export default function CoDesignPage() {
   const [templateIdx, setTemplateIdx] = useState(0);
