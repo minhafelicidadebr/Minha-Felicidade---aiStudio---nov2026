@@ -1,7 +1,10 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
+import { motion } from "framer-motion";
+import { Home, ArrowLeft, Sparkles } from "lucide-react";
+import logoIcon from "@/assets/logo-icon.png";
 
-const NotFound = () => {
+export default function NotFound() {
   const location = useLocation();
 
   useEffect(() => {
@@ -9,16 +12,23 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-muted-foreground">Oops! Page not found</p>
-        <a href="/" className="text-primary underline hover:text-primary/90">
-          Return to Home
-        </a>
-      </div>
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-md">
+        <img src={logoIcon} alt="Instituto" className="w-16 h-16 rounded-2xl mx-auto mb-6 shadow-warm" />
+        <div className="text-8xl font-display font-bold text-gradient mb-4">404</div>
+        <h1 className="text-2xl font-display font-bold mb-2">Página não encontrada</h1>
+        <p className="text-muted-foreground mb-8">
+          Parece que essa rota não existe. Que tal explorar a ciência do bem-estar?
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link to="/" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl gradient-institute text-primary-foreground font-semibold text-sm shadow-warm hover:shadow-glow transition-all">
+            <Home className="w-4 h-4" /> Página Inicial
+          </Link>
+          <Link to="/dashboard" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-card border border-border font-semibold text-sm hover:shadow-warm transition-all">
+            <Sparkles className="w-4 h-4" /> Meu Dashboard
+          </Link>
+        </div>
+      </motion.div>
     </div>
   );
-};
-
-export default NotFound;
+}
