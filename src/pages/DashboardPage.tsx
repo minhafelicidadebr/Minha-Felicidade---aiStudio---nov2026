@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { modules, videoLessons } from "@/data/courseData";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { BookOpen, Play, Trophy, Flame, ArrowRight, LogOut, User, Download, Zap, Star, Calendar, BarChart3, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
