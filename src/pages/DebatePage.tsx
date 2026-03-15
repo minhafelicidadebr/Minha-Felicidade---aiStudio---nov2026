@@ -5,6 +5,7 @@ import { debateTopics } from "@/data/moduleContents";
 import { modules } from "@/data/courseData";
 import { ArrowRight, MessageSquare, Scale } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { useProgress } from "@/hooks/useProgress";
 
 export default function DebatePage() {
