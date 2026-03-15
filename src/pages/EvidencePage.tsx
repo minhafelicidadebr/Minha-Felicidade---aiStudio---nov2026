@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { evidenceItems, modules } from "@/data/courseData";
 import { ExternalLink, Search, Filter } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 const levelColors = { alto: "bg-success/10 text-success", médio: "bg-secondary/20 text-secondary-foreground", exploratório: "bg-muted text-muted-foreground" };
 
