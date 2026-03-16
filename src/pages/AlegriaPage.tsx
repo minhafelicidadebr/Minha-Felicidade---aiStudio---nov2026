@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { Send, Sparkles, BookOpen, Lightbulb, Heart, Brain, Loader2 } from "lucide-react";
+import { Send, Sparkles, BookOpen, Lightbulb, Heart, Brain, Loader2, Zap, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import aledriaAvatar from "@/assets/aledria-avatar.png";
 import { useToast } from "@/hooks/use-toast";
 import { modules } from "@/data/courseData";
@@ -13,27 +14,50 @@ type Msg = { role: "user" | "assistant"; content: string };
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/aledria-chat`;
 
 const SUGGESTED_QUESTIONS = [
-  { icon: Sparkles, text: "O que é felicidade segundo a ciência?", color: "from-amber-500/20 to-orange-500/20" },
-  { icon: Brain, text: "Como funciona a adaptação hedônica?", color: "from-blue-500/20 to-indigo-500/20" },
-  { icon: Heart, text: "Quais práticas aumentam o bem-estar?", color: "from-rose-500/20 to-pink-500/20" },
-  { icon: Lightbulb, text: "Explique o modelo PERMA+V", color: "from-emerald-500/20 to-teal-500/20" },
-  { icon: BookOpen, text: "O que é Job Crafting?", color: "from-violet-500/20 to-purple-500/20" },
+  { icon: Sparkles, text: "O que é felicidade segundo a ciência?", color: "from-primary/20 to-secondary/20" },
+  { icon: Brain, text: "Como funciona a adaptação hedônica?", color: "from-accent/20 to-primary/20" },
+  { icon: Heart, text: "Quais são os 6 Rewirements?", color: "from-destructive/20 to-primary/20" },
+  { icon: Lightbulb, text: "O que é o método WOOP?", color: "from-secondary/20 to-accent/20" },
+  { icon: Users, text: "Por que conexão social é o maior preditor de bem-estar?", color: "from-accent/20 to-secondary/20" },
+  { icon: Zap, text: "Dinheiro compra felicidade?", color: "from-primary/20 to-destructive/20" },
 ];
 
 const MODULE_QUESTIONS: Record<string, { text: string }[]> = {
-  etymology: [{ text: "Qual a etimologia da palavra felicidade?" }, { text: "Qual a diferença entre hedonia e eudaimonia?" }],
-  worldviews: [{ text: "O que Aristóteles dizia sobre felicidade?" }, { text: "Como o estoicismo se conecta com a ciência?" }],
-  illusions: [{ text: "O que é miswanting?" }, { text: "Dinheiro compra felicidade?" }],
-  hedonic: [{ text: "O que é a esteira hedônica?" }, { text: "Como retardar a adaptação hedônica?" }],
-  neuro: [{ text: "Quais são as 4 dimensões de Davidson?" }, { text: "O que há de errado com os '4 hormônios da felicidade'?" }],
-  emotions: [{ text: "O que são os mapas corporais das emoções?" }, { text: "Qual a melhor estratégia de regulação emocional?" }],
-  perma: [{ text: "Explique o modelo PERMA+V" }, { text: "PERMA vs SPIRE — qual é melhor?" }],
-  work: [{ text: "O que é Job Crafting?" }, { text: "Quais são os drivers de bem-estar no trabalho?" }],
+  mentiras: [
+    { text: "O que é miswanting?" },
+    { text: "Por que a Falácia de G.I. Joe é importante?" },
+    { text: "Quais são as 6 misconceptions sobre felicidade?" },
+    { text: "Até que valor o dinheiro aumenta o bem-estar?" },
+  ],
+  expectativas: [
+    { text: "Quais são os 4 'bugs' da mente?" },
+    { text: "O que é adaptação hedônica?" },
+    { text: "Como os pontos de referência distorcem nossa percepção?" },
+    { text: "O que é Impact Bias?" },
+  ],
+  rewirements: [
+    { text: "Quais são os 6 Rewirements?" },
+    { text: "O que diz Diener & Seligman sobre conexão social?" },
+    { text: "Como atos de bondade aumentam o bem-estar?" },
+    { text: "O que é Time Affluence?" },
+  ],
+  hacks: [
+    { text: "O que é Savoring?" },
+    { text: "Como funciona a Visualização Negativa?" },
+    { text: "Por que a mente divaga 47% do tempo?" },
+    { text: "Por que experiências superam posses?" },
+  ],
+  habitos: [
+    { text: "Como funciona o framework WOOP?" },
+    { text: "O que são Implementation Intentions?" },
+    { text: "Como o Growth Mindset ajuda na mudança?" },
+    { text: "Como fazer Design de Ambiente para hábitos?" },
+  ],
 };
 
 const WELCOME_MESSAGE: Msg = {
   role: "assistant",
-  content: "Olá! 🌟 Sou a **AlegrIA**, sua companheira de viagem pela ciência da felicidade.\n\nEstou aqui para explorar com você — de Aristóteles a neurociência, de gratidão a propósito no trabalho. Minhas respostas são sempre baseadas em **evidências científicas** do nosso Evidence Explorer.\n\nO que você gostaria de descobrir hoje?",
+  content: "Olá! 🌟 Sou a **AlegrIA**, sua companheira de viagem pela ciência do bem-estar.\n\nEstou aqui para explorar com você os 5 módulos do curso de Yale — de misconceptions sobre felicidade a como formar hábitos duradouros. Minhas respostas são baseadas em **evidências científicas** com citações verificáveis.\n\nO que você gostaria de descobrir hoje?",
 };
 
 async function streamChat({ messages, onDelta, onDone, onError }: { messages: Msg[]; onDelta: (t: string) => void; onDone: () => void; onError: (msg: string) => void }) {
@@ -42,7 +66,11 @@ async function streamChat({ messages, onDelta, onDone, onError }: { messages: Ms
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
     body: JSON.stringify({ messages }),
   });
-  if (!resp.ok) { const body = await resp.json().catch(() => ({ error: "Erro de conexão" })); onError(body.error || `Erro ${resp.status}`); return; }
+  if (!resp.ok) {
+    const body = await resp.json().catch(() => ({ error: "Erro de conexão" }));
+    onError(body.error || `Erro ${resp.status}`);
+    return;
+  }
   if (!resp.body) { onError("Sem resposta do servidor"); return; }
   const reader = resp.body.getReader();
   const decoder = new TextDecoder();
@@ -125,7 +153,7 @@ export default function AlegriaPage() {
           <div>
             <h1 className="font-display text-xl font-bold flex items-center gap-2">AlegrIA <Sparkles className="w-4 h-4 text-primary" /></h1>
             <p className="text-xs text-muted-foreground">
-              {mod ? `Módulo ${mod.number}: ${mod.title}` : "Tutora socrática · Evidências científicas · Ciência da Felicidade"}
+              {mod ? `Módulo ${mod.number}: ${mod.title}` : "Tutora socrática · 5 módulos de Yale · Ciência do Bem-Estar"}
             </p>
           </div>
         </motion.div>
@@ -188,13 +216,14 @@ export default function AlegriaPage() {
         )}
 
         <div className="relative bg-card border border-border rounded-2xl shadow-lg focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/40 transition-all">
-          <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Pergunte à AlegrIA sobre ciência da felicidade..." rows={1} disabled={isLoading} className="w-full resize-none bg-transparent px-4 py-3.5 pr-14 text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50 max-h-32" aria-label="Digite sua mensagem para AlegrIA" />
+          <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Pergunte à AlegrIA sobre os 5 módulos de Yale..." rows={1} disabled={isLoading} className="w-full resize-none bg-transparent px-4 py-3.5 pr-14 text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50 max-h-32" aria-label="Digite sua mensagem para AlegrIA" />
           <button onClick={() => send(input)} disabled={!input.trim() || isLoading} className="absolute right-2 bottom-2 p-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all" aria-label="Enviar mensagem">
             <Send className="w-4 h-4" />
           </button>
         </div>
-        <p className="text-center text-[10px] text-muted-foreground mt-2">AlegrIA usa IA com base de evidências curadas. Sempre verifique fontes no Evidence Explorer.</p>
+        <p className="text-center text-[10px] text-muted-foreground mt-2">AlegrIA usa IA com base nos 5 módulos de Yale. Sempre verifique fontes no Evidence Explorer.</p>
       </div>
+      <Footer />
     </div>
   );
 }

@@ -1,9 +1,10 @@
+import { Link } from "react-router-dom";
 import logoIcon from "@/assets/logo-icon.png";
 import logoDarkBg from "@/assets/logo-dark-bg.png";
 
 export default function Footer() {
   return (
-    <footer className="bg-foreground text-background py-16">
+    <footer className="bg-foreground text-background py-16" role="contentinfo">
       <div className="container">
         <div className="grid md:grid-cols-3 gap-12 mb-12">
           {/* Brand */}
@@ -21,24 +22,24 @@ export default function Footer() {
           <div>
             <h4 className="font-display font-bold text-lg mb-4">Plataforma</h4>
             <ul className="space-y-2 text-sm opacity-70">
-              <li><a href="/auth" className="hover:opacity-100 transition-opacity">Acessar Curso</a></li>
-              <li><a href="#modulos" className="hover:opacity-100 transition-opacity">Módulos</a></li>
-              <li><a href="#dinamicas" className="hover:opacity-100 transition-opacity">Dinâmicas</a></li>
-              <li><a href="#sobre" className="hover:opacity-100 transition-opacity">Sobre o Instituto</a></li>
+              <li><Link to="/auth" className="hover:opacity-100 transition-opacity">Acessar Curso</Link></li>
+              <li><Link to="/dashboard" className="hover:opacity-100 transition-opacity">Dashboard</Link></li>
+              <li><Link to="/alegria" className="hover:opacity-100 transition-opacity">AlegrIA</Link></li>
+              <li><Link to="/quiz" className="hover:opacity-100 transition-opacity">Quiz Adaptativo</Link></li>
             </ul>
           </div>
 
           {/* Contact */}
           <div>
             <h4 className="font-display font-bold text-lg mb-4">Contato</h4>
-            <div className="space-y-2 text-sm opacity-70">
+            <address className="space-y-2 text-sm opacity-70 not-italic">
               <p>Impact HUB Brasília - SGAN 601, Lote H</p>
               <p>Edifício Íon, Ala Amarela</p>
               <p>Asa Norte, Brasília/DF - Brasil</p>
               <p className="pt-2">📞 (61) 3550-8779</p>
               <p>🌐 <a href="https://www.felicidadeparatodos.com.br" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 underline">felicidadeparatodos.com.br</a></p>
               <p>📸 <a href="https://instagram.com/felicidadeparatodosbr" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 underline">@felicidadeparatodosbr</a></p>
-            </div>
+            </address>
           </div>
         </div>
 
