@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { modules, videoLessons } from "@/data/courseData";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { BookOpen, Play, Trophy, Flame, ArrowRight, LogOut, User, Download, Zap, Star, Calendar, BarChart3, Target } from "lucide-react";
+import { BookOpen, Play, Trophy, Flame, ArrowRight, LogOut, User, Download, Zap, Star, BarChart3, Target, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const ACHIEVEMENTS = [
@@ -19,6 +19,19 @@ const ACHIEVEMENTS = [
   { id: "streak_3", icon: "📅", title: "Consistente", desc: "3 dias seguidos de atividade", check: (p: any[]) => { const days = [...new Set(p.map((x: any) => x.created_at?.split("T")[0]))].sort().reverse(); let s = 0; for (let i = 0; i < days.length; i++) { const exp = new Date(Date.now() - i * 86400000).toISOString().split("T")[0]; if (days[i] === exp) s++; else break; } return s >= 3; } },
 ];
 
+// Generate last 7 days labels
+function getLast7Days() {
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000);
+    days.push({
+      key: d.toISOString().split("T")[0],
+      label: d.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", ""),
+    });
+  }
+  return days;
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
@@ -26,6 +39,7 @@ export default function DashboardPage() {
   const [progress, setProgress] = useState<any[]>([]);
   const [userRole, setUserRole] = useState<string>("student");
   const [loading, setLoading] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -38,6 +52,11 @@ export default function DashboardPage() {
       setProgress(prog || []);
       const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", session.user.id);
       if (roles && roles.length > 0) setUserRole(roles[0].role);
+      // Show welcome for new users
+      if (!prog || prog.length === 0) {
+        const shown = localStorage.getItem("felicidade_welcome_shown");
+        if (!shown) { setShowWelcome(true); localStorage.setItem("felicidade_welcome_shown", "1"); }
+      }
       setLoading(false);
     });
     supabase.auth.getSession().then(({ data: { session } }) => { if (!session) navigate("/auth"); });
@@ -49,7 +68,6 @@ export default function DashboardPage() {
   const totalVideos = videoLessons.length;
   const watchedVideos = progress.filter((p) => p.activity_type === "video" && p.completed).length;
 
-  // Streak
   const streak = useMemo(() => {
     const days = [...new Set(progress.map(p => p.created_at?.split("T")[0]))].sort().reverse();
     let s = 0;
@@ -61,14 +79,20 @@ export default function DashboardPage() {
     return s;
   }, [progress]);
 
-  // Level
   const level = Math.floor(totalXp / 100) + 1;
   const levelProgress = (totalXp % 100);
-
-  // Achievements
   const earned = ACHIEVEMENTS.filter(a => a.check(progress));
-
   const getModuleProgress = (moduleId: string) => progress.filter((p) => p.module_id === moduleId && p.completed).length;
+
+  // Weekly chart data
+  const weekData = useMemo(() => {
+    const days = getLast7Days();
+    return days.map(d => {
+      const dayProgress = progress.filter(p => p.created_at?.split("T")[0] === d.key);
+      return { ...d, xp: dayProgress.reduce((s, p) => s + (p.xp_earned || 0), 0), count: dayProgress.length };
+    });
+  }, [progress]);
+  const maxXp = Math.max(...weekData.map(d => d.xp), 10);
 
   const handleSignOut = async () => { await supabase.auth.signOut(); navigate("/"); };
 
@@ -83,29 +107,31 @@ export default function DashboardPage() {
       });
       if (!resp.ok) throw new Error("Erro ao gerar relatório");
       const report = await resp.json();
-
-      // Generate readable text report
       const lines = [
         `═══════════════════════════════════════`,
         `  RELATÓRIO DE PROGRESSO — CIÊNCIA DO BEM-ESTAR`,
+        `  Instituto Felicidade Para Todos`,
         `═══════════════════════════════════════`,
         ``,
-        `Aluno: ${report.student.name}`,
-        `Email: ${report.student.email}`,
+        `Olá, ${report.student.name}! 🌟`,
+        ``,
+        `Este é seu relatório personalizado de progresso na jornada`,
+        `pela Ciência do Bem-Estar. Veja como você está evoluindo!`,
+        ``,
         `Gerado em: ${new Date(report.generatedAt).toLocaleDateString("pt-BR")}`,
         ``,
-        `─── RESUMO ───`,
-        `XP Total: ${report.summary.totalXp}`,
-        `Atividades Completas: ${report.summary.completedActivities}`,
-        `Vídeos Assistidos: ${report.summary.videosWatched}`,
-        `Dias Ativos: ${report.summary.totalDaysActive}`,
-        `Sequência Atual: ${report.summary.currentStreak} dias`,
-        `Nível: ${Math.floor(report.summary.totalXp / 100) + 1}`,
+        `─── SEU RESUMO ───`,
+        `⚡ XP Total: ${report.summary.totalXp}`,
+        `🎯 Atividades Completas: ${report.summary.completedActivities}`,
+        `📹 Vídeos Assistidos: ${report.summary.videosWatched}`,
+        `📅 Dias Ativos: ${report.summary.totalDaysActive}`,
+        `🔥 Sequência Atual: ${report.summary.currentStreak} dias`,
+        `⭐ Nível: ${Math.floor(report.summary.totalXp / 100) + 1}`,
         ``,
         `─── PROGRESSO POR MÓDULO ───`,
         ...report.modules.map((m: any) => `${m.icon} Módulo ${m.number} — ${m.title}: ${m.completed} atividades, ${m.xp} XP`),
         ``,
-        `─── CONQUISTAS ───`,
+        `─── CONQUISTAS DESBLOQUEADAS ───`,
         ...earned.map(a => `${a.icon} ${a.title} — ${a.desc}`),
         ``,
         `─── ATIVIDADES RECENTES ───`,
@@ -114,15 +140,18 @@ export default function DashboardPage() {
         ),
         ``,
         `═══════════════════════════════════════`,
-        `Gerado por Felicidade.lab — Ciência do Bem-Estar`,
-        `Baseado em "Psychology and the Good Life" — Yale University`,
+        `Continue sua jornada! Cada pequena ação conta. 🌟`,
+        ``,
+        `Instituto Felicidade Para Todos`,
+        `Impact HUB Brasília - SGAN 601, Lote H`,
+        `www.felicidadeparatodos.com.br`,
+        `@felicidadeparatodosbr`,
       ];
-
       const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `relatorio_progresso_${profile?.full_name?.replace(/\s+/g, "_") || "aluno"}.txt`;
+      a.download = `relatorio_${profile?.full_name?.replace(/\s+/g, "_") || "aluno"}.txt`;
       a.click();
       URL.revokeObjectURL(url);
       toast({ title: "Relatório baixado! 📄" });
@@ -146,6 +175,30 @@ export default function DashboardPage() {
       <Navbar />
       <div className="flex-1 container pt-24 pb-16 max-w-5xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+
+          {/* Welcome modal for new users */}
+          {showWelcome && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mb-8 p-8 rounded-3xl gradient-institute text-primary-foreground relative overflow-hidden"
+            >
+              <motion.div className="absolute top-4 right-4 w-24 h-24 rounded-full bg-background/10 blur-2xl" animate={{ y: [-5, 5, -5] }} transition={{ duration: 4, repeat: Infinity }} />
+              <h2 className="font-display text-2xl font-bold mb-2">Bem-vindo(a) à sua jornada! 🌟</h2>
+              <p className="text-primary-foreground/80 mb-4 max-w-xl">
+                Você está prestes a explorar o que a ciência diz sobre felicidade. São 5 módulos baseados no curso mais popular de Yale, com quizzes, simuladores e uma IA tutora chamada AlegrIA.
+              </p>
+              <div className="flex gap-3">
+                <button onClick={() => { setShowWelcome(false); navigate("/module/mentiras"); }} className="px-5 py-2.5 rounded-xl bg-background text-foreground font-semibold text-sm hover:shadow-lg transition-all">
+                  Começar pelo Módulo 1
+                </button>
+                <button onClick={() => setShowWelcome(false)} className="px-5 py-2.5 rounded-xl bg-background/20 text-primary-foreground font-medium text-sm hover:bg-background/30 transition-colors">
+                  Explorar sozinho
+                </button>
+              </div>
+            </motion.div>
+          )}
+
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -154,14 +207,17 @@ export default function DashboardPage() {
               </h1>
               <p className="text-muted-foreground mt-1">Continue sua jornada de bem-estar</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {(userRole === "teacher" || userRole === "manager") && (
                 <button onClick={() => navigate("/admin")} className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-accent text-accent-foreground text-sm font-semibold">
                   <BarChart3 className="w-4 h-4" /> Painel
                 </button>
               )}
-              <button onClick={handleDownloadReport} className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-muted text-muted-foreground hover:text-foreground text-sm font-medium" title="Baixar relatório de progresso">
+              <button onClick={handleDownloadReport} className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-muted text-muted-foreground hover:text-foreground text-sm font-medium" title="Baixar relatório">
                 <Download className="w-4 h-4" /> Relatório
+              </button>
+              <button onClick={() => navigate("/profile")} className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Perfil" aria-label="Meu perfil">
+                <Settings className="w-5 h-5" />
               </button>
               <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/20 text-secondary-foreground">
                 <Trophy className="w-4 h-4" />
@@ -195,35 +251,52 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-3">
               <div className="flex-1 h-3 rounded-full bg-muted/50 overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full gradient-warm"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${levelProgress}%` }}
-                  transition={{ duration: 1, ease: "easeOut" }}
-                />
+                <motion.div className="h-full rounded-full gradient-warm" initial={{ width: 0 }} animate={{ width: `${levelProgress}%` }} transition={{ duration: 1, ease: "easeOut" }} />
               </div>
               <span className="text-xs font-semibold text-muted-foreground">{levelProgress}/100</span>
             </div>
           </div>
 
+          {/* Weekly Activity Chart */}
+          <div className="p-5 rounded-2xl bg-card border border-border mb-6">
+            <h3 className="font-display font-bold text-sm mb-4 flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-primary" /> Atividade dos últimos 7 dias
+            </h3>
+            <div className="flex items-end gap-2 h-24">
+              {weekData.map((d) => (
+                <div key={d.key} className="flex-1 flex flex-col items-center gap-1">
+                  <span className="text-[10px] font-bold text-primary">{d.xp > 0 ? `+${d.xp}` : ""}</span>
+                  <motion.div
+                    className="w-full rounded-t-lg gradient-warm min-h-[4px]"
+                    initial={{ height: 4 }}
+                    animate={{ height: d.xp > 0 ? Math.max((d.xp / maxXp) * 80, 8) : 4 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    style={{ opacity: d.xp > 0 ? 1 : 0.2 }}
+                  />
+                  <span className="text-[10px] text-muted-foreground capitalize">{d.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-            <div className="p-5 rounded-2xl bg-card border border-border">
+            <div className="p-5 rounded-2xl bg-card border border-border hover:shadow-warm transition-all">
               <Trophy className="w-5 h-5 text-secondary mb-2" />
               <div className="text-2xl font-display font-bold">{totalXp}</div>
               <div className="text-xs text-muted-foreground">XP Total</div>
             </div>
-            <div className="p-5 rounded-2xl bg-card border border-border">
+            <div className="p-5 rounded-2xl bg-card border border-border hover:shadow-warm transition-all">
               <Target className="w-5 h-5 text-destructive mb-2" />
               <div className="text-2xl font-display font-bold">{completedActivities}</div>
               <div className="text-xs text-muted-foreground">Atividades completas</div>
             </div>
-            <div className="p-5 rounded-2xl bg-card border border-border">
+            <div className="p-5 rounded-2xl bg-card border border-border hover:shadow-warm transition-all">
               <Play className="w-5 h-5 text-primary mb-2" />
               <div className="text-2xl font-display font-bold">{watchedVideos}/{totalVideos}</div>
               <div className="text-xs text-muted-foreground">Vídeos assistidos</div>
             </div>
-            <div className="p-5 rounded-2xl bg-card border border-border">
+            <div className="p-5 rounded-2xl bg-card border border-border hover:shadow-warm transition-all">
               <BookOpen className="w-5 h-5 text-primary mb-2" />
               <div className="text-2xl font-display font-bold">{earned.length}/{ACHIEVEMENTS.length}</div>
               <div className="text-xs text-muted-foreground">Conquistas</div>
@@ -267,7 +340,7 @@ export default function DashboardPage() {
                       <h3 className="font-display font-bold text-lg truncate">{mod.title}</h3>
                       <p className="text-sm text-muted-foreground truncate">{mod.subtitle}</p>
                       <div className="mt-3 flex items-center gap-3">
-                        <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden" role="progressbar" aria-valuenow={modProgress} aria-valuemax={modVideos + 4} aria-label={`Progresso do módulo ${mod.number}`}>
+                        <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden" role="progressbar" aria-valuenow={modProgress} aria-valuemax={modVideos + 4}>
                           <div className="h-full rounded-full gradient-warm transition-all" style={{ width: `${Math.min((modProgress / Math.max(modVideos + 4, 1)) * 100, 100)}%` }} />
                         </div>
                         <span className="text-xs text-muted-foreground whitespace-nowrap">{modProgress} atividades</span>

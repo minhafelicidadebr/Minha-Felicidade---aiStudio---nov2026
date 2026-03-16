@@ -35,16 +35,16 @@ export default function Navbar() {
   }, [location.pathname]);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50" role="navigation" aria-label="Navegação principal">
       <div className="container flex items-center justify-between h-16">
-        <Link to="/dashboard" className="flex items-center gap-2.5">
+        <Link to="/dashboard" className="flex items-center gap-2.5" aria-label="Ir para Dashboard">
           <img src={logoIcon} alt="Instituto Felicidade Para Todos" className="w-9 h-9 rounded-lg object-contain" />
           <span className="font-display font-bold text-lg hidden sm:inline">Ciência do <span className="text-primary">Bem-Estar</span></span>
         </Link>
 
         <div className="hidden lg:flex items-center gap-1">
           {links.map((l) => (
-            <Link key={l.href} to={l.href} className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${location.pathname === l.href ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+            <Link key={l.href} to={l.href} className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${location.pathname === l.href ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`} aria-current={location.pathname === l.href ? "page" : undefined}>
               {l.label}
             </Link>
           ))}
@@ -56,7 +56,7 @@ export default function Navbar() {
             <Trophy className="w-3.5 h-3.5" />
             <span className="text-sm font-bold">✨ {totalXp} XP</span>
           </div>
-          <button className="lg:hidden p-2" onClick={() => setOpen(!open)} aria-label="Menu">
+          <button className="lg:hidden p-2" onClick={() => setOpen(!open)} aria-label={open ? "Fechar menu" : "Abrir menu"} aria-expanded={open}>
             {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
@@ -65,9 +65,9 @@ export default function Navbar() {
       <AnimatePresence>
         {open && (
           <motion.div className="lg:hidden bg-background border-b border-border" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
-            <div className="container py-4 flex flex-col gap-2">
+            <div className="container py-4 flex flex-col gap-1">
               {links.map((l) => (
-                <Link key={l.href} to={l.href} className="px-4 py-3 rounded-lg text-sm font-medium hover:bg-muted" onClick={() => setOpen(false)}>
+                <Link key={l.href} to={l.href} className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors ${location.pathname === l.href ? "bg-primary/10 text-primary" : "hover:bg-muted"}`} onClick={() => setOpen(false)}>
                   {l.label}
                 </Link>
               ))}
