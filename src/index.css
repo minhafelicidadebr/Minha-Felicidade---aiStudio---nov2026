@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -46,6 +46,9 @@
     --institute-orange: 25 95% 53%;
     --institute-blue: 197 71% 40%;
     --institute-gold: 45 100% 51%;
+
+    --glass-bg: 0 0% 100% / 0.7;
+    --glass-border: 0 0% 100% / 0.3;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -97,6 +100,9 @@
     --institute-blue: 197 60% 45%;
     --institute-gold: 45 80% 50%;
 
+    --glass-bg: 220 25% 12% / 0.7;
+    --glass-border: 220 20% 30% / 0.4;
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -128,6 +134,8 @@
   .font-body {
     font-family: 'Inter', system-ui, sans-serif;
   }
+
+  /* Gradients */
   .gradient-hero {
     background: linear-gradient(135deg, hsl(var(--primary) / 0.08), hsl(var(--secondary) / 0.12), hsl(var(--accent) / 0.06));
   }
@@ -146,6 +154,41 @@
   .gradient-card-navy {
     background: linear-gradient(145deg, hsl(var(--navy-light)), hsl(var(--warm-glow)));
   }
+  .gradient-mesh {
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 30%, hsl(var(--primary) / 0.08), transparent),
+      radial-gradient(ellipse 60% 50% at 80% 60%, hsl(var(--secondary) / 0.1), transparent),
+      radial-gradient(ellipse 70% 40% at 50% 80%, hsl(var(--accent) / 0.06), transparent);
+  }
+  .gradient-aurora {
+    background: linear-gradient(
+      120deg,
+      hsl(var(--primary) / 0.15) 0%,
+      hsl(var(--secondary) / 0.12) 25%,
+      hsl(var(--accent) / 0.1) 50%,
+      hsl(var(--success) / 0.08) 75%,
+      hsl(var(--primary) / 0.12) 100%
+    );
+    background-size: 300% 300%;
+    animation: aurora-shift 12s ease-in-out infinite;
+  }
+
+  /* Glassmorphism */
+  .glass {
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(16px) saturate(1.8);
+    -webkit-backdrop-filter: blur(16px) saturate(1.8);
+    border: 1px solid hsl(var(--glass-border));
+  }
+  .glass-card {
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(12px) saturate(1.5);
+    -webkit-backdrop-filter: blur(12px) saturate(1.5);
+    border: 1px solid hsl(var(--glass-border));
+    box-shadow: 0 8px 32px -8px hsl(var(--primary) / 0.08);
+  }
+
+  /* Shadows */
   .shadow-warm {
     box-shadow: 0 8px 32px -8px hsl(var(--primary) / 0.15), 0 4px 12px -4px hsl(var(--secondary) / 0.1);
   }
@@ -155,6 +198,14 @@
   .shadow-premium {
     box-shadow: 0 20px 60px -15px hsl(var(--primary) / 0.2), 0 8px 24px -8px hsl(var(--accent) / 0.1);
   }
+  .shadow-float {
+    box-shadow:
+      0 24px 48px -12px hsl(var(--primary) / 0.12),
+      0 12px 24px -8px hsl(var(--accent) / 0.08),
+      0 0 0 1px hsl(var(--border));
+  }
+
+  /* Text effects */
   .text-gradient {
     background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
     -webkit-background-clip: text;
@@ -167,11 +218,95 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+  .text-gradient-aurora {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)), hsl(var(--accent)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    background-size: 200% 200%;
+    animation: aurora-shift 4s ease-in-out infinite;
+  }
+
+  /* Shimmer */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(var(--primary) / 0.06) 50%,
+      transparent 100%
+    );
+    animation: shimmer-slide 3s ease-in-out infinite;
+  }
+
+  /* Noise texture */
+  .noise {
+    position: relative;
+  }
+  .noise::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  /* Animations */
   .counter-animate {
     animation: countUp 2s ease-out forwards;
   }
-  @keyframes countUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+
+  /* Scrollbar */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
   }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.2);
+    border-radius: 100px;
+  }
+
+  /* Progress ring */
+  .progress-ring {
+    transform: rotate(-90deg);
+  }
+  .progress-ring circle {
+    transition: stroke-dashoffset 1s ease-out;
+  }
+}
+
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes aurora-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-8px) rotate(1deg); }
+  66% { transform: translateY(4px) rotate(-0.5deg); }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
 }
