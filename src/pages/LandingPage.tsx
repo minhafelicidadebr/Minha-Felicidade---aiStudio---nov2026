@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Play, BookOpen, Sparkles, Users, Star, TrendingUp, Heart, ArrowRight, ArrowDown } from "lucide-react";
+import { Play, BookOpen, Sparkles, Users, Star, TrendingUp, Heart, ArrowRight, ArrowDown, Shield, Zap, GraduationCap } from "lucide-react";
 import heroYouthBg from "@/assets/hero-youth-bg.jpg";
 import logoIcon from "@/assets/logo-icon.png";
 import logoLightBg from "@/assets/logo-light-bg.png";
@@ -16,10 +16,17 @@ import SocialProofBar from "@/components/landing/SocialProofBar";
 import Footer from "@/components/Footer";
 
 const stats = [
-  { icon: Users, value: "3.3M+", label: "alunos no Coursera" },
-  { icon: Star, value: "#1", label: "aula mais popular de Yale" },
-  { icon: TrendingUp, value: "40%", label: "da felicidade é controlável" },
-  { icon: Heart, value: "5", label: "módulos baseados em ciência" },
+  { icon: Users, value: "3.3M+", label: "alunos no Coursera", delay: 0 },
+  { icon: Star, value: "#1", label: "aula mais popular de Yale", delay: 0.1 },
+  { icon: TrendingUp, value: "40%", label: "da felicidade é controlável", delay: 0.2 },
+  { icon: Heart, value: "5", label: "módulos baseados em ciência", delay: 0.3 },
+];
+
+const trustBadges = [
+  { icon: Shield, label: "Fontes Verificáveis" },
+  { icon: GraduationCap, label: "Baseado em Yale" },
+  { icon: Zap, label: "IA Socrática" },
+  { icon: BookOpen, label: "WCAG 2.2" },
 ];
 
 export default function LandingPage() {
@@ -28,7 +35,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
+      <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/30">
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-2.5">
             <img src={logoIcon} alt="Instituto" className="w-9 h-9 rounded-lg" />
@@ -40,11 +47,10 @@ export default function LandingPage() {
             <a href="#sobre" className="hover:text-foreground transition-colors">Instituto</a>
             <a href="#planos" className="hover:text-foreground transition-colors">Planos</a>
             <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
-            <a href="#parceiros" className="hover:text-foreground transition-colors">Parceiros</a>
           </div>
           <button
             onClick={() => navigate("/auth")}
-            className="px-5 py-2.5 rounded-xl gradient-institute text-primary-foreground text-sm font-semibold shadow-warm hover:shadow-glow transition-all"
+            className="px-5 py-2.5 rounded-xl gradient-institute text-primary-foreground text-sm font-semibold shadow-warm hover:shadow-glow transition-all hover:scale-[1.02]"
           >
             Começar Grátis
           </button>
@@ -52,100 +58,154 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="pt-24 pb-20 relative overflow-hidden min-h-[90vh] flex items-center">
+      <section className="pt-24 pb-20 relative overflow-hidden min-h-[92vh] flex items-center">
         <div className="absolute inset-0">
           <img src={heroYouthBg} alt="" className="w-full h-full object-cover" loading="eager" />
           <div className="absolute inset-0 bg-background/85" />
-          <div className="absolute inset-0 gradient-hero opacity-80" />
+          <div className="absolute inset-0 gradient-mesh" />
         </div>
 
+        {/* Animated orbs */}
+        <motion.div
+          className="absolute top-20 right-[15%] w-48 h-48 rounded-full bg-primary/8 blur-3xl pointer-events-none"
+          animate={{ y: [-20, 20, -20], x: [-10, 10, -10], scale: [1, 1.1, 1] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute bottom-20 left-[10%] w-64 h-64 rounded-full bg-secondary/8 blur-3xl pointer-events-none"
+          animate={{ y: [15, -15, 15], scale: [1.1, 1, 1.1] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute top-1/3 left-1/4 w-36 h-36 rounded-full bg-accent/6 blur-3xl pointer-events-none"
+          animate={{ y: [8, -20, 8], x: [0, 15, 0] }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+        />
+
         <div className="container relative max-w-5xl text-center">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+          <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}>
             <div className="flex justify-center mb-8">
-              <img src={logoLightBg} alt="Instituto Felicidade Para Todos" className="h-12 md:h-16 object-contain" />
+              <motion.img
+                src={logoLightBg}
+                alt="Instituto Felicidade Para Todos"
+                className="h-12 md:h-16 object-contain"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2, duration: 0.8 }}
+              />
             </div>
-            <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary/10 text-primary text-sm font-bold mb-8">
+
+            <motion.span
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass text-primary text-sm font-bold mb-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
               <Sparkles className="w-4 h-4" /> Baseado no curso de Yale — gratuito para adolescentes
-            </span>
-            <h1 className="text-5xl md:text-7xl font-display font-bold leading-tight mb-6">
+            </motion.span>
+
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-bold leading-[1.05] mb-6">
               A Ciência do{" "}
-              <span className="text-gradient">Bem-Estar</span>
+              <span className="text-gradient-aurora">Bem-Estar</span>
               <br />
-              <span className="text-3xl md:text-4xl text-muted-foreground font-normal">para Adolescentes</span>
+              <motion.span
+                className="text-3xl md:text-4xl text-muted-foreground font-normal block mt-2"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+              >
+                para Adolescentes
+              </motion.span>
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
+
+            <motion.p
+              className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
               A aula mais popular da história da Universidade de Yale.
               Agora <strong className="text-foreground">gratuita</strong>, gamificada e com tutoria de IA.
-              Descubra o que a ciência diz sobre como ser realmente feliz.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+            </motion.p>
+
+            <motion.div
+              className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+            >
               <button
                 onClick={() => navigate("/auth")}
-                className="px-8 py-4 rounded-2xl gradient-institute text-primary-foreground font-bold text-lg shadow-warm hover:shadow-glow transition-all hover:scale-[1.02] flex items-center gap-2 justify-center"
+                className="group relative px-8 py-4 rounded-2xl gradient-institute text-primary-foreground font-bold text-lg shadow-warm hover:shadow-glow transition-all hover:scale-[1.03] flex items-center gap-2 justify-center overflow-hidden"
               >
-                <Play className="w-5 h-5" /> Começar Minha Jornada
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-foreground/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                <Play className="w-5 h-5 relative z-10" />
+                <span className="relative z-10">Começar Minha Jornada</span>
               </button>
               <a
                 href="#modulos"
-                className="px-8 py-4 rounded-2xl bg-card/80 backdrop-blur border border-border hover:bg-card font-semibold text-lg transition-colors flex items-center gap-2 justify-center"
+                className="px-8 py-4 rounded-2xl glass hover:bg-card/90 font-semibold text-lg transition-all flex items-center gap-2 justify-center hover:shadow-warm"
               >
                 <BookOpen className="w-5 h-5" /> Explorar Módulos
               </a>
-            </div>
+            </motion.div>
+
+            {/* Trust badges inline */}
+            <motion.div
+              className="flex flex-wrap items-center justify-center gap-6 mb-16"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.9 }}
+            >
+              {trustBadges.map((b) => (
+                <div key={b.label} className="flex items-center gap-1.5 text-muted-foreground/70">
+                  <b.icon className="w-3.5 h-3.5" />
+                  <span className="text-xs font-semibold uppercase tracking-wider">{b.label}</span>
+                </div>
+              ))}
+            </motion.div>
           </motion.div>
 
           {/* Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4"
-          >
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {stats.map((s) => (
-              <div key={s.label} className="p-5 rounded-2xl bg-card/80 backdrop-blur border border-border hover:shadow-warm transition-all duration-300">
-                <s.icon className="w-6 h-6 text-primary mb-2 mx-auto" />
+              <motion.div
+                key={s.label}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1 + s.delay, duration: 0.6 }}
+                className="group p-5 rounded-2xl glass-card hover:shadow-float transition-all duration-500 hover:-translate-y-1"
+              >
+                <s.icon className="w-6 h-6 text-primary mb-2 mx-auto group-hover:scale-110 transition-transform" />
                 <div className="text-2xl font-display font-bold">{s.value}</div>
                 <div className="text-xs text-muted-foreground">{s.label}</div>
-              </div>
+              </motion.div>
             ))}
-          </motion.div>
+          </div>
 
-          {/* Scroll indicator */}
+          {/* Scroll */}
           <motion.div
-            className="mt-12 flex justify-center"
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            className="mt-14 flex justify-center"
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
           >
-            <a href="#modulos" className="text-muted-foreground/50 hover:text-muted-foreground transition-colors" aria-label="Scroll para ver mais">
-              <ArrowDown className="w-6 h-6" />
+            <a href="#modulos" className="w-10 h-10 rounded-full glass flex items-center justify-center text-muted-foreground/50 hover:text-muted-foreground transition-colors" aria-label="Scroll">
+              <ArrowDown className="w-5 h-5" />
             </a>
           </motion.div>
         </div>
-
-        {/* Floating orbs */}
-        <motion.div
-          className="absolute top-20 right-20 w-40 h-40 rounded-full bg-primary/10 blur-3xl pointer-events-none"
-          animate={{ y: [-15, 15, -15], x: [-5, 5, -5] }}
-          transition={{ duration: 6, repeat: Infinity }}
-        />
-        <motion.div
-          className="absolute bottom-20 left-20 w-56 h-56 rounded-full bg-secondary/10 blur-3xl pointer-events-none"
-          animate={{ y: [10, -10, 10] }}
-          transition={{ duration: 8, repeat: Infinity }}
-        />
-        <motion.div
-          className="absolute top-1/2 left-1/4 w-32 h-32 rounded-full bg-accent/8 blur-3xl pointer-events-none"
-          animate={{ y: [5, -15, 5], x: [0, 10, 0] }}
-          transition={{ duration: 10, repeat: Infinity }}
-        />
       </section>
 
       <SocialProofBar />
 
-      {/* Crisis */}
-      <section className="py-20 bg-destructive/5">
-        <div className="container max-w-4xl text-center">
+      {/* Crisis section with glassmorphism */}
+      <section className="py-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-destructive/5" />
+        <div className="container max-w-4xl text-center relative">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-destructive/10 text-destructive text-sm font-bold mb-6">
+              ⚠️ Urgência Real
+            </div>
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-6">
               Os adolescentes estão passando por uma <span className="text-destructive">crise de saúde mental</span>.
             </h2>
@@ -155,7 +215,7 @@ export default function LandingPage() {
             </p>
             <button
               onClick={() => navigate("/auth")}
-              className="px-6 py-3 rounded-xl gradient-institute text-primary-foreground font-semibold shadow-warm hover:shadow-glow transition-all"
+              className="px-6 py-3 rounded-xl gradient-institute text-primary-foreground font-semibold shadow-warm hover:shadow-glow transition-all hover:scale-[1.02]"
             >
               Explore Agora <ArrowRight className="w-4 h-4 inline ml-1" />
             </button>
@@ -164,22 +224,26 @@ export default function LandingPage() {
       </section>
 
       {/* What you'll learn */}
-      <section className="py-24">
-        <div className="container max-w-5xl">
+      <section className="py-24 relative">
+        <div className="absolute inset-0 gradient-mesh opacity-30" />
+        <div className="container max-w-5xl relative">
           <motion.div className="text-center mb-16" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
+              🧠 O que você vai aprender
+            </span>
             <h2 className="text-3xl md:text-5xl font-display font-bold mb-4">
               Sinta-se melhor. Desenvolva hábitos mais <span className="text-gradient">saudáveis</span>.
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Em 5 módulos, a Dra. Laurie Santos reúne as melhores ideias do curso "Psychology and the Good Life" — reformulado para adolescentes.
+              Em 5 módulos, a Dra. Laurie Santos reúne as melhores ideias do curso "Psychology and the Good Life".
             </p>
           </motion.div>
           <div className="grid md:grid-cols-2 gap-6">
             {[
-              { icon: "🎭", title: "Conceitos Errôneos", desc: "Descubra por que dinheiro, notas e corpo perfeito NÃO sustentam felicidade." },
-              { icon: "🐛", title: "Vieses Cognitivos", desc: "Entenda como a adaptação hedônica e a comparação social sabotam seu bem-estar." },
-              { icon: "⚡", title: "Rewirements", desc: "6 práticas validadas pela ciência para reprogramar seu cérebro para felicidade." },
-              { icon: "🚀", title: "Hábitos Duráveis", desc: "WOOP, Implementation Intentions e Growth Mindset para mudança permanente." },
+              { icon: "🎭", title: "Conceitos Errôneos", desc: "Descubra por que dinheiro, notas e corpo perfeito NÃO sustentam felicidade.", gradient: "gradient-card-coral" },
+              { icon: "🐛", title: "Vieses Cognitivos", desc: "Entenda como a adaptação hedônica e a comparação social sabotam seu bem-estar.", gradient: "gradient-card-navy" },
+              { icon: "⚡", title: "Rewirements", desc: "6 práticas validadas pela ciência para reprogramar seu cérebro para felicidade.", gradient: "gradient-card-gold" },
+              { icon: "🚀", title: "Hábitos Duráveis", desc: "WOOP, Implementation Intentions e Growth Mindset para mudança permanente.", gradient: "gradient-card-coral" },
             ].map((f, i) => (
               <motion.div
                 key={f.title}
@@ -187,9 +251,9 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="p-8 rounded-3xl bg-card border border-border hover:shadow-premium transition-all duration-500 group"
+                className={`p-8 rounded-3xl ${f.gradient} border border-border/50 hover:shadow-float transition-all duration-500 group hover:-translate-y-1`}
               >
-                <span className="text-4xl mb-4 block">{f.icon}</span>
+                <span className="text-4xl mb-4 block group-hover:scale-110 transition-transform inline-block">{f.icon}</span>
                 <h3 className="font-display font-bold text-xl mb-2 group-hover:text-primary transition-colors">{f.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </motion.div>
@@ -207,26 +271,34 @@ export default function LandingPage() {
       <FAQSection />
       <LeadCaptureForm />
 
-      {/* CTA */}
-      <section className="py-24 gradient-institute relative overflow-hidden">
+      {/* Final CTA */}
+      <section className="py-24 gradient-institute relative overflow-hidden noise">
         <motion.div
-          className="absolute top-10 right-10 w-40 h-40 rounded-full bg-background/10 blur-3xl pointer-events-none"
-          animate={{ y: [-10, 10, -10] }}
-          transition={{ duration: 5, repeat: Infinity }}
+          className="absolute top-10 right-10 w-48 h-48 rounded-full bg-primary-foreground/5 blur-3xl pointer-events-none"
+          animate={{ y: [-15, 15, -15], scale: [1, 1.2, 1] }}
+          transition={{ duration: 6, repeat: Infinity }}
+        />
+        <motion.div
+          className="absolute bottom-10 left-10 w-32 h-32 rounded-full bg-primary-foreground/5 blur-3xl pointer-events-none"
+          animate={{ y: [10, -10, 10] }}
+          transition={{ duration: 8, repeat: Infinity }}
         />
         <div className="container max-w-3xl text-center relative">
-          <h2 className="text-3xl md:text-5xl font-display font-bold text-primary-foreground mb-4">
-            Você está pronto para se sentir melhor?
-          </h2>
-          <p className="text-primary-foreground/80 mb-10 text-lg">
-            Comece sua jornada de bem-estar baseada em ciência. Gratuito. Gamificado. Com tutoria de IA.
-          </p>
-          <button
-            onClick={() => navigate("/auth")}
-            className="px-10 py-5 rounded-2xl bg-background text-foreground font-bold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-105"
-          >
-            Começar Agora — É Grátis ✨
-          </button>
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <h2 className="text-3xl md:text-5xl font-display font-bold text-primary-foreground mb-4">
+              Você está pronto para se sentir melhor?
+            </h2>
+            <p className="text-primary-foreground/80 mb-10 text-lg">
+              Comece sua jornada de bem-estar baseada em ciência. Gratuito. Gamificado. Com tutoria de IA.
+            </p>
+            <button
+              onClick={() => navigate("/auth")}
+              className="group relative px-10 py-5 rounded-2xl bg-background text-foreground font-bold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-105 overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+              <span className="relative z-10">Começar Agora — É Grátis ✨</span>
+            </button>
+          </motion.div>
         </div>
       </section>
 
