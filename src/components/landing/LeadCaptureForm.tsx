@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Send, CheckCircle2, Building2, GraduationCap, Users, MapPin } from "lucide-react";
+import { Send, CheckCircle2, Building2, GraduationCap, Heart, Landmark, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,9 +12,9 @@ export default function LeadCaptureForm() {
 
   const segments = [
     { value: "escola", label: "Escola / Instituição de Ensino", icon: GraduationCap },
-    { value: "comunidade", label: "Organização Comunitária / ONG", icon: Users },
+    { value: "comunidade", label: "Organização Comunitária / ONG", icon: Heart },
     { value: "empresa", label: "Empresa / Corporação", icon: Building2 },
-    { value: "governo", label: "Governo / Setor Público", icon: MapPin },
+    { value: "governo", label: "Governo / Setor Público", icon: Landmark },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
