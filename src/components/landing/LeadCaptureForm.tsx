@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Send, CheckCircle2, Building2, GraduationCap, Users, MapPin } from "lucide-react";
+import { Send, CheckCircle2, Building2, GraduationCap, Heart, Landmark, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
