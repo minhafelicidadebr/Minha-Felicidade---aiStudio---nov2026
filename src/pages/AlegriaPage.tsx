@@ -2,16 +2,17 @@ import { useState, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { Send, Sparkles, BookOpen, Lightbulb, Heart, Brain, Loader2, Zap, Users } from "lucide-react";
+import { Send, Sparkles, BookOpen, Lightbulb, Heart, Brain, Loader2, Zap, Users, MessageCircle, RotateCcw } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import aledriaAvatar from "@/assets/aledria-avatar.png";
 import { useToast } from "@/hooks/use-toast";
 import { modules } from "@/data/courseData";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/aledria-chat`;
+
+const AVATAR_URL = "https://static.wixstatic.com/media/575677_d1cc9ff366794d83a8095092ca1a82fe~mv2.png/v1/fill/w_648,h_648,al_c,lg_1,q_90,enc_avif,quality_auto/avatares%20AI%20(6).png";
 
 const SUGGESTED_QUESTIONS = [
   { icon: Sparkles, text: "O que é felicidade segundo a ciência?", color: "from-primary/20 to-secondary/20" },
@@ -137,6 +138,7 @@ export default function AlegriaPage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } };
+  const resetChat = () => { setMessages([WELCOME_MESSAGE]); setInput(""); };
 
   const showSuggestions = messages.length <= 1;
   const suggestions = moduleId && MODULE_QUESTIONS[moduleId] ? MODULE_QUESTIONS[moduleId] : null;
@@ -145,34 +147,61 @@ export default function AlegriaPage() {
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full pt-20 pb-4 px-4">
+        {/* Header */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-4 mb-4 px-2">
           <div className="relative">
-            <img src={aledriaAvatar} alt="AlegrIA — Tutora socrática" className="w-14 h-14 rounded-2xl object-cover shadow-lg ring-2 ring-primary/20" />
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success rounded-full border-2 border-background" />
+            <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-warm ring-2 ring-primary/20">
+              <img src={AVATAR_URL} alt="AlegrIA — Tutora socrática" className="w-full h-full object-cover" />
+            </div>
+            <motion.div
+              className="absolute -bottom-1 -right-1 w-4 h-4 bg-success rounded-full border-2 border-background"
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
           </div>
-          <div>
-            <h1 className="font-display text-xl font-bold flex items-center gap-2">AlegrIA <Sparkles className="w-4 h-4 text-primary" /></h1>
+          <div className="flex-1">
+            <h1 className="font-display text-xl font-bold flex items-center gap-2">
+              AlegrIA <Sparkles className="w-4 h-4 text-primary" />
+            </h1>
             <p className="text-xs text-muted-foreground">
               {mod ? `Módulo ${mod.number}: ${mod.title}` : "Tutora socrática · 5 módulos de Yale · Ciência do Bem-Estar"}
             </p>
           </div>
+          <button onClick={resetChat} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all" title="Nova conversa" aria-label="Iniciar nova conversa">
+            <RotateCcw className="w-4 h-4" />
+          </button>
         </motion.div>
 
         {/* Module tag */}
         {mod && (
           <div className="px-2 mb-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
               {mod.icon} Módulo {mod.number} · {mod.title}
             </span>
           </div>
         )}
 
+        {/* Messages */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4 px-1 pb-4 scrollbar-thin" role="log" aria-label="Conversa com AlegrIA" aria-live="polite">
           <AnimatePresence initial={false}>
             {messages.map((msg, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                {msg.role === "assistant" && <img src={aledriaAvatar} alt="AlegrIA" className="w-9 h-9 rounded-xl object-cover shrink-0 mt-1 ring-1 ring-border" />}
-                <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${msg.role === "user" ? "bg-primary text-primary-foreground rounded-br-md" : "bg-card border border-border rounded-bl-md"}`}>
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+                className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
+              >
+                {msg.role === "assistant" && (
+                  <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 mt-1 ring-1 ring-border shadow-sm">
+                    <img src={AVATAR_URL} alt="AlegrIA" className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                  msg.role === "user"
+                    ? "gradient-institute text-primary-foreground rounded-br-md shadow-warm"
+                    : "glass-card rounded-bl-md"
+                }`}>
                   {msg.role === "assistant" ? (
                     <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:mb-0.5 [&_strong]:text-foreground [&_a]:text-primary [&_a]:underline">
                       <ReactMarkdown>{msg.content}</ReactMarkdown>
@@ -182,11 +211,19 @@ export default function AlegriaPage() {
               </motion.div>
             ))}
           </AnimatePresence>
+
+          {/* Typing indicator */}
           {isLoading && messages[messages.length - 1]?.role === "user" && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3">
-              <img src={aledriaAvatar} alt="AlegrIA" className="w-9 h-9 rounded-xl object-cover shrink-0 mt-1 ring-1 ring-border" />
-              <div className="bg-card border border-border rounded-2xl rounded-bl-md px-4 py-3">
-                <div className="flex items-center gap-2 text-muted-foreground text-sm"><Loader2 className="w-4 h-4 animate-spin" /><span>Pensando...</span></div>
+              <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 mt-1 ring-1 ring-border">
+                <img src={AVATAR_URL} alt="AlegrIA" className="w-full h-full object-cover" />
+              </div>
+              <div className="glass-card rounded-2xl rounded-bl-md px-4 py-3">
+                <div className="flex items-center gap-1.5">
+                  <motion.div className="w-2 h-2 rounded-full bg-primary" animate={{ y: [0, -6, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0 }} />
+                  <motion.div className="w-2 h-2 rounded-full bg-primary/70" animate={{ y: [0, -6, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.15 }} />
+                  <motion.div className="w-2 h-2 rounded-full bg-primary/40" animate={{ y: [0, -6, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }} />
+                </div>
               </div>
             </motion.div>
           )}
@@ -196,7 +233,7 @@ export default function AlegriaPage() {
         {showSuggestions && suggestions && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="flex flex-wrap gap-2 mb-3">
             {suggestions.map((q, i) => (
-              <button key={i} onClick={() => send(q.text)} className="px-3 py-2 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/20 text-sm font-medium text-primary transition-all">
+              <button key={i} onClick={() => send(q.text)} className="px-3 py-2 rounded-xl glass border border-primary/20 hover:bg-primary/10 text-sm font-medium text-primary transition-all hover:shadow-warm">
                 {q.text}
               </button>
             ))}
@@ -207,7 +244,7 @@ export default function AlegriaPage() {
         {showSuggestions && !suggestions && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
             {SUGGESTED_QUESTIONS.map((q, i) => (
-              <button key={i} onClick={() => send(q.text)} className={`flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r ${q.color} border border-border/50 hover:border-primary/30 hover:shadow-md transition-all text-left group`}>
+              <button key={i} onClick={() => send(q.text)} className={`flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r ${q.color} border border-border/50 hover:border-primary/30 hover:shadow-warm transition-all text-left group`}>
                 <q.icon className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
                 <span className="text-sm font-medium text-foreground">{q.text}</span>
               </button>
@@ -215,13 +252,31 @@ export default function AlegriaPage() {
           </motion.div>
         )}
 
-        <div className="relative bg-card border border-border rounded-2xl shadow-lg focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/40 transition-all">
-          <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Pergunte à AlegrIA sobre os 5 módulos de Yale..." rows={1} disabled={isLoading} className="w-full resize-none bg-transparent px-4 py-3.5 pr-14 text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50 max-h-32" aria-label="Digite sua mensagem para AlegrIA" />
-          <button onClick={() => send(input)} disabled={!input.trim() || isLoading} className="absolute right-2 bottom-2 p-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all" aria-label="Enviar mensagem">
+        {/* Input */}
+        <div className="relative glass-card rounded-2xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/40 transition-all">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Pergunte à AlegrIA sobre os 5 módulos de Yale..."
+            rows={1}
+            disabled={isLoading}
+            className="w-full resize-none bg-transparent px-4 py-3.5 pr-14 text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50 max-h-32"
+            aria-label="Digite sua mensagem para AlegrIA"
+          />
+          <button
+            onClick={() => send(input)}
+            disabled={!input.trim() || isLoading}
+            className="absolute right-2 bottom-2 p-2.5 rounded-xl gradient-institute text-primary-foreground hover:shadow-glow disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            aria-label="Enviar mensagem"
+          >
             <Send className="w-4 h-4" />
           </button>
         </div>
-        <p className="text-center text-[10px] text-muted-foreground mt-2">AlegrIA usa IA com base nos 5 módulos de Yale. Sempre verifique fontes no Evidence Explorer.</p>
+        <p className="text-center text-[10px] text-muted-foreground mt-2 flex items-center justify-center gap-1">
+          <MessageCircle className="w-3 h-3" />
+          AlegrIA usa IA com base nos 5 módulos de Yale. Sempre verifique fontes no Evidence Explorer.
+        </p>
       </div>
       <Footer />
     </div>
