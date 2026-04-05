@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { modules, videoLessons } from "@/data/courseData";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { BookOpen, Play, Trophy, Flame, ArrowRight, LogOut, User, Download, Zap, Star, BarChart3, Target, Settings } from "lucide-react";
+import { BookOpen, Play, Trophy, Flame, ArrowRight, LogOut, Download, Star, BarChart3, Target, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const ACHIEVEMENTS = [
@@ -16,18 +16,14 @@ const ACHIEVEMENTS = [
   { id: "all_modules", icon: "🏆", title: "Explorador", desc: "Atividade em todos os módulos", check: (p: any[]) => new Set(p.map(x => x.module_id)).size >= 5 },
   { id: "poet", icon: "🎭", title: "Poeta", desc: "Completou uma poesia", check: (p: any[]) => p.some(x => x.activity_type === "poetry" && x.completed) },
   { id: "debater", icon: "⚔️", title: "Debatedor", desc: "Participou de um debate", check: (p: any[]) => p.some(x => x.activity_type === "debate" && x.completed) },
-  { id: "streak_3", icon: "📅", title: "Consistente", desc: "3 dias seguidos de atividade", check: (p: any[]) => { const days = [...new Set(p.map((x: any) => x.created_at?.split("T")[0]))].sort().reverse(); let s = 0; for (let i = 0; i < days.length; i++) { const exp = new Date(Date.now() - i * 86400000).toISOString().split("T")[0]; if (days[i] === exp) s++; else break; } return s >= 3; } },
+  { id: "streak_3", icon: "📅", title: "Consistente", desc: "3 dias seguidos", check: (p: any[]) => { const days = [...new Set(p.map((x: any) => x.created_at?.split("T")[0]))].sort().reverse(); let s = 0; for (let i = 0; i < days.length; i++) { const exp = new Date(Date.now() - i * 86400000).toISOString().split("T")[0]; if (days[i] === exp) s++; else break; } return s >= 3; } },
 ];
 
-// Generate last 7 days labels
 function getLast7Days() {
   const days = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(Date.now() - i * 86400000);
-    days.push({
-      key: d.toISOString().split("T")[0],
-      label: d.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", ""),
-    });
+    days.push({ key: d.toISOString().split("T")[0], label: d.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "") });
   }
   return days;
 }
@@ -52,7 +48,6 @@ export default function DashboardPage() {
       setProgress(prog || []);
       const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", session.user.id);
       if (roles && roles.length > 0) setUserRole(roles[0].role);
-      // Show welcome for new users
       if (!prog || prog.length === 0) {
         const shown = localStorage.getItem("felicidade_welcome_shown");
         if (!shown) { setShowWelcome(true); localStorage.setItem("felicidade_welcome_shown", "1"); }
@@ -73,8 +68,7 @@ export default function DashboardPage() {
     let s = 0;
     for (let i = 0; i < days.length; i++) {
       const exp = new Date(Date.now() - i * 86400000).toISOString().split("T")[0];
-      if (days[i] === exp) s++;
-      else break;
+      if (days[i] === exp) s++; else break;
     }
     return s;
   }, [progress]);
@@ -84,7 +78,6 @@ export default function DashboardPage() {
   const earned = ACHIEVEMENTS.filter(a => a.check(progress));
   const getModuleProgress = (moduleId: string) => progress.filter((p) => p.module_id === moduleId && p.completed).length;
 
-  // Weekly chart data
   const weekData = useMemo(() => {
     const days = getLast7Days();
     return days.map(d => {
@@ -105,65 +98,45 @@ export default function DashboardPage() {
         headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
-      if (!resp.ok) throw new Error("Erro ao gerar relatório");
+      if (!resp.ok) throw new Error("Erro");
       const report = await resp.json();
       const lines = [
         `═══════════════════════════════════════`,
         `  RELATÓRIO DE PROGRESSO — CIÊNCIA DO BEM-ESTAR`,
         `  Instituto Felicidade Para Todos`,
-        `═══════════════════════════════════════`,
-        ``,
-        `Olá, ${report.student.name}! 🌟`,
-        ``,
-        `Este é seu relatório personalizado de progresso na jornada`,
-        `pela Ciência do Bem-Estar. Veja como você está evoluindo!`,
-        ``,
-        `Gerado em: ${new Date(report.generatedAt).toLocaleDateString("pt-BR")}`,
-        ``,
+        `═══════════════════════════════════════`, ``,
+        `Olá, ${report.student.name}! 🌟`, ``,
+        `Gerado em: ${new Date(report.generatedAt).toLocaleDateString("pt-BR")}`, ``,
         `─── SEU RESUMO ───`,
         `⚡ XP Total: ${report.summary.totalXp}`,
-        `🎯 Atividades Completas: ${report.summary.completedActivities}`,
-        `📹 Vídeos Assistidos: ${report.summary.videosWatched}`,
-        `📅 Dias Ativos: ${report.summary.totalDaysActive}`,
-        `🔥 Sequência Atual: ${report.summary.currentStreak} dias`,
-        `⭐ Nível: ${Math.floor(report.summary.totalXp / 100) + 1}`,
-        ``,
-        `─── PROGRESSO POR MÓDULO ───`,
-        ...report.modules.map((m: any) => `${m.icon} Módulo ${m.number} — ${m.title}: ${m.completed} atividades, ${m.xp} XP`),
-        ``,
-        `─── CONQUISTAS DESBLOQUEADAS ───`,
-        ...earned.map(a => `${a.icon} ${a.title} — ${a.desc}`),
-        ``,
-        `─── ATIVIDADES RECENTES ───`,
-        ...(report.recentActivity || []).slice(0, 10).map((a: any) =>
-          `${new Date(a.date).toLocaleDateString("pt-BR")} | ${a.type} | ${a.module} | +${a.xp} XP`
-        ),
-        ``,
+        `🎯 Atividades: ${report.summary.completedActivities}`,
+        `📹 Vídeos: ${report.summary.videosWatched}`,
+        `🔥 Sequência: ${report.summary.currentStreak} dias`,
+        `⭐ Nível: ${Math.floor(report.summary.totalXp / 100) + 1}`, ``,
+        `─── MÓDULOS ───`,
+        ...report.modules.map((m: any) => `${m.icon} M${m.number} — ${m.title}: ${m.completed} atividades, ${m.xp} XP`), ``,
+        `─── CONQUISTAS ───`,
+        ...earned.map(a => `${a.icon} ${a.title} — ${a.desc}`), ``,
         `═══════════════════════════════════════`,
-        `Continue sua jornada! Cada pequena ação conta. 🌟`,
-        ``,
+        `Continue sua jornada! 🌟`,
         `Instituto Felicidade Para Todos`,
-        `Impact HUB Brasília - SGAN 601, Lote H`,
-        `www.felicidadeparatodos.com.br`,
-        `@felicidadeparatodosbr`,
       ];
       const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
-      a.download = `relatorio_${profile?.full_name?.replace(/\s+/g, "_") || "aluno"}.txt`;
-      a.click();
-      URL.revokeObjectURL(url);
+      a.href = url; a.download = `relatorio_${profile?.full_name?.replace(/\s+/g, "_") || "aluno"}.txt`;
+      a.click(); URL.revokeObjectURL(url);
       toast({ title: "Relatório baixado! 📄" });
-    } catch {
-      toast({ title: "Erro ao gerar relatório", variant: "destructive" });
-    }
+    } catch { toast({ title: "Erro ao gerar relatório", variant: "destructive" }); }
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-10 h-10 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
+        <motion.div className="flex flex-col items-center gap-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <div className="w-12 h-12 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
+          <p className="text-sm text-muted-foreground font-medium">Carregando sua jornada...</p>
+        </motion.div>
       </div>
     );
   }
@@ -176,17 +149,13 @@ export default function DashboardPage() {
       <div className="flex-1 container pt-24 pb-16 max-w-5xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
 
-          {/* Welcome modal for new users */}
+          {/* Welcome */}
           {showWelcome && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="mb-8 p-8 rounded-3xl gradient-institute text-primary-foreground relative overflow-hidden"
-            >
-              <motion.div className="absolute top-4 right-4 w-24 h-24 rounded-full bg-background/10 blur-2xl" animate={{ y: [-5, 5, -5] }} transition={{ duration: 4, repeat: Infinity }} />
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mb-8 p-8 rounded-3xl gradient-institute text-primary-foreground relative overflow-hidden noise">
+              <motion.div className="absolute top-4 right-4 w-32 h-32 rounded-full bg-background/10 blur-3xl" animate={{ y: [-10, 10, -10] }} transition={{ duration: 6, repeat: Infinity }} />
               <h2 className="font-display text-2xl font-bold mb-2">Bem-vindo(a) à sua jornada! 🌟</h2>
               <p className="text-primary-foreground/80 mb-4 max-w-xl">
-                Você está prestes a explorar o que a ciência diz sobre felicidade. São 5 módulos baseados no curso mais popular de Yale, com quizzes, simuladores e uma IA tutora chamada AlegrIA.
+                5 módulos baseados no curso mais popular de Yale, com quizzes, simuladores e uma IA tutora chamada AlegrIA.
               </p>
               <div className="flex gap-3">
                 <button onClick={() => { setShowWelcome(false); navigate("/module/mentiras"); }} className="px-5 py-2.5 rounded-xl bg-background text-foreground font-semibold text-sm hover:shadow-lg transition-all">
@@ -203,7 +172,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-3xl font-display font-bold">
-                Olá, <span className="text-primary">{displayName}</span> 👋
+                Olá, <span className="text-gradient">{displayName}</span> 👋
               </h1>
               <p className="text-muted-foreground mt-1">Continue sua jornada de bem-estar</p>
             </div>
@@ -213,54 +182,55 @@ export default function DashboardPage() {
                   <BarChart3 className="w-4 h-4" /> Painel
                 </button>
               )}
-              <button onClick={handleDownloadReport} className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-muted text-muted-foreground hover:text-foreground text-sm font-medium" title="Baixar relatório">
-                <Download className="w-4 h-4" /> Relatório
+              <button onClick={handleDownloadReport} className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-muted text-muted-foreground hover:text-foreground text-sm font-medium" title="Relatório">
+                <Download className="w-4 h-4" />
               </button>
-              <button onClick={() => navigate("/profile")} className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Perfil" aria-label="Meu perfil">
+              <button onClick={() => navigate("/profile")} className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Perfil">
                 <Settings className="w-5 h-5" />
               </button>
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/20 text-secondary-foreground">
-                <Trophy className="w-4 h-4" />
+              <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full glass text-foreground">
+                <Trophy className="w-4 h-4 text-secondary" />
                 <span className="font-bold text-sm">{totalXp} XP</span>
               </div>
-              <button onClick={handleSignOut} className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Sair" aria-label="Sair da conta">
+              <button onClick={handleSignOut} className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Sair">
                 <LogOut className="w-5 h-5" />
               </button>
             </div>
           </div>
 
-          {/* Level & XP Bar */}
-          <div className="p-5 rounded-2xl gradient-card-gold mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl gradient-warm flex items-center justify-center shadow-warm">
-                  <Star className="w-6 h-6 text-primary-foreground" />
+          {/* Level & XP */}
+          <div className="p-6 rounded-3xl glass-card mb-6 relative overflow-hidden">
+            <motion.div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-primary/5 blur-3xl" animate={{ y: [-5, 5, -5] }} transition={{ duration: 4, repeat: Infinity }} />
+            <div className="flex items-center justify-between mb-3 relative">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl gradient-institute flex items-center justify-center shadow-warm">
+                  <Star className="w-7 h-7 text-primary-foreground" />
                 </div>
                 <div>
-                  <div className="font-display font-bold text-lg">Nível {level}</div>
-                  <div className="text-xs text-muted-foreground">{totalXp} XP total</div>
+                  <div className="font-display font-bold text-xl">Nível {level}</div>
+                  <div className="text-xs text-muted-foreground">{totalXp} XP acumulados</div>
                 </div>
               </div>
               <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/10">
                   <Flame className="w-4 h-4 text-destructive" />
-                  <span className="font-bold">{streak}</span>
-                  <span className="text-muted-foreground">dias</span>
+                  <span className="font-bold text-destructive">{streak}</span>
+                  <span className="text-destructive/70 text-xs">dias</span>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 relative">
               <div className="flex-1 h-3 rounded-full bg-muted/50 overflow-hidden">
-                <motion.div className="h-full rounded-full gradient-warm" initial={{ width: 0 }} animate={{ width: `${levelProgress}%` }} transition={{ duration: 1, ease: "easeOut" }} />
+                <motion.div className="h-full rounded-full gradient-warm" initial={{ width: 0 }} animate={{ width: `${levelProgress}%` }} transition={{ duration: 1.2, ease: "easeOut" }} />
               </div>
-              <span className="text-xs font-semibold text-muted-foreground">{levelProgress}/100</span>
+              <span className="text-xs font-bold text-muted-foreground">{levelProgress}/100</span>
             </div>
           </div>
 
-          {/* Weekly Activity Chart */}
-          <div className="p-5 rounded-2xl bg-card border border-border mb-6">
+          {/* Weekly Chart */}
+          <div className="p-5 rounded-2xl glass-card mb-6">
             <h3 className="font-display font-bold text-sm mb-4 flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-primary" /> Atividade dos últimos 7 dias
+              <BarChart3 className="w-4 h-4 text-primary" /> Últimos 7 dias
             </h3>
             <div className="flex items-end gap-2 h-24">
               {weekData.map((d) => (
@@ -279,28 +249,20 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Stats Grid */}
+          {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-            <div className="p-5 rounded-2xl bg-card border border-border hover:shadow-warm transition-all">
-              <Trophy className="w-5 h-5 text-secondary mb-2" />
-              <div className="text-2xl font-display font-bold">{totalXp}</div>
-              <div className="text-xs text-muted-foreground">XP Total</div>
-            </div>
-            <div className="p-5 rounded-2xl bg-card border border-border hover:shadow-warm transition-all">
-              <Target className="w-5 h-5 text-destructive mb-2" />
-              <div className="text-2xl font-display font-bold">{completedActivities}</div>
-              <div className="text-xs text-muted-foreground">Atividades completas</div>
-            </div>
-            <div className="p-5 rounded-2xl bg-card border border-border hover:shadow-warm transition-all">
-              <Play className="w-5 h-5 text-primary mb-2" />
-              <div className="text-2xl font-display font-bold">{watchedVideos}/{totalVideos}</div>
-              <div className="text-xs text-muted-foreground">Vídeos assistidos</div>
-            </div>
-            <div className="p-5 rounded-2xl bg-card border border-border hover:shadow-warm transition-all">
-              <BookOpen className="w-5 h-5 text-primary mb-2" />
-              <div className="text-2xl font-display font-bold">{earned.length}/{ACHIEVEMENTS.length}</div>
-              <div className="text-xs text-muted-foreground">Conquistas</div>
-            </div>
+            {[
+              { icon: Trophy, color: "text-secondary", value: totalXp, label: "XP Total" },
+              { icon: Target, color: "text-destructive", value: completedActivities, label: "Atividades" },
+              { icon: Play, color: "text-primary", value: `${watchedVideos}/${totalVideos}`, label: "Vídeos" },
+              { icon: BookOpen, color: "text-primary", value: `${earned.length}/${ACHIEVEMENTS.length}`, label: "Conquistas" },
+            ].map((s) => (
+              <motion.div key={s.label} whileHover={{ y: -2 }} className="p-5 rounded-2xl glass-card hover:shadow-warm transition-all">
+                <s.icon className={`w-5 h-5 ${s.color} mb-2`} />
+                <div className="text-2xl font-display font-bold">{s.value}</div>
+                <div className="text-xs text-muted-foreground">{s.label}</div>
+              </motion.div>
+            ))}
           </div>
 
           {/* Achievements */}
@@ -311,10 +273,10 @@ export default function DashboardPage() {
               return (
                 <motion.div
                   key={a.id}
-                  className={`p-4 rounded-2xl border text-center transition-all ${unlocked ? "bg-card border-secondary/30 shadow-warm" : "bg-muted/30 border-border opacity-50"}`}
-                  whileHover={unlocked ? { scale: 1.05 } : {}}
+                  className={`p-4 rounded-2xl border text-center transition-all ${unlocked ? "glass-card border-secondary/30 shadow-warm" : "bg-muted/20 border-border opacity-40 grayscale"}`}
+                  whileHover={unlocked ? { scale: 1.05, rotate: 1 } : {}}
                 >
-                  <span className="text-3xl block mb-2">{a.icon}</span>
+                  <span className={`text-3xl block mb-2 ${unlocked ? "" : "opacity-50"}`}>{a.icon}</span>
                   <h4 className="font-display font-bold text-xs">{a.title}</h4>
                   <p className="text-[10px] text-muted-foreground mt-0.5">{a.desc}</p>
                 </motion.div>
@@ -329,7 +291,18 @@ export default function DashboardPage() {
               const modProgress = getModuleProgress(mod.id);
               const modVideos = videoLessons.filter((v) => v.module === mod.id).length;
               return (
-                <motion.div key={mod.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }} onClick={() => navigate(`/module/${mod.id}`)} className="group p-5 rounded-2xl bg-card border border-border hover:shadow-warm hover:-translate-y-0.5 transition-all cursor-pointer" role="button" tabIndex={0} aria-label={`Abrir Módulo ${mod.number}: ${mod.title}`} onKeyDown={(e) => e.key === "Enter" && navigate(`/module/${mod.id}`)}>
+                <motion.div
+                  key={mod.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.08 }}
+                  onClick={() => navigate(`/module/${mod.id}`)}
+                  className="group p-5 rounded-2xl glass-card hover:shadow-float hover:-translate-y-0.5 transition-all cursor-pointer"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Abrir Módulo ${mod.number}: ${mod.title}`}
+                  onKeyDown={(e) => e.key === "Enter" && navigate(`/module/${mod.id}`)}
+                >
                   <div className="flex items-center gap-4">
                     <span className="text-3xl" aria-hidden="true">{mod.icon}</span>
                     <div className="flex-1 min-w-0">
@@ -340,8 +313,8 @@ export default function DashboardPage() {
                       <h3 className="font-display font-bold text-lg truncate">{mod.title}</h3>
                       <p className="text-sm text-muted-foreground truncate">{mod.subtitle}</p>
                       <div className="mt-3 flex items-center gap-3">
-                        <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden" role="progressbar" aria-valuenow={modProgress} aria-valuemax={modVideos + 4}>
-                          <div className="h-full rounded-full gradient-warm transition-all" style={{ width: `${Math.min((modProgress / Math.max(modVideos + 4, 1)) * 100, 100)}%` }} />
+                        <div className="flex-1 h-2 rounded-full bg-muted/50 overflow-hidden" role="progressbar" aria-valuenow={modProgress} aria-valuemax={modVideos + 4}>
+                          <motion.div className="h-full rounded-full gradient-warm" initial={{ width: 0 }} animate={{ width: `${Math.min((modProgress / Math.max(modVideos + 4, 1)) * 100, 100)}%` }} transition={{ duration: 1 }} />
                         </div>
                         <span className="text-xs text-muted-foreground whitespace-nowrap">{modProgress} atividades</span>
                       </div>
@@ -366,10 +339,16 @@ export default function DashboardPage() {
               { icon: "🎭", title: "Poesia", path: "/poetry" },
               { icon: "🏗️", title: "Co-design", path: "/codesign" },
             ].map((d) => (
-              <button key={d.title} onClick={() => navigate(d.path)} className="p-4 rounded-2xl bg-card border border-border hover:shadow-warm hover:-translate-y-1 transition-all text-left" aria-label={`Abrir ${d.title}`}>
+              <motion.button
+                key={d.title}
+                onClick={() => navigate(d.path)}
+                whileHover={{ y: -4, scale: 1.02 }}
+                className="p-4 rounded-2xl glass-card hover:shadow-warm transition-all text-left"
+                aria-label={`Abrir ${d.title}`}
+              >
                 <span className="text-2xl block mb-2" aria-hidden="true">{d.icon}</span>
                 <h4 className="font-display font-bold text-sm">{d.title}</h4>
-              </button>
+              </motion.button>
             ))}
           </div>
         </motion.div>
