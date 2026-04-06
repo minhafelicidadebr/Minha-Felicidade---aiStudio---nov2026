@@ -20,6 +20,15 @@ export default function DynamicsShowcase() {
     debate: "/debate",
     poetry: "/poetry",
     codesign: "/codesign",
+    breathing: "/breathing",
+    lifewheel: "/lifewheel",
+    gratitude: "/gratitude",
+    memory: "/memory",
+    mindmap: "/mindmap",
+    emotions: "/emotions",
+    challenge21: "/challenge21",
+    hypothesis: "/hypothesis",
+    missions: "/missions",
   };
   const getRoute = (id: string) => routeMap[id] || "#";
 
@@ -33,7 +42,8 @@ export default function DynamicsShowcase() {
           viewport={{ once: true }}
         >
           <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">
-            10 Dinâmicas <span className="text-gradient">Gamificadas</span>
+            19 Dinâmicas <span className="text-gradient">Gamificadas</span>
+          </h2>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Pipeline pedagógico completo: ensinar + treinar + transferir para a vida e para a organização.
