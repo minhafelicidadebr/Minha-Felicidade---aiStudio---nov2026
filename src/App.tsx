@@ -18,6 +18,15 @@ import CoDesignPage from "./pages/CoDesignPage";
 import AlegriaPage from "./pages/AlegriaPage";
 import AdminPage from "./pages/AdminPage";
 import ProfilePage from "./pages/ProfilePage";
+import BreathingPage from "./pages/BreathingPage";
+import LifeWheelPage from "./pages/LifeWheelPage";
+import GratitudePage from "./pages/GratitudePage";
+import MemoryGamePage from "./pages/MemoryGamePage";
+import MindMapPage from "./pages/MindMapPage";
+import EmotionTrackerPage from "./pages/EmotionTrackerPage";
+import Challenge21Page from "./pages/Challenge21Page";
+import HypothesisLabPage from "./pages/HypothesisLabPage";
+import SocialMissionsPage from "./pages/SocialMissionsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +53,15 @@ const App = () => (
           <Route path="/alegria" element={<AlegriaPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/breathing" element={<BreathingPage />} />
+          <Route path="/lifewheel" element={<LifeWheelPage />} />
+          <Route path="/gratitude" element={<GratitudePage />} />
+          <Route path="/memory" element={<MemoryGamePage />} />
+          <Route path="/mindmap" element={<MindMapPage />} />
+          <Route path="/emotions" element={<EmotionTrackerPage />} />
+          <Route path="/challenge21" element={<Challenge21Page />} />
+          <Route path="/hypothesis" element={<HypothesisLabPage />} />
+          <Route path="/missions" element={<SocialMissionsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
