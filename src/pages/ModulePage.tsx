@@ -29,6 +29,15 @@ const activityDefs = [
   { key: "debate", icon: "⚔️", title: "Debate", path: "/debate", check: (id: string) => debateTopics.some(d => d.module === id) },
   { key: "poetry", icon: "🎭", title: "Poesia", path: "/poetry", check: (id: string) => poems.some(p => p.module === id) },
   { key: "codesign", icon: "🏗️", title: "Co-design", path: "/codesign", check: (id: string) => coDesignTemplates.some(c => c.module === id) },
+  { key: "breathing", icon: "🧘", title: "Respiração", path: "/breathing", check: () => true },
+  { key: "lifewheel", icon: "🎯", title: "Roda da Vida", path: "/lifewheel", check: () => true },
+  { key: "gratitude", icon: "📝", title: "Gratidão", path: "/gratitude", check: () => true },
+  { key: "memory", icon: "🧩", title: "Memória", path: "/memory", check: () => true },
+  { key: "mindmap", icon: "🗺️", title: "Mapa Mental", path: "/mindmap", check: () => true },
+  { key: "emotions", icon: "📊", title: "Emoções", path: "/emotions", check: () => true },
+  { key: "challenge21", icon: "🎲", title: "21 Dias", path: "/challenge21", check: () => true },
+  { key: "hypothesis", icon: "🔬", title: "Hipóteses", path: "/hypothesis", check: () => true },
+  { key: "missions", icon: "🏆", title: "Missões", path: "/missions", check: () => true },
 ];
 
 export default function ModulePage() {
