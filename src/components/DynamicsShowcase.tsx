@@ -44,7 +44,6 @@ export default function DynamicsShowcase() {
           <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">
             19 Dinâmicas <span className="text-gradient">Gamificadas</span>
           </h2>
-          </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Pipeline pedagógico completo: ensinar + treinar + transferir para a vida e para a organização.
           </p>
