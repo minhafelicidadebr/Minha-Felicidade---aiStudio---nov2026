@@ -169,6 +169,15 @@ export const dynamics: DynamicItem[] = [
   { id: "debate", icon: "⚔️", title: "Arena de Debate", description: "Debate socrático + mapa de argumentos", color: "navy" },
   { id: "poetry", icon: "🎭", title: "Poesia Pedagógica", description: "Poema + prática reflexiva", color: "coral" },
   { id: "codesign", icon: "🏗️", title: "Estúdio de Co-design", description: "Plano de intervenção com métricas", color: "gold" },
+  { id: "breathing", icon: "🧘", title: "Respiração Consciente", description: "Técnicas de respiração com neurociência", color: "navy" },
+  { id: "lifewheel", icon: "🎯", title: "Roda da Vida", description: "Avaliação de 8 dimensões de bem-estar", color: "coral" },
+  { id: "gratitude", icon: "📝", title: "Diário de Gratidão", description: "Journaling com prompts e streaks", color: "gold" },
+  { id: "memory", icon: "🧩", title: "Jogo da Memória", description: "Match de conceitos científicos", color: "navy" },
+  { id: "mindmap", icon: "🗺️", title: "Mapa Mental", description: "Mind map interativo dos módulos", color: "coral" },
+  { id: "emotions", icon: "📊", title: "Termômetro Emocional", description: "Tracker de emoções com visualização", color: "gold" },
+  { id: "challenge21", icon: "🎲", title: "Desafio 21 Dias", description: "Micro-ações diárias de bem-estar", color: "navy" },
+  { id: "hypothesis", icon: "🔬", title: "Laboratório de Hipóteses", description: "Formule e teste hipóteses pessoais", color: "coral" },
+  { id: "missions", icon: "🏆", title: "Missões Sociais", description: "Desafios colaborativos com impacto social", color: "gold" },
 ];
 
 // ===================== QUIZ QUESTIONS =====================
