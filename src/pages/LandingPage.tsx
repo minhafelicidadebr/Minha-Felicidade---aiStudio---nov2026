@@ -5,6 +5,7 @@ import heroYouthBg from "@/assets/hero-youth-bg.jpg";
 import logoIcon from "@/assets/logo-icon.png";
 import logoLightBg from "@/assets/logo-light-bg.png";
 import DynamicsSection from "@/components/landing/DynamicsSection";
+import InteractiveToolsShowcase from "@/components/landing/InteractiveToolsShowcase";
 import CourseStructure from "@/components/landing/CourseStructure";
 import ImpactNumbers from "@/components/landing/ImpactNumbers";
 import InstituteSection from "@/components/landing/InstituteSection";
@@ -44,9 +45,9 @@ export default function LandingPage() {
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
             <a href="#modulos" className="hover:text-foreground transition-colors">Módulos</a>
             <a href="#dinamicas" className="hover:text-foreground transition-colors">Dinâmicas</a>
+            <a href="#ferramentas" className="hover:text-foreground transition-colors">Ferramentas</a>
             <a href="#sobre" className="hover:text-foreground transition-colors">Instituto</a>
             <a href="#planos" className="hover:text-foreground transition-colors">Planos</a>
-            <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
           </div>
           <button
             onClick={() => navigate("/auth")}
@@ -264,6 +265,7 @@ export default function LandingPage() {
 
       <CourseStructure />
       <DynamicsSection />
+      <InteractiveToolsShowcase />
       <ImpactNumbers />
       <TestimonialsSection />
       <InstituteSection />
