@@ -5,6 +5,7 @@ import heroYouthBg from "@/assets/hero-youth-bg.jpg";
 import logoIcon from "@/assets/logo-icon.png";
 import logoLightBg from "@/assets/logo-light-bg.png";
 import DynamicsSection from "@/components/landing/DynamicsSection";
+import InteractiveToolsShowcase from "@/components/landing/InteractiveToolsShowcase";
 import CourseStructure from "@/components/landing/CourseStructure";
 import ImpactNumbers from "@/components/landing/ImpactNumbers";
 import InstituteSection from "@/components/landing/InstituteSection";
@@ -264,6 +265,7 @@ export default function LandingPage() {
 
       <CourseStructure />
       <DynamicsSection />
+      <InteractiveToolsShowcase />
       <ImpactNumbers />
       <TestimonialsSection />
       <InstituteSection />
