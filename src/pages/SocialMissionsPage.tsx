@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Users, Heart, Star, Trophy, CheckCircle2, Circle, Sparkles } from "lucide-react";
+import { ArrowLeft, Users, Star, Trophy, CheckCircle2, Sparkles } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useProgress } from "@/hooks/useProgress";
@@ -18,19 +18,18 @@ const MISSIONS = [
   { id: "m9", title: "Embaixador do Flow", description: "Ajude 2 pessoas a descobrirem suas forças de caráter (VIA Survey)", xp: 30, category: "Flow", icon: "⚡", difficulty: "Médio", science: "Peterson & Seligman (2004): usar forças de caráter aumenta engajamento" },
 ];
 
-const difficultyConfig: Record<string, { color: string; stars: number }> = {
-  "Fácil": { color: "bg-success/20 text-success", stars: 1 },
-  "Médio": { color: "bg-secondary/20 text-secondary-foreground", stars: 2 },
-  "Difícil": { color: "bg-destructive/10 text-destructive", stars: 3 },
-  "Épico": { color: "bg-primary/20 text-primary", stars: 4 },
+const difficultyConfig: Record<string, { color: string; stars: number; gradient: string }> = {
+  "Fácil": { color: "bg-success/20 text-success", stars: 1, gradient: "from-emerald-500/10 to-green-500/10" },
+  "Médio": { color: "bg-secondary/20 text-secondary-foreground", stars: 2, gradient: "from-amber-500/10 to-yellow-500/10" },
+  "Difícil": { color: "bg-destructive/10 text-destructive", stars: 3, gradient: "from-red-500/10 to-orange-500/10" },
+  "Épico": { color: "bg-primary/20 text-primary", stars: 4, gradient: "from-violet-500/10 to-purple-500/10" },
 };
 
 export default function SocialMissionsPage() {
   const navigate = useNavigate();
   const { trackActivity } = useProgress();
   const [completed, setCompleted] = useState<string[]>(() => {
-    const s = localStorage.getItem("social-missions");
-    return s ? JSON.parse(s) : [];
+    const s = localStorage.getItem("social-missions"); return s ? JSON.parse(s) : [];
   });
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -52,81 +51,86 @@ export default function SocialMissionsPage() {
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       <div className="flex-1 container pt-24 pb-16 max-w-2xl">
-        <button onClick={() => navigate("/dashboard")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
           <ArrowLeft className="w-4 h-4" /> Voltar
         </button>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <header className="text-center mb-8">
-            <span className="text-5xl mb-3 block">🏆</span>
-            <h1 className="text-3xl font-display font-bold mb-2">Missões Sociais</h1>
-            <p className="text-muted-foreground">Desafios de impacto social baseados em evidências científicas</p>
-          </header>
+          <div className="relative rounded-3xl p-8 mb-8 bg-gradient-to-br from-red-500/10 to-orange-500/10 border border-border/30 overflow-hidden">
+            <div className="absolute inset-0 noise opacity-30 pointer-events-none" />
+            <div className="relative text-center">
+              <span className="text-6xl mb-3 block">🏆</span>
+              <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">Missões Sociais</h1>
+              <p className="text-muted-foreground text-sm">Desafios de impacto social baseados em evidências científicas</p>
+            </div>
+          </div>
 
-          {/* Progress */}
-          <div className="glass-card rounded-2xl p-5 mb-8">
-            <div className="flex items-center justify-between mb-3">
+          {/* Progress — premium */}
+          <div className="glass-card rounded-3xl p-6 mb-8 border border-border/30 relative overflow-hidden">
+            {completed.length === MISSIONS.length && <div className="absolute inset-0 shimmer pointer-events-none" />}
+            <div className="flex items-center justify-between mb-4 relative z-10">
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-primary" />
-                <span className="font-bold text-sm">{completed.length}/{MISSIONS.length} missões</span>
+                <span className="font-bold">{completed.length}/{MISSIONS.length}</span>
+                <span className="text-xs text-muted-foreground">missões</span>
               </div>
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-secondary" />
-                <span className="text-sm font-bold">+{totalXp} XP</span>
+                <span className="font-bold text-primary">+{totalXp} XP</span>
               </div>
             </div>
-            <div className="w-full h-3 rounded-full bg-muted overflow-hidden">
-              <motion.div className="h-full rounded-full gradient-institute" animate={{ width: `${progress}%` }} transition={{ type: "spring", damping: 20 }} />
-            </div>
-            {completed.length === MISSIONS.length && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center mt-4">
-                <Trophy className="w-8 h-8 text-secondary mx-auto mb-1" />
-                <p className="font-display font-bold">🌟 Herói Social Completo!</p>
+            <div className="w-full h-4 rounded-full bg-muted overflow-hidden relative z-10">
+              <motion.div className="h-full rounded-full gradient-institute relative" animate={{ width: `${progress}%` }} transition={{ type: "spring", damping: 20 }}>
+                {progress > 10 && <div className="absolute inset-0 shimmer" />}
               </motion.div>
-            )}
+            </div>
+            <AnimatePresence>
+              {completed.length === MISSIONS.length && (
+                <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center mt-6 relative z-10">
+                  <Trophy className="w-12 h-12 text-secondary mx-auto mb-2" />
+                  <p className="font-display font-bold text-xl">🌟 Herói Social Completo!</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* Missions */}
+          {/* Missions — premium cards */}
           <div className="space-y-3">
             {MISSIONS.map((mission, i) => {
               const done = completed.includes(mission.id);
               const diff = difficultyConfig[mission.difficulty];
               const isExpanded = expandedId === mission.id;
               return (
-                <motion.div
-                  key={mission.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.03 }}
-                  className={`glass-card rounded-2xl overflow-hidden transition-all ${done ? "border-2 border-success/30" : ""}`}
+                <motion.div key={mission.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
+                  className={`glass-card rounded-2xl overflow-hidden transition-all border ${done ? "border-success/30 bg-success/5" : "border-border/30"}`}
                 >
-                  <button
-                    onClick={() => setExpandedId(isExpanded ? null : mission.id)}
-                    className="w-full text-left p-4 flex items-start gap-3"
-                  >
-                    <span className="text-2xl mt-0.5">{mission.icon}</span>
+                  <button onClick={() => setExpandedId(isExpanded ? null : mission.id)} className="w-full text-left p-5 flex items-start gap-3">
+                    <motion.span className="text-3xl mt-0.5" whileHover={{ scale: 1.15 }}>{mission.icon}</motion.span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h3 className={`font-display font-bold text-sm ${done ? "line-through text-muted-foreground" : ""}`}>{mission.title}</h3>
-                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${diff.color}`}>{mission.difficulty}</span>
+                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold ${diff.color}`}>{mission.difficulty}</span>
                         <span className="text-xs font-bold text-primary">+{mission.xp} XP</span>
                       </div>
-                      <p className="text-xs text-muted-foreground">{mission.description}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{mission.description}</p>
                     </div>
                     {done && <CheckCircle2 className="w-5 h-5 text-success shrink-0" />}
                   </button>
                   <AnimatePresence>
                     {isExpanded && (
-                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="px-4 pb-4">
-                        <div className="p-3 rounded-xl bg-primary/5 border border-primary/10 mb-3">
-                          <p className="text-xs font-semibold text-primary">📎 {mission.science}</p>
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="px-5 pb-5">
+                        <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 mb-4">
+                          <p className="text-xs font-semibold text-primary leading-relaxed">📎 {mission.science}</p>
                         </div>
-                        <div className="flex items-center gap-1 mb-3">
-                          {Array.from({ length: diff.stars }).map((_, s) => <Star key={s} className="w-3 h-3 text-secondary fill-secondary" />)}
+                        <div className="flex items-center gap-1 mb-4">
+                          {Array.from({ length: diff.stars }).map((_, s) => (
+                            <motion.div key={s} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: s * 0.1 }}>
+                              <Star className="w-4 h-4 text-secondary fill-secondary" />
+                            </motion.div>
+                          ))}
                         </div>
-                        <button
-                          onClick={() => toggleComplete(mission)}
-                          className={`w-full py-2.5 rounded-xl font-bold text-sm transition-all ${done ? "bg-muted text-muted-foreground" : "gradient-institute text-primary-foreground shadow-warm hover:shadow-glow"}`}
+                        <button onClick={() => toggleComplete(mission)}
+                          className={`w-full py-3 rounded-2xl font-bold text-sm transition-all ${done ? "bg-muted text-muted-foreground" : "gradient-institute text-primary-foreground shadow-warm hover:shadow-glow"}`}
                         >
                           {done ? "↩️ Desmarcar" : "✅ Completar Missão"}
                         </button>
