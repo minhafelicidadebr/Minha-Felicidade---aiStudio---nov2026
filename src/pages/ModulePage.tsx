@@ -161,9 +161,28 @@ export default function ModulePage() {
                         allowFullScreen
                       />
                     </div>
-                    <div className="mt-3 p-3 rounded-xl bg-muted/30 flex items-center gap-2">
-                      <span className="text-xs">🌐</span>
-                      <p className="text-xs text-muted-foreground">Legendas PT ativadas automaticamente. Se não aparecerem: ⚙️ → Legendas → Português</p>
+                    <div className="mt-3 p-4 rounded-2xl bg-gradient-to-r from-blue-500/10 via-primary/5 to-purple-500/10 border border-primary/10">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-base">🌐</div>
+                        <div className="space-y-2 flex-1">
+                          <p className="text-sm font-semibold text-foreground">Como ativar legendas em Português</p>
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-[10px]">1</span>
+                              <span>No player, clique em <strong className="text-foreground">⚙️ Configurações</strong> (engrenagem)</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-[10px]">2</span>
+                              <span>Selecione <strong className="text-foreground">Legendas/CC</strong> → ative as legendas em inglês</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-[10px]">3</span>
+                              <span>Clique em <strong className="text-foreground">Tradução Automática</strong> → escolha <strong className="text-foreground">Português</strong></span>
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground/70 italic mt-1">💡 Após ativar uma vez, o YouTube lembrará sua preferência nos próximos vídeos!</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   {/* Quick Activities Sidebar */}
