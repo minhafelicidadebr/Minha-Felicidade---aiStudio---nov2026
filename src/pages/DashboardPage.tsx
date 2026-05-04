@@ -212,8 +212,8 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/10">
-                  <Flame className="w-4 h-4 text-destructive" />
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/10 border border-destructive/20">
+                  <span className="fire-flicker text-base leading-none">🔥</span>
                   <span className="font-bold text-destructive">{streak}</span>
                   <span className="text-destructive/70 text-xs">dias</span>
                 </div>
