@@ -126,7 +126,7 @@ export default function FlashcardsPage() {
                 <button onClick={prev} className="p-3 rounded-xl bg-muted hover:bg-muted/80 transition-colors" aria-label="Card anterior"><ChevronLeft className="w-5 h-5" /></button>
                 <div className="flex gap-3">
                   <button onClick={next} className="flex items-center gap-2 px-5 py-3 rounded-xl bg-muted hover:bg-muted/80 transition-colors font-medium text-sm"><RotateCcw className="w-4 h-4" /> Revisar</button>
-                  <button onClick={markKnown} className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm shadow-warm transition-all ${known.has(card.id) ? "bg-success/20 text-success" : "gradient-institute text-primary-foreground"}`}>
+                  <button onClick={(e) => markKnown(e)} className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm shadow-warm transition-all dopamine-pop ${known.has(card.id) ? "bg-success/20 text-success" : "gradient-institute text-primary-foreground"}`}>
                     {known.has(card.id) ? "✓ Aprendido" : "✓ Sei isso!"}
                   </button>
                 </div>
@@ -137,6 +137,9 @@ export default function FlashcardsPage() {
           )}
         </motion.div>
       </div>
+      {xpFx.node}
+      <EncouragementBubble trigger={encourageTrigger} />
+      <ConfettiCelebration active={allDone} />
       <Footer />
     </div>
   );
