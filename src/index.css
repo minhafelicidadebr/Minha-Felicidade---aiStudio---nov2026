@@ -310,3 +310,168 @@
   0% { transform: scale(1); opacity: 1; }
   100% { transform: scale(1.5); opacity: 0; }
 }
+
+/* ============================================
+   MASTER-PLUS LEARNING EFFECTS — 18 Sprints
+   ============================================ */
+
+/* Sprint 1 — Neural mesh background */
+@keyframes neural-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+.neural-bg {
+  background-image:
+    radial-gradient(circle at 20% 30%, hsl(var(--primary) / 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 80% 20%, hsl(var(--accent) / 0.1) 0%, transparent 40%),
+    radial-gradient(circle at 50% 80%, hsl(var(--secondary) / 0.1) 0%, transparent 40%);
+  animation: neural-pulse 8s ease-in-out infinite;
+}
+
+/* Sprint 2 — Holographic shimmer */
+@keyframes holographic {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.holographic {
+  background: linear-gradient(110deg,
+    hsl(var(--primary)) 0%, hsl(var(--secondary)) 25%,
+    hsl(var(--accent)) 50%, hsl(var(--secondary)) 75%, hsl(var(--primary)) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: holographic 4s linear infinite;
+}
+
+/* Sprint 3 — XP burst particle */
+@keyframes xp-burst {
+  0% { transform: translate(0, 0) scale(0); opacity: 1; }
+  50% { opacity: 1; }
+  100% { transform: translate(var(--tx, 60px), var(--ty, -60px)) scale(1.2); opacity: 0; }
+}
+.xp-particle {
+  position: absolute;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: radial-gradient(circle, hsl(var(--secondary)), hsl(var(--primary)));
+  animation: xp-burst 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  box-shadow: 0 0 12px hsl(var(--primary) / 0.6);
+}
+
+/* Sprint 4 — Magnetic hover lift */
+.magnetic-lift {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
+}
+.magnetic-lift:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 24px 48px -12px hsl(var(--primary) / 0.25), 0 0 0 1px hsl(var(--primary) / 0.2);
+}
+
+/* Sprint 5 — Glow pulse for streaks */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4), 0 0 20px hsl(var(--primary) / 0.2); }
+  50% { box-shadow: 0 0 0 8px hsl(var(--primary) / 0), 0 0 30px hsl(var(--primary) / 0.4); }
+}
+.glow-pulse { animation: glow-pulse 2.5s ease-in-out infinite; }
+
+/* Sprint 6 — Confetti rain */
+@keyframes confetti-fall {
+  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+.confetti-piece {
+  position: fixed; top: 0; width: 10px; height: 14px;
+  animation: confetti-fall 3s ease-in forwards;
+  pointer-events: none; z-index: 9999;
+}
+
+/* Sprint 7 — Knowledge orbit (orbital decoration) */
+@keyframes orbit { from { transform: rotate(0deg) translateX(40px) rotate(0deg); } to { transform: rotate(360deg) translateX(40px) rotate(-360deg); } }
+.orbit-element { animation: orbit 8s linear infinite; }
+
+/* Sprint 8 — Liquid morph card */
+@keyframes liquid-morph {
+  0%, 100% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
+  50% { border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%; }
+}
+.liquid-blob { animation: liquid-morph 12s ease-in-out infinite; }
+
+/* Sprint 9 — Type-on cursor */
+@keyframes blink-cursor { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+.typing-cursor::after {
+  content: '|'; display: inline-block; margin-left: 2px;
+  color: hsl(var(--primary)); animation: blink-cursor 1s infinite;
+}
+
+/* Sprint 10 — Progress bar with shine */
+@keyframes progress-shine {
+  0% { transform: translateX(-100%) skewX(-20deg); }
+  100% { transform: translateX(300%) skewX(-20deg); }
+}
+.progress-shine { position: relative; overflow: hidden; }
+.progress-shine::after {
+  content: ''; position: absolute; inset: 0; width: 50%;
+  background: linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.5), transparent);
+  animation: progress-shine 2s ease-in-out infinite;
+}
+
+/* Sprint 11 — Floating brain icons */
+@keyframes float-brain {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-12px) rotate(3deg); }
+}
+.float-brain { animation: float-brain 4s ease-in-out infinite; }
+
+/* Sprint 12 — Dopamine burst on click */
+@keyframes dopamine-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.15); filter: brightness(1.3); }
+  100% { transform: scale(1); }
+}
+.dopamine-pop { animation: dopamine-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* Sprint 13 — Achievement border ring */
+@keyframes ring-rotate { to { transform: rotate(360deg); } }
+.achievement-ring {
+  position: relative;
+}
+.achievement-ring::before {
+  content: ''; position: absolute; inset: -3px; border-radius: inherit;
+  background: conic-gradient(from 0deg, hsl(var(--primary)), hsl(var(--secondary)), hsl(var(--accent)), hsl(var(--primary)));
+  animation: ring-rotate 4s linear infinite;
+  z-index: -1;
+}
+
+/* Sprint 14 — Spotlight follow */
+.spotlight {
+  background: radial-gradient(600px circle at var(--mx, 50%) var(--my, 50%),
+    hsl(var(--primary) / 0.1), transparent 40%);
+}
+
+/* Sprint 15 — Streak fire flicker */
+@keyframes fire-flicker {
+  0%, 100% { transform: scale(1) rotate(-2deg); filter: hue-rotate(0deg); }
+  25% { transform: scale(1.08) rotate(2deg); filter: hue-rotate(10deg); }
+  50% { transform: scale(0.96) rotate(-1deg); filter: hue-rotate(-10deg); }
+  75% { transform: scale(1.04) rotate(1deg); filter: hue-rotate(5deg); }
+}
+.fire-flicker { animation: fire-flicker 1.6s ease-in-out infinite; display: inline-block; }
+
+/* Sprint 16 — 3D tilt prep */
+.tilt-3d { transform-style: preserve-3d; perspective: 1000px; transition: transform 0.3s ease; }
+.tilt-3d:hover { transform: rotateY(6deg) rotateX(-4deg) scale(1.02); }
+
+/* Sprint 17 — Neural connection lines (SVG-friendly) */
+@keyframes draw-line {
+  from { stroke-dashoffset: 1000; }
+  to { stroke-dashoffset: 0; }
+}
+.draw-line { stroke-dasharray: 1000; animation: draw-line 3s ease-out forwards; }
+
+/* Sprint 18 — Reduced motion respect */
+@media (prefers-reduced-motion: reduce) {
+  .neural-bg, .holographic, .glow-pulse, .float-brain, .liquid-blob,
+  .fire-flicker, .orbit-element, .progress-shine::after, .achievement-ring::before {
+    animation: none !important;
+  }
+}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Sparkles, Brain, Heart, Gamepad2, X } from "lucide-react";
+import { NeuralBackground, SpotlightCard, BrainPulse, MilestoneTracker } from "@/components/learning/LearningFX";
 
 const tools = [
   {
@@ -97,6 +98,7 @@ export default function InteractiveToolsShowcase() {
 
   return (
     <section className="py-24 relative overflow-hidden" id="ferramentas">
+      <NeuralBackground />
       <div className="absolute inset-0 gradient-mesh opacity-10" />
       <div className="container max-w-6xl relative">
         <motion.div
@@ -105,15 +107,27 @@ export default function InteractiveToolsShowcase() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
+          <div className="flex justify-center mb-4"><BrainPulse /></div>
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-success/10 text-success text-sm font-bold mb-4">
             🧪 Laboratório de Aprendizagem Interativa
           </span>
           <h2 className="text-3xl md:text-5xl font-display font-bold mb-4">
-            9 Ferramentas <span className="text-gradient">Científicas</span>
+            9 Ferramentas <span className="holographic">Científicas</span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
             Cada ferramenta foi desenhada com neurociência aplicada para transformar conhecimento em prática real.
           </p>
+          <div className="max-w-2xl mx-auto">
+            <MilestoneTracker
+              milestones={[
+                { label: "Iniciante", value: 0 },
+                { label: "Explorador", value: 100 },
+                { label: "Praticante", value: 300 },
+                { label: "Mestre", value: 600 },
+              ]}
+              current={120}
+            />
+          </div>
         </motion.div>
 
         {/* Category Filter */}
@@ -147,7 +161,7 @@ export default function InteractiveToolsShowcase() {
                 onMouseEnter={() => setHoveredId(tool.id)}
                 onMouseLeave={() => setHoveredId(null)}
                 onClick={() => setSelectedTool(tool)}
-                className={`group relative p-6 rounded-3xl cursor-pointer transition-all duration-500 hover:-translate-y-2 border border-border/50 overflow-hidden bg-gradient-to-br ${tool.color} hover:shadow-float`}
+                className={`group relative p-6 rounded-3xl cursor-pointer magnetic-lift tilt-3d border border-border/50 overflow-hidden bg-gradient-to-br ${tool.color}`}
               >
                 {/* Shimmer */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
