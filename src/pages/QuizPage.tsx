@@ -6,6 +6,7 @@ import { CheckCircle2, XCircle, ArrowRight, RotateCcw, Trophy, Zap } from "lucid
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useProgress } from "@/hooks/useProgress";
+import { useXPBurst, ConfettiCelebration, EncouragementBubble } from "@/components/learning/LearningFX";
 
 export default function QuizPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -17,18 +18,23 @@ export default function QuizPage() {
   const [score, setScore] = useState(0);
   const [xp, setXp] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [encourageTrigger, setEncourageTrigger] = useState(0);
   const { trackActivity } = useProgress();
+  const xpFx = useXPBurst();
 
   const questions = useMemo(() => quizQuestions.filter((q) => q.level === level && (!activeModule || q.module === activeModule)), [level, activeModule]);
   const current = questions[currentIdx];
 
-  const handleSelect = (idx: number) => {
+  const handleSelect = (idx: number, e?: React.MouseEvent) => {
     if (showResult) return;
     setSelected(idx);
     setShowResult(true);
     if (idx === current.correctIndex) {
+      const gained = level * 10;
       setScore((s) => s + 1);
-      setXp((x) => x + level * 10);
+      setXp((x) => x + gained);
+      xpFx.trigger(gained, e ? { clientX: e.clientX, clientY: e.clientY } : undefined);
+      setEncourageTrigger(t => t + 1);
     }
   };
 
@@ -125,7 +131,7 @@ export default function QuizPage() {
                     else if (i === selected) classes += "border-destructive bg-destructive/10 text-foreground";
                     else classes += "border-border opacity-50";
                     return (
-                      <button key={i} onClick={() => handleSelect(i)} className={classes} role="radio" aria-checked={selected === i} disabled={showResult}>
+                      <button key={i} onClick={(e) => handleSelect(i, e)} className={classes} role="radio" aria-checked={selected === i} disabled={showResult}>
                         <div className="flex items-start gap-3">
                           {showResult && i === current.correctIndex && <CheckCircle2 className="w-5 h-5 text-success shrink-0 mt-0.5" />}
                           {showResult && i === selected && i !== current.correctIndex && <XCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />}
@@ -151,6 +157,9 @@ export default function QuizPage() {
           </AnimatePresence>
         </motion.div>
       </div>
+      {xpFx.node}
+      <EncouragementBubble trigger={encourageTrigger} />
+      <ConfettiCelebration active={finished && score / Math.max(1, questions.length) >= 0.7} />
     </div>
   );
 }

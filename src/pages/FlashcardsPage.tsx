@@ -6,6 +6,7 @@ import { RotateCcw, ChevronLeft, ChevronRight, Sparkles, Trophy } from "lucide-r
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useProgress } from "@/hooks/useProgress";
+import { useXPBurst, EncouragementBubble, ConfettiCelebration } from "@/components/learning/LearningFX";
 
 export default function FlashcardsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,17 +16,21 @@ export default function FlashcardsPage() {
   const [flipped, setFlipped] = useState(false);
   const [known, setKnown] = useState<Set<string>>(new Set());
   const [totalXp, setTotalXp] = useState(0);
+  const [encourageTrigger, setEncourageTrigger] = useState(0);
   const { trackActivity } = useProgress();
+  const xpFx = useXPBurst();
 
   const card = filtered[idx] || filtered[0];
   if (!card) return <div className="min-h-screen bg-background"><Navbar /><div className="container pt-24 text-center text-muted-foreground">Nenhum flashcard disponível.</div></div>;
 
   const next = () => { setFlipped(false); setTimeout(() => setIdx((i) => (i + 1) % filtered.length), 200); };
   const prev = () => { setFlipped(false); setTimeout(() => setIdx((i) => (i - 1 + filtered.length) % filtered.length), 200); };
-  const markKnown = () => {
+  const markKnown = (e?: React.MouseEvent) => {
     if (!known.has(card.id)) {
       setKnown((s) => new Set(s).add(card.id));
       setTotalXp(p => p + 5);
+      xpFx.trigger(5, e ? { clientX: e.clientX, clientY: e.clientY } : undefined);
+      setEncourageTrigger(t => t + 1);
       trackActivity({ moduleId: card.module, activityType: "flashcard", activityId: card.id, score: 100, data: { status: "known" } });
     }
     next();
