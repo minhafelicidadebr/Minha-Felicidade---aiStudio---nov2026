@@ -339,6 +339,7 @@ export default function DashboardPage() {
               { icon: "🎭", title: "Poesia", path: "/poetry" },
               { icon: "🏗️", title: "Co-design", path: "/codesign" },
               { icon: "✨", title: "Constelação", path: "/constellation" },
+              { icon: "🪞", title: "Espelho", path: "/mirror" },
             ].map((d) => (
               <motion.button
                 key={d.title}
