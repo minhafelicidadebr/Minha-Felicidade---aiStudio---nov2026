@@ -28,6 +28,7 @@ import Challenge21Page from "./pages/Challenge21Page";
 import HypothesisLabPage from "./pages/HypothesisLabPage";
 import SocialMissionsPage from "./pages/SocialMissionsPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
+import ConstellationPage from "./pages/ConstellationPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -64,6 +65,7 @@ const App = () => (
           <Route path="/hypothesis" element={<HypothesisLabPage />} />
           <Route path="/missions" element={<SocialMissionsPage />} />
           <Route path="/subscription" element={<SubscriptionPage />} />
+          <Route path="/constellation" element={<ConstellationPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
