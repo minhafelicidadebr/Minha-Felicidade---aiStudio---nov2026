@@ -67,6 +67,7 @@ const App = () => (
           <Route path="/missions" element={<SocialMissionsPage />} />
           <Route path="/subscription" element={<SubscriptionPage />} />
           <Route path="/constellation" element={<ConstellationPage />} />
+          <Route path="/mirror" element={<CognitiveMirrorPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
