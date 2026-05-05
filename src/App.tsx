@@ -28,6 +28,7 @@ import Challenge21Page from "./pages/Challenge21Page";
 import HypothesisLabPage from "./pages/HypothesisLabPage";
 import SocialMissionsPage from "./pages/SocialMissionsPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
+import ConstellationPage from "./pages/ConstellationPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
