@@ -30,6 +30,7 @@ import SocialMissionsPage from "./pages/SocialMissionsPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
 import ConstellationPage from "./pages/ConstellationPage";
 import CognitiveMirrorPage from "./pages/CognitiveMirrorPage";
+import FutureSelfPage from "./pages/FutureSelfPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
