@@ -11,6 +11,7 @@ import { ArrowLeft, Sparkles, Network, Lightbulb, BookOpen, Target } from "lucid
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { NeuralBackground, useXPBurst, EncouragementBubble, AchievementToast } from "@/components/learning/LearningFX";
+import { InsightDialog } from "@/components/learning/InsightDialog";
 import { useProgress } from "@/hooks/useProgress";
 
 /* ============= Knowledge Graph: Concepts × Modules × Edges ============= */
@@ -170,6 +171,58 @@ export default function ConstellationPage() {
             Cada conceito é uma estrela. Cada linha, uma conexão científica real.
             Explore o mapa do conhecimento e descubra como tudo se entrelaça.
           </p>
+
+          {/* Mini CTAs — instructional design pop-outs */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
+            <InsightDialog
+              cta="Como usar"
+              emoji="🧭"
+              variant="primary"
+              subtitle="Guia rápido • 60s"
+              title="Navegando a Constelação"
+              intro="Este mapa transforma 16 conceitos da ciência do bem-estar em uma rede neural visual. Aprender em rede é cientificamente superior a listas lineares."
+              steps={[
+                { icon: "👆", title: "Clique nas estrelas", body: "Cada estrela oculta um conceito. Clicar revela seu conteúdo, ganha XP e ativa as conexões neurais ao redor.", evidence: "Active retrieval — Karpicke (2008)" },
+                { icon: "🔗", title: "Passe o mouse nas linhas", body: "As linhas mostram relações reais entre conceitos. Hover revela a explicação científica de como dois temas se conectam.", evidence: "Schema theory — Anderson (1977)" },
+                { icon: "✍️", title: "Escreva sua aplicação", body: "No painel de detalhes, descreva como aplicaria o conceito. Isso ativa o Generation Effect e consolida 2× mais a memória.", evidence: "Slamecka & Graf (1978)" },
+                { icon: "🏆", title: "Marcos & XP", body: "5, 10 e 16 conceitos descobertos disparam conquistas. O ciclo dopamina→motivação→prática é projetado para hábito.", evidence: "Skinner (1953); Duhigg (2012)" },
+              ]}
+              takeaway="Aprender em rede (não em lista) cria 'palácios da memória' resistentes ao esquecimento."
+              citation="Bjork & Bjork (2011) — Desirable Difficulties"
+            />
+            <InsightDialog
+              cta="A ciência por trás"
+              emoji="🧠"
+              variant="secondary"
+              subtitle="Neurociência • Schema Building"
+              title="Por que mapas mentais funcionam"
+              intro="Seu cérebro armazena conhecimento como redes (schemas), não como listas. Esta constelação espelha sua arquitetura cognitiva real."
+              steps={[
+                { icon: "🕸️", title: "Redes Semânticas", body: "Conceitos isolados decaem em 24h (curva de Ebbinghaus). Conceitos conectados a 3+ outros têm retenção até 7× maior.", evidence: "Collins & Loftus (1975)" },
+                { icon: "🧬", title: "Codificação Dual", body: "Combinar imagem (estrelas) + texto (rótulo) ativa dois sistemas de memória paralelos, dobrando a probabilidade de recuperação.", evidence: "Paivio (1971); Mayer (2009)" },
+                { icon: "⚡", title: "Elaborative Encoding", body: "Quando você descobre que 'Gratidão' conecta com 'Adaptação Hedônica', seu cérebro cria pontes neurais que fortalecem ambos.", evidence: "Craik & Lockhart (1972)" },
+                { icon: "🎯", title: "Generation Effect", body: "Escrever uma aplicação prática (em vez de só ler) gera +50% de retenção. É por isso que cada estrela tem campo de reflexão.", evidence: "Bertsch et al. (2007) meta-análise" },
+              ]}
+              takeaway="Esta interface não é decoração — é uma extensão visual do córtex pré-frontal trabalhando."
+              citation="Sweller (1988) — Cognitive Load Theory"
+            />
+            <InsightDialog
+              cta="Metodologia Yale"
+              emoji="🎓"
+              variant="accent"
+              subtitle="Origem • PSYC 157"
+              title="Da sala de Yale para sua tela"
+              intro="O conteúdo desta constelação vem de 'The Science of Well-Being' (Yale, Prof. Laurie Santos), o curso mais popular da história da universidade."
+              steps={[
+                { icon: "📚", title: "5 Módulos = 5 Clusters", body: "Cada módulo do curso (Mentiras, Expectativas, Rewirements, Hacks, Hábitos) vira um cluster orbital ao redor do sol 'Bem-Estar'.", evidence: "Santos (Yale, 2018)" },
+                { icon: "🔬", title: "Só evidência peer-reviewed", body: "Todos os 16 nós citam estudos publicados (PNAS, Science, JPSP). Nada de pseudociência ou simplificações de neurotransmissores.", evidence: "Rigor científico absoluto" },
+                { icon: "🌎", title: "Adaptação cultural BR", body: "A linguagem foi traduzida com sensibilidade ao contexto brasileiro pelo Instituto Felicidade para Todos, sem distorcer evidência.", evidence: "Localização baseada em ciência" },
+                { icon: "♻️", title: "Espaçamento + Recuperação", body: "Voltar à constelação em dias diferentes ativa Spaced Repetition, o método mais eficaz documentado para retenção de longo prazo.", evidence: "Cepeda et al. (2006) meta-análise" },
+              ]}
+              takeaway="Você está fazendo, em interface premium, o que alunos de Yale fazem em PDF estático."
+              citation="Yale OpenCourseWare + Instituto Felicidade para Todos"
+            />
+          </div>
 
           {/* Progress */}
           <div className="mt-6 inline-flex items-center gap-3 px-4 py-2 rounded-full bg-card/60 backdrop-blur border border-border">

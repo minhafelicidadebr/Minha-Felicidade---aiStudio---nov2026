@@ -30,6 +30,7 @@ import SocialMissionsPage from "./pages/SocialMissionsPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
 import ConstellationPage from "./pages/ConstellationPage";
 import CognitiveMirrorPage from "./pages/CognitiveMirrorPage";
+import FutureSelfPage from "./pages/FutureSelfPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -68,6 +69,7 @@ const App = () => (
           <Route path="/subscription" element={<SubscriptionPage />} />
           <Route path="/constellation" element={<ConstellationPage />} />
           <Route path="/mirror" element={<CognitiveMirrorPage />} />
+          <Route path="/future-self" element={<FutureSelfPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
