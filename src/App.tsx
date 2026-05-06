@@ -69,6 +69,7 @@ const App = () => (
           <Route path="/subscription" element={<SubscriptionPage />} />
           <Route path="/constellation" element={<ConstellationPage />} />
           <Route path="/mirror" element={<CognitiveMirrorPage />} />
+          <Route path="/future-self" element={<FutureSelfPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
