@@ -11,6 +11,7 @@ import { ArrowLeft, Sparkles, Network, Lightbulb, BookOpen, Target } from "lucid
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { NeuralBackground, useXPBurst, EncouragementBubble, AchievementToast } from "@/components/learning/LearningFX";
+import { InsightDialog } from "@/components/learning/InsightDialog";
 import { useProgress } from "@/hooks/useProgress";
 
 /* ============= Knowledge Graph: Concepts × Modules × Edges ============= */
