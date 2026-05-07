@@ -15,6 +15,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { NeuralBackground, useXPBurst, ConfettiCelebration, EncouragementBubble, ProgressRing } from "@/components/learning/LearningFX";
+import { InsightDialog } from "@/components/learning/InsightDialog";
+import { NarrativeJourney, COGNITIVE_MIRROR_CHAPTERS } from "@/components/learning/NarrativeJourney";
 import { useProgress } from "@/hooks/useProgress";
 
 const CONCEPTS = [
