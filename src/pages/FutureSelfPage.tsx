@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { NeuralBackground, useXPBurst, AchievementToast, EncouragementBubble, ConfettiCelebration } from "@/components/learning/LearningFX";
 import { InsightDialog } from "@/components/learning/InsightDialog";
+import { NarrativeJourney, FUTURE_SELF_CHAPTERS } from "@/components/learning/NarrativeJourney";
 import { useProgress } from "@/hooks/useProgress";
 import { useToast } from "@/hooks/use-toast";
 
@@ -131,6 +132,7 @@ export default function FutureSelfPage() {
 
           {/* Mini CTAs */}
           <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
+            <NarrativeJourney chapters={FUTURE_SELF_CHAPTERS} cta="Modo História" emoji="📖" />
             <InsightDialog
               cta="Como funciona"
               emoji="🧭"
