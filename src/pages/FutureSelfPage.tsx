@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { NeuralBackground, useXPBurst, AchievementToast, EncouragementBubble, ConfettiCelebration } from "@/components/learning/LearningFX";
 import { InsightDialog } from "@/components/learning/InsightDialog";
+import { NarrativeJourney, FUTURE_SELF_CHAPTERS } from "@/components/learning/NarrativeJourney";
 import { useProgress } from "@/hooks/useProgress";
 import { useToast } from "@/hooks/use-toast";
 
