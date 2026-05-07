@@ -165,8 +165,8 @@ export function NarrativeJourney({ chapters = CONSTELLATION_CHAPTERS, cta = "Mod
     <Sheet open={open} onOpenChange={(v) => { setOpen(v); if (v) setI(0); }}>
       <SheetTrigger asChild>
         <button className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-br from-fuchsia-500/20 to-fuchsia-500/5 border border-fuchsia-500/40 text-fuchsia-400 backdrop-blur text-[11px] font-bold uppercase tracking-wider transition-all hover:scale-105 hover:shadow-lg">
-          <span className="text-sm group-hover:rotate-12 transition-transform">📖</span>
-          <span>Modo História</span>
+          <span className="text-sm group-hover:rotate-12 transition-transform">{emoji}</span>
+          <span>{cta}</span>
         </button>
       </SheetTrigger>
 
