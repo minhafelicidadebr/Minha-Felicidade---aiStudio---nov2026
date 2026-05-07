@@ -132,6 +132,7 @@ export default function FutureSelfPage() {
 
           {/* Mini CTAs */}
           <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
+            <NarrativeJourney chapters={FUTURE_SELF_CHAPTERS} cta="Modo História" emoji="📖" />
             <InsightDialog
               cta="Como funciona"
               emoji="🧭"
