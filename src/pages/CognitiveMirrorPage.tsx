@@ -134,6 +134,58 @@ export default function CognitiveMirrorPage() {
             Ensine um conceito como se fosse para um amigo. A IA fará o raio-X da sua compreensão —
             lacunas, vieses, profundidade, e como um mestre explicaria.
           </p>
+
+          {/* Mini CTAs — instructional design pop-outs */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
+            <NarrativeJourney chapters={COGNITIVE_MIRROR_CHAPTERS} cta="Modo História" emoji="📖" />
+            <InsightDialog
+              cta="Como funciona"
+              emoji="🧭"
+              variant="primary"
+              subtitle="Guia rápido • 60s"
+              title="3 passos para o raio-X cognitivo"
+              intro="Você não está sendo testado. Está sendo escutado por um espelho que devolve metacognição em vez de reflexo."
+              steps={[
+                { icon: "🎯", title: "Escolha um conceito", body: "Comece pelo que você acha que domina. (Geralmente é onde os vieses se escondem melhor.)", evidence: "Dunning-Kruger Effect (1999)" },
+                { icon: "🎤", title: "Explique como para um amigo", body: "Use texto OU microfone. Linguagem cotidiana > jargão acadêmico. Quanto mais simples, mais expõe lacunas reais.", evidence: "Feynman Technique" },
+                { icon: "🔬", title: "Leia o raio-X com calma", body: "Pontuação, forças, lacunas, vieses citados com seu próprio texto. Releia 1×, ajuste sua próxima explicação.", evidence: "Hattie & Timperley (2007)" },
+              ]}
+              takeaway="Quem se ouve com clareza aprende com profundidade."
+              citation="Self-Explanation Effect — Chi et al."
+            />
+            <InsightDialog
+              cta="A ciência por trás"
+              emoji="🧠"
+              variant="secondary"
+              subtitle="Metacognição aplicada"
+              title="Por que ensinar é o melhor jeito de aprender"
+              intro="Quando você se prepara para ensinar, seu cérebro entra em modo organizador. Ele para de armazenar e começa a estruturar."
+              steps={[
+                { icon: "👨‍🏫", title: "Protégé Effect", body: "Estudantes que estudaram para 'ensinar a outro' retiveram 28% mais que os que estudaram para uma prova. Mesmo conteúdo. Mesma duração.", evidence: "Fiorella & Mayer (2013)" },
+                { icon: "🧩", title: "Self-Explanation", body: "Verbalizar o raciocínio expõe inconsistências invisíveis na leitura silenciosa. É a base da técnica Feynman.", evidence: "Chi et al. (1994)" },
+                { icon: "🪞", title: "Espelhamento metacognitivo", body: "A IA devolve sua fala anotada com vieses e lacunas. Ver o próprio pensamento de fora é o motor do crescimento adulto.", evidence: "Flavell (1979) — Metacognition" },
+                { icon: "📈", title: "Delta vence nota", body: "O score 0-100 importa menos que sua evolução entre tentativas. Refaça em 7 dias e compare.", evidence: "Dweck (2006) — Growth Mindset" },
+              ]}
+              takeaway="O espelho não corrige — ilumina. O resto é com você."
+              citation="40 anos de literatura em metacognição"
+            />
+            <InsightDialog
+              cta="E se for cringe?"
+              emoji="🤗"
+              variant="accent"
+              subtitle="Permissão pra errar"
+              title="Sim, vai parecer estranho falar sozinho"
+              intro="Acolhe esse desconforto. Ele é o sinal de que circuitos novos estão sendo recrutados. (Cérebro adora reclamar antes de aprender.)"
+              steps={[
+                { icon: "😅", title: "Errar é o método", body: "Explicações ruins na primeira tentativa são dado, não fracasso. Elas dizem onde focar.", evidence: "Bjork — Desirable Difficulties" },
+                { icon: "🎙️", title: "O microfone ajuda mesmo", body: "Se travar escrevendo, fala. A produção oral acessa memórias diferentes da escrita. Use as duas.", evidence: "Levelt (1989) — Speech Production" },
+                { icon: "🔁", title: "Volte ao mesmo conceito", body: "A magia acontece na 3ª tentativa do mesmo conceito em dias diferentes. Score sobe, vieses caem.", evidence: "Spaced Practice" },
+                { icon: "🧡", title: "Sem juízo, com curiosidade", body: "A IA é um espelho — não um professor severo. Trate o feedback como mapa, não como prova.", evidence: "Carl Rogers — Aprendizagem Significativa" },
+              ]}
+              takeaway="Ninguém aprendeu nada elegante de primeira. Todo mundo aprendeu de novo."
+              citation="Brown, Roediger & McDaniel (2014)"
+            />
+          </div>
         </motion.div>
 
         <AnimatePresence mode="wait">
