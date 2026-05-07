@@ -13,75 +13,39 @@ export type Chapter = {
   emoji: string;
   chapter: string;
   title: string;
-  hook: string;          // empathic, slightly humorous opening
-  story: string;         // 2-3 sentences narrative
-  science: string;       // the science explained simply
-  evidence: string;      // citation
-  visual: "stars" | "web" | "spark" | "trophy" | "compass";
+  hook: string;
+  story: string;
+  science: string;
+  evidence: string;
+  visual: "stars" | "web" | "spark" | "trophy" | "compass" | "mirror" | "clock" | "letter";
 };
 
-const CHAPTERS: Chapter[] = [
-  {
-    emoji: "🌌",
-    chapter: "Capítulo 1",
-    title: "Você está no escuro (e tudo bem)",
-    hook: "Sim, o mapa começa apagado. Não é bug — é pedagogia. (E, vá lá, um pouquinho de drama.)",
-    story: "Imagine entrar numa sala com 16 lâmpadas apagadas. Você não sabe onde estão os interruptores… mas seu cérebro adora um bom mistério. Cada estrela cinza é uma pergunta esperando resposta.",
-    science: "O efeito da curiosidade ativa o circuito dopaminérgico do hipocampo, aumentando em até 30% a memorização do que vem depois. Aprender é detetive, não palestra.",
-    evidence: "Gruber, Gelman & Ranganath (2014), Neuron",
-    visual: "stars",
-  },
-  {
-    emoji: "👆",
-    chapter: "Capítulo 2",
-    title: "Clique. (A mágica é literalmente no dedo.)",
-    hook: "Você toca uma estrela e — pluf — ela acende. Parabéns: acabou de fazer ciência da memória sem perceber.",
-    story: "Cada clique é um ato de recuperação ativa: seu cérebro pergunta 'o que será isso?' antes de receber a resposta. Esse mini-suspense vale mais do que reler 10 vezes o mesmo PDF.",
-    science: "Recuperação ativa (testing effect) supera releitura passiva em todas as métricas de retenção a longo prazo. É o motor invisível de toda app de flashcards séria.",
-    evidence: "Karpicke & Roediger (2008), Science",
-    visual: "spark",
-  },
-  {
-    emoji: "🕸️",
-    chapter: "Capítulo 3",
-    title: "As linhas que você jurava serem decoração",
-    hook: "Aquelas linhas tracejadas? Não são enfeite de festa junina. São pontes neurais reais.",
-    story: "Quando duas estrelas próximas acendem, a linha entre elas vira sólida. Passe o mouse e descubra por que 'Gratidão' segura a mão de 'Adaptação Hedônica' há décadas na literatura científica.",
-    science: "Conhecimento conectado a 3+ outros conceitos tem retenção até 7× maior que conhecimento isolado. Seu cérebro literalmente esquece o que vive sozinho.",
-    evidence: "Collins & Loftus (1975) — Spreading Activation",
-    visual: "web",
-  },
-  {
-    emoji: "✍️",
-    chapter: "Capítulo 4",
-    title: "Escreva. Sim, com suas palavras (não as do Yale).",
-    hook: "O campo de reflexão parece pequeno. Ele não é. É um músculo cognitivo disfarçado de textarea.",
-    story: "Quando você descreve como aplicaria 'Savoring' no seu domingo, dois processos acontecem: o conceito vira pessoal e a memória vira biográfica. E memórias biográficas? Praticamente imortais.",
-    science: "O Generation Effect mostra que produzir conteúdo (vs. ler) gera +50% de retenção. Vinte caracteres bem escritos valem mais que vinte páginas relidas.",
-    evidence: "Bertsch et al. (2007), meta-análise (n=86 estudos)",
-    visual: "spark",
-  },
-  {
-    emoji: "🏆",
-    chapter: "Capítulo 5",
-    title: "5, 10, 16: o cérebro adora marcos",
-    hook: "Sim, vão pipocar troféus. Não, não é infantil. É neurobiologia operando a seu favor.",
-    story: "A cada 5 estrelas acesas, sua dopamina recebe um pequeno tapinha nas costas. E dopamina, ao contrário do que dizem por aí, não é a 'molécula do prazer' — é a molécula da motivação para repetir.",
-    science: "Reforços intermitentes e marcos visíveis sustentam hábito mais que recompensas grandes e raras. É o mesmo princípio de jogos bem desenhados.",
-    evidence: "Schultz (2016), Nature Reviews Neuroscience",
-    visual: "trophy",
-  },
-  {
-    emoji: "♻️",
-    chapter: "Capítulo 6",
-    title: "Volte amanhã. Sério, volte.",
-    hook: "Sabe aquele 'depois eu vejo'? Aqui ele é cientificamente recomendado.",
-    story: "Reabrir a constelação em dias diferentes ativa Spaced Repetition — o método mais documentado de retenção a longo prazo. Em 21 dias, esse mapa não está mais na tela: está em você.",
-    science: "Intervalos crescentes entre revisões (1d → 3d → 7d) consolidam memória semântica de forma mais durável que estudo concentrado.",
-    evidence: "Cepeda et al. (2006), Psychological Bulletin",
-    visual: "compass",
-  },
+const CONSTELLATION_CHAPTERS: Chapter[] = [
+  { emoji: "🌌", chapter: "Capítulo 1", title: "Você está no escuro (e tudo bem)", hook: "Sim, o mapa começa apagado. Não é bug — é pedagogia. (E, vá lá, um pouquinho de drama.)", story: "Imagine entrar numa sala com 16 lâmpadas apagadas. Você não sabe onde estão os interruptores… mas seu cérebro adora um bom mistério. Cada estrela cinza é uma pergunta esperando resposta.", science: "O efeito da curiosidade ativa o circuito dopaminérgico do hipocampo, aumentando em até 30% a memorização do que vem depois. Aprender é detetive, não palestra.", evidence: "Gruber, Gelman & Ranganath (2014), Neuron", visual: "stars" },
+  { emoji: "👆", chapter: "Capítulo 2", title: "Clique. (A mágica é literalmente no dedo.)", hook: "Você toca uma estrela e — pluf — ela acende. Parabéns: acabou de fazer ciência da memória sem perceber.", story: "Cada clique é um ato de recuperação ativa: seu cérebro pergunta 'o que será isso?' antes de receber a resposta. Esse mini-suspense vale mais do que reler 10 vezes o mesmo PDF.", science: "Recuperação ativa (testing effect) supera releitura passiva em todas as métricas de retenção a longo prazo.", evidence: "Karpicke & Roediger (2008), Science", visual: "spark" },
+  { emoji: "🕸️", chapter: "Capítulo 3", title: "As linhas que você jurava serem decoração", hook: "Aquelas linhas tracejadas? Não são enfeite de festa junina. São pontes neurais reais.", story: "Quando duas estrelas próximas acendem, a linha entre elas vira sólida. Passe o mouse e descubra por que 'Gratidão' segura a mão de 'Adaptação Hedônica' há décadas na literatura.", science: "Conhecimento conectado a 3+ outros conceitos tem retenção até 7× maior que conhecimento isolado. Seu cérebro literalmente esquece o que vive sozinho.", evidence: "Collins & Loftus (1975) — Spreading Activation", visual: "web" },
+  { emoji: "✍️", chapter: "Capítulo 4", title: "Escreva. Sim, com suas palavras (não as do Yale).", hook: "O campo de reflexão parece pequeno. Ele não é. É um músculo cognitivo disfarçado de textarea.", story: "Quando você descreve como aplicaria 'Savoring' no seu domingo, dois processos acontecem: o conceito vira pessoal e a memória vira biográfica. E memórias biográficas? Praticamente imortais.", science: "O Generation Effect mostra que produzir conteúdo (vs. ler) gera +50% de retenção. Vinte caracteres bem escritos valem mais que vinte páginas relidas.", evidence: "Bertsch et al. (2007), meta-análise (n=86 estudos)", visual: "spark" },
+  { emoji: "🏆", chapter: "Capítulo 5", title: "5, 10, 16: o cérebro adora marcos", hook: "Sim, vão pipocar troféus. Não, não é infantil. É neurobiologia operando a seu favor.", story: "A cada 5 estrelas acesas, sua dopamina recebe um pequeno tapinha nas costas. Dopamina, ao contrário do que dizem por aí, não é a 'molécula do prazer' — é a molécula da motivação para repetir.", science: "Reforços intermitentes e marcos visíveis sustentam hábito mais que recompensas grandes e raras. É o mesmo princípio de jogos bem desenhados.", evidence: "Schultz (2016), Nature Reviews Neuroscience", visual: "trophy" },
+  { emoji: "♻️", chapter: "Capítulo 6", title: "Volte amanhã. Sério, volte.", hook: "Sabe aquele 'depois eu vejo'? Aqui ele é cientificamente recomendado.", story: "Reabrir a constelação em dias diferentes ativa Spaced Repetition — o método mais documentado de retenção a longo prazo. Em 21 dias, esse mapa não está mais na tela: está em você.", science: "Intervalos crescentes entre revisões (1d → 3d → 7d) consolidam memória semântica de forma mais durável que estudo concentrado.", evidence: "Cepeda et al. (2006), Psychological Bulletin", visual: "compass" },
 ];
+
+export const COGNITIVE_MIRROR_CHAPTERS: Chapter[] = [
+  { emoji: "🪞", chapter: "Capítulo 1", title: "Bem-vindo ao espelho que não mente", hook: "Diferente do espelho do banheiro às 7h da manhã, este aqui não te bajula. (Mas também não te julga.)", story: "Você escolhe um conceito e explica em voz alta — como se um amigo curioso de 12 anos pedisse. A IA escuta cada palavra e devolve um raio-X da sua compreensão real, não da que você acha que tem.", science: "O 'Protégé Effect' mostra que ensinar gera 28% mais retenção que estudar para uma prova. Explicar em voz alta força o cérebro a organizar lacunas que ficariam invisíveis na leitura.", evidence: "Fiorella & Mayer (2013), Journal of Educational Psychology", visual: "mirror" },
+  { emoji: "🎤", chapter: "Capítulo 2", title: "O microfone é seu melhor professor", hook: "Sim, é estranho falar sozinho. (Pergunte a qualquer cientista falando com ratos.)", story: "Quando você verbaliza, dois sistemas se ativam: o que produz a fala e o que escuta a si mesmo. Essa dupla checagem é exatamente o que Feynman fazia rabiscando em quadros vazios para sentir onde travava.", science: "Pensar em voz alta (think-aloud) revela vieses metacognitivos que escapam ao silêncio mental. É a base da técnica Feynman e do método socrático moderno.", evidence: "Chi et al. (1994) — Self-Explanation Effect", visual: "spark" },
+  { emoji: "🔍", chapter: "Capítulo 3", title: "O raio-X dos seus vieses", hook: "Se aparecer 'viés do otimismo' no seu resultado, respira. Quase todo mundo aparece com pelo menos um. (Inclusive psicólogos.)", story: "A IA mapeia trechos exatos da sua fala para vieses cognitivos catalogados (confirmação, projeção, falácia G.I. Joe…). Ver o viés nomeado é o primeiro passo para desarmá-lo.", science: "Kahneman mostra que vieses não desaparecem com força de vontade — eles diminuem quando aprendemos a reconhecê-los em flagrante. Nomear é o antídoto.", evidence: "Kahneman (2011) — Thinking, Fast and Slow", visual: "web" },
+  { emoji: "📊", chapter: "Capítulo 4", title: "Profundidade 0–100: nem nota, nem ego", hook: "Não é prova. Não vai pra escola. Ninguém te dá medalha por 98 — e ninguém te chama no Conselho por 42.", story: "O 'depth_score' mostra quão profunda foi sua explicação naquele momento, naquele conceito. Em 7 dias você refaz e vê movimento. Esse delta é o que importa.", science: "Crescimento mensurável + feedback específico = motivação intrínseca sustentável. Notas absolutas viram ranking; deltas viram identidade.", evidence: "Dweck (2006); Hattie & Timperley (2007) — Power of Feedback", visual: "trophy" },
+  { emoji: "🔁", chapter: "Capítulo 5", title: "Reescreva no estilo Feynman", hook: "Quando a IA devolve uma versão Feynman da sua fala, é meio que humilhante e libertador ao mesmo tempo. (Muito útil.)", story: "A reescrita não é correção — é exemplo. Mostra como o mesmo conteúdo soa quando passa pelo crivo da clareza extrema. Você compara, ajusta sua próxima explicação, e o ciclo recomeça melhor.", science: "Worked examples reduzem carga cognitiva extrínseca e aceleram a transferência de habilidade do novato para o expert.", evidence: "Sweller, van Merriënboer & Paas (1998)", visual: "compass" },
+];
+
+export const FUTURE_SELF_CHAPTERS: Chapter[] = [
+  { emoji: "⏳", chapter: "Capítulo 1", title: "O eu de daqui a 5 anos é um estranho", hook: "Sério: estudos de fMRI mostram que seu cérebro trata o 'eu futuro' como se fosse outra pessoa. Tipo, um colega de trabalho distante.", story: "É por isso que adiar economia, exercício e gratidão parece fácil — você está ajudando 'aquela outra pessoa lá no futuro'. Esta tela existe pra fazer essa pessoa virar você de novo.", science: "Quanto mais o córtex pré-frontal medial (mPFC) ativa pensando em si mesmo no futuro, mais decisões pró-futuro o presente toma. EFT é o ginásio desse músculo.", evidence: "Hershfield et al. (2011), Journal of Marketing Research", visual: "clock" },
+  { emoji: "✍️", chapter: "Capítulo 2", title: "Específico vence inspirador", hook: "'Ser uma pessoa melhor' é lindo no Pinterest. Aqui, não funciona. ('Caminhar 20min/dia' funciona.)", story: "Quanto mais concreto o hábito, mais vívida a cena que a IA constrói. O cérebro precisa de detalhes sensoriais para 'visitar' o futuro — não de slogans motivacionais.", science: "Imagens mentais detalhadas ativam regiões sensoriais reais. Visualizar com nitidez muda escolhas tanto quanto experiências de fato vividas.", evidence: "Atance & O'Neill (2001) — Episodic Future Thinking", visual: "spark" },
+  { emoji: "🌅", chapter: "Capítulo 3", title: "Cinco horizontes, cinco versões de você", hook: "1 semana, 1 mês, 6 meses, 1 ano, 5 anos. (Sim, 5 anos parece exagero. Não é.)", story: "Cada cena traz métrica mensurável e um risco realista. Não é otimismo cego — é Mental Contrasting: você sente o ganho e antecipa o tropeço, na mesma respiração.", science: "Apenas sonhar relaxa o cérebro e reduz ação. Sonhar + contrastar com obstáculos aumenta execução real. É a fórmula WOOP em ação.", evidence: "Oettingen (2014) — Rethinking Positive Thinking", visual: "stars" },
+  { emoji: "💌", chapter: "Capítulo 4", title: "A carta do seu eu futuro (não chore)", hook: "Tudo bem chorar. (A gente não conta.)", story: "Cartas autobiográficas do futuro reduzem desconto temporal e aumentam comportamento pró-poupança em até 60% em estudos com fMRI. Aqui é a mesma técnica, em formato envelope animado.", science: "Quando o eu-futuro deixa de ser 'estranho' e vira 'amigo íntimo', o cérebro recalibra impulsos do presente automaticamente. Menos esforço, mais aderência.", evidence: "Hershfield (2011); Bartels & Urminsky (2011)", visual: "letter" },
+  { emoji: "🎯", chapter: "Capítulo 5", title: "Se X, então Y: a frase mágica", hook: "Não é mantra de coach. É a sentença que dobra taxa de cumprimento de objetivos em 94 estudos.", story: "A 'frase-âncora' (Implementation Intention) ao final transforma intenção vaga em gatilho automático. 'Se forem 18h, então calço o tênis e saio.' Cérebro adora regras claras.", science: "Quando 'se X' acontece, o cérebro executa 'então Y' antes da racionalização entrar em cena. Pré-decisão > força de vontade.", evidence: "Gollwitzer & Sheeran (2006), meta-análise n>8.000", visual: "trophy" },
+];
+
+
 
 function ChapterVisual({ visual }: { visual: Chapter["visual"] }) {
   return (
