@@ -12,6 +12,7 @@ import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { NeuralBackground, useXPBurst, EncouragementBubble, AchievementToast } from "@/components/learning/LearningFX";
 import { InsightDialog } from "@/components/learning/InsightDialog";
+import { NarrativeJourney } from "@/components/learning/NarrativeJourney";
 import { useProgress } from "@/hooks/useProgress";
 
 /* ============= Knowledge Graph: Concepts × Modules × Edges ============= */
@@ -221,6 +222,39 @@ export default function ConstellationPage() {
               ]}
               takeaway="Você está fazendo, em interface premium, o que alunos de Yale fazem em PDF estático."
               citation="Yale OpenCourseWare + Instituto Felicidade para Todos"
+            />
+            <NarrativeJourney />
+            <InsightDialog
+              cta="Por que assim?"
+              emoji="💡"
+              variant="primary"
+              subtitle="Design da experiência"
+              title="Por que essa interface (e não uma lista)?"
+              intro="Spoiler: porque seu cérebro odeia listas longas. (Pergunte ao seu Domingo de Páscoa lendo o manual da geladeira.)"
+              steps={[
+                { icon: "🥱", title: "Listas planas viram zumbis", body: "Bullet points são ótimos para checklists de supermercado. Para teorias interconectadas? Eles matam o engajamento em 8 segundos. Literalmente.", evidence: "Microsoft Attention Span Study (2015)" },
+                { icon: "🌌", title: "Constelações viram histórias", body: "Quando 'Gratidão' está ao lado de 'Adaptação', você não decora — você entende uma trama. E tramas grudam.", evidence: "Narrative Transportation — Green & Brock (2000)" },
+                { icon: "🎨", title: "Cor + posição = atalho mental", body: "Cada módulo tem uma cor (laranja, azul, dourado…). Em 3 visitas, você reconhece um conceito antes mesmo de ler o nome. Isso é codificação dupla na prática.", evidence: "Paivio (1971); Mayer (2009)" },
+                { icon: "🧘", title: "Espaço em branco é respiro", body: "O céu escuro entre as estrelas não é vazio: é o que permite seu córtex visual diferenciar o que importa. Densidade ≠ profundidade.", evidence: "Tufte (2001) — Visual Display of Quantitative Information" },
+              ]}
+              takeaway="Boa interface não é a que mostra mais — é a que esconde no momento certo."
+              citation="Don Norman — The Design of Everyday Things"
+            />
+            <InsightDialog
+              cta="E se eu travar?"
+              emoji="🤗"
+              variant="secondary"
+              subtitle="Permissão para pausar"
+              title="Calma. Aprender também é descansar."
+              intro="Se bateu aquela vontade de fechar a aba — ótimo sinal! Seu cérebro está pedindo para consolidar. (Sim, com licença científica para procrastinar um cafezinho.)"
+              steps={[
+                { icon: "😅", title: "Sobrecarga é real", body: "Memória de trabalho aguenta ~4 itens novos por vez. Se 16 estrelas parecem demais de uma vez, é porque são. Comece com 3.", evidence: "Cowan (2001) — Magical Number 4" },
+                { icon: "☕", title: "Pausas consolidam", body: "Os 10 minutos depois de aprender são quando o hipocampo organiza tudo. Levantar, respirar, hidratar é parte do método.", evidence: "Dewar et al. (2012), Psychological Science" },
+                { icon: "😴", title: "Dormir é estudar (de olhos fechados)", body: "Sono REM reativa as conexões neurais que você criou hoje. Voltar amanhã não é atraso: é técnica.", evidence: "Walker (2017) — Why We Sleep" },
+                { icon: "🧡", title: "Volte sem culpa", body: "Sua progressão fica salva. Cada retorno espaçado vale 3 estudos seguidos. Esse app respeita seu ritmo.", evidence: "Spaced Repetition — Cepeda et al. (2006)" },
+              ]}
+              takeaway="A pressa de terminar é inimiga da memória que dura."
+              citation="Brown, Roediger & McDaniel (2014) — Make It Stick"
             />
           </div>
 
