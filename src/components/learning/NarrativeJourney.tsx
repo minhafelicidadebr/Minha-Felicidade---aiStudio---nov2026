@@ -113,15 +113,53 @@ function ChapterVisual({ visual }: { visual: Chapter["visual"] }) {
           </motion.span>
         </div>
       )}
+      {visual === "mirror" && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <motion.div
+            className="w-24 h-32 rounded-full border-4 border-primary/60 bg-gradient-to-br from-primary/10 to-secondary/20"
+            animate={{ boxShadow: ["0 0 20px hsl(var(--primary)/0.3)", "0 0 60px hsl(var(--primary)/0.7)", "0 0 20px hsl(var(--primary)/0.3)"] }}
+            transition={{ duration: 2.5, repeat: Infinity }}
+          />
+          <motion.span className="absolute text-5xl" animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2.5, repeat: Infinity }}>🪞</motion.span>
+        </div>
+      )}
+      {visual === "clock" && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <svg viewBox="0 0 100 100" className="w-32 h-32">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(var(--primary)/0.4)" strokeWidth="2" />
+            <motion.line x1="50" y1="50" x2="50" y2="20" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round"
+              style={{ originX: "50px", originY: "50px" }}
+              animate={{ rotate: 360 }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }} />
+            <motion.line x1="50" y1="50" x2="50" y2="28" stroke="hsl(var(--secondary))" strokeWidth="1.5" strokeLinecap="round"
+              style={{ originX: "50px", originY: "50px" }}
+              animate={{ rotate: 360 }} transition={{ duration: 12, repeat: Infinity, ease: "linear" }} />
+            <circle cx="50" cy="50" r="3" fill="hsl(var(--primary))" />
+          </svg>
+        </div>
+      )}
+      {visual === "letter" && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <motion.div className="relative text-6xl" animate={{ y: [0, -8, 0], rotate: [-3, 3, -3] }} transition={{ duration: 3, repeat: Infinity }}>
+            💌
+            <motion.span className="absolute -top-2 -right-3 text-2xl" animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.6, 1, 0.6] }} transition={{ duration: 1.5, repeat: Infinity }}>✨</motion.span>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
 
-export function NarrativeJourney() {
+type Props = {
+  chapters?: Chapter[];
+  cta?: string;
+  emoji?: string;
+};
+
+export function NarrativeJourney({ chapters = CONSTELLATION_CHAPTERS, cta = "Modo História", emoji = "📖" }: Props = {}) {
   const [open, setOpen] = useState(false);
   const [i, setI] = useState(0);
-  const ch = CHAPTERS[i];
-  const last = i === CHAPTERS.length - 1;
+  const ch = chapters[i];
+  const last = i === chapters.length - 1;
 
   return (
     <Sheet open={open} onOpenChange={(v) => { setOpen(v); if (v) setI(0); }}>
