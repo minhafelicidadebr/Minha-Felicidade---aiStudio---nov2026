@@ -341,6 +341,7 @@ export default function DashboardPage() {
               { icon: "✨", title: "Constelação", path: "/constellation" },
              { icon: "🪞", title: "Espelho", path: "/mirror" },
              { icon: "⏳", title: "Eu Futuro", path: "/future-self" },
+             { icon: "👑", title: "Forças VIA", path: "/strengths" },
             ].map((d) => (
               <motion.button
                 key={d.title}

@@ -31,6 +31,7 @@ import SubscriptionPage from "./pages/SubscriptionPage";
 import ConstellationPage from "./pages/ConstellationPage";
 import CognitiveMirrorPage from "./pages/CognitiveMirrorPage";
 import FutureSelfPage from "./pages/FutureSelfPage";
+import SignatureStrengthsPage from "./pages/SignatureStrengthsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -70,6 +71,7 @@ const App = () => (
           <Route path="/constellation" element={<ConstellationPage />} />
           <Route path="/mirror" element={<CognitiveMirrorPage />} />
           <Route path="/future-self" element={<FutureSelfPage />} />
+          <Route path="/strengths" element={<SignatureStrengthsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
