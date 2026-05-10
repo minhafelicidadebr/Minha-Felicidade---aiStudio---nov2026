@@ -272,21 +272,63 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* What you'll learn */}
-      <section className="py-24 relative">
+      {/* What you'll learn — with editorial transformation photo */}
+      <section className="py-24 relative overflow-hidden">
         <div className="absolute inset-0 gradient-mesh opacity-30" />
-        <div className="container max-w-5xl relative">
-          <motion.div className="text-center mb-16" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
-              🧠 O que você vai aprender
-            </span>
-            <h2 className="text-3xl md:text-5xl font-display font-bold mb-4">
-              Sinta-se melhor. Desenvolva hábitos mais <span className="text-gradient">saudáveis</span>.
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Em 5 módulos, a Dra. Laurie Santos reúne as melhores ideias do curso "Psychology and the Good Life".
-            </p>
+        <div className="container max-w-6xl relative">
+          {/* Cinematic hero photo */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="relative rounded-[2rem] overflow-hidden shadow-float mb-16 aspect-[16/9] md:aspect-[21/9]"
+          >
+            <img
+              src={youthConnection}
+              alt="Jovens brasileiros conectados, descobrindo a ciência do bem-estar juntos"
+              width={1920}
+              height={1080}
+              loading="lazy"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-transparent to-transparent" />
+
+            <div className="absolute inset-0 flex items-end md:items-center p-8 md:p-16">
+              <motion.div
+                className="max-w-lg"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.4, duration: 0.8 }}
+              >
+                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-primary text-xs font-bold mb-4 uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5" /> A transformação é real
+                </span>
+                <h2 className="text-3xl md:text-5xl font-display font-bold leading-[1.05] text-foreground drop-shadow-lg">
+                  Sinta-se melhor.<br />
+                  <span className="text-gradient-aurora">Hábitos saudáveis.</span>
+                </h2>
+                <p className="text-base md:text-lg text-foreground/85 mt-4 leading-relaxed">
+                  Em 5 módulos, a Dra. Laurie Santos reúne as melhores ideias do curso "Psychology and the Good Life".
+                </p>
+              </motion.div>
+            </div>
+
+            {/* Floating chip */}
+            <motion.div
+              className="absolute top-6 right-6 hidden md:flex items-center gap-2 glass-card px-4 py-2 rounded-full"
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.7 }}
+            >
+              <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+              <span className="text-xs font-semibold">+12.000 jovens já começaram</span>
+            </motion.div>
           </motion.div>
+
           <div className="grid md:grid-cols-2 gap-6">
             {[
               { icon: "🎭", title: "Conceitos Errôneos", desc: "Descubra por que dinheiro, notas e corpo perfeito NÃO sustentam felicidade.", gradient: "gradient-card-coral" },
