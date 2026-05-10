@@ -203,76 +203,8 @@ export default function LandingPage() {
 
       <SocialProofBar />
 
-      {/* Crisis section with editorial photo */}
-      <section className="py-24 relative overflow-hidden">
-        <div className="absolute inset-0 bg-destructive/5" />
-        <div className="container max-w-6xl relative">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="relative order-2 lg:order-1"
-            >
-              <div className="relative rounded-3xl overflow-hidden shadow-float aspect-[3/4] max-w-md mx-auto">
-                <img
-                  src={youthReflection}
-                  alt="Adolescente brasileira em momento de reflexão e autoconhecimento"
-                  width={1080}
-                  height={1920}
-                  loading="lazy"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
-                <motion.div
-                  className="absolute bottom-6 left-6 right-6 glass-card p-4 rounded-2xl"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.5 }}
-                >
-                  <p className="text-xs font-semibold text-primary mb-1">VOCÊ NÃO ESTÁ SOZINho</p>
-                  <p className="text-sm text-foreground/90 leading-snug">
-                    "Antes do app, eu não sabia nomear o que sentia. Hoje, eu entendo." — Maria, 16
-                  </p>
-                </motion.div>
-              </div>
-              {/* Floating accent */}
-              <motion.div
-                className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-destructive/10 blur-2xl pointer-events-none"
-                animate={{ scale: [1, 1.15, 1] }}
-                transition={{ duration: 4, repeat: Infinity }}
-              />
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="order-1 lg:order-2"
-            >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-destructive/10 text-destructive text-sm font-bold mb-6">
-                ⚠️ Urgência Real
-              </div>
-              <h2 className="text-3xl md:text-5xl font-display font-bold mb-6 leading-[1.1]">
-                Os adolescentes estão passando por uma <span className="text-destructive">crise de saúde mental</span>.
-              </h2>
-              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                Uma pesquisa recente revelou que <strong className="text-foreground">37% dos adolescentes</strong> afirmam ter problemas de saúde mental.
-                Explore o que a psicologia nos ensina sobre como ser mais feliz, reduzir o estresse e prosperar.
-              </p>
-              <button
-                onClick={() => navigate("/auth")}
-                className="px-6 py-3 rounded-xl gradient-institute text-primary-foreground font-semibold shadow-warm hover:shadow-glow transition-all hover:scale-[1.02] inline-flex items-center gap-2"
-              >
-                Explore Agora <ArrowRight className="w-4 h-4" />
-              </button>
-            </motion.div>
-          </div>
-        </div>
-      </section>
+      {/* Crisis section — neuromarketing data storytelling with sourced stats */}
+      <CrisisDataSection />
 
       {/* What you'll learn — with editorial transformation photo */}
       <section className="py-24 relative overflow-hidden">
