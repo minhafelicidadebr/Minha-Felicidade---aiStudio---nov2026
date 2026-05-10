@@ -4,8 +4,10 @@ import { Play, BookOpen, Sparkles, Users, Star, TrendingUp, Heart, ArrowRight, A
 import heroYouthBg from "@/assets/hero-youth-bg.jpg";
 import logoIcon from "@/assets/logo-icon.png";
 import logoLightBg from "@/assets/logo-light-bg.png";
-import youthReflection from "@/assets/youth-reflection.jpg";
 import youthConnection from "@/assets/youth-connection.jpg";
+import youthCelebration from "@/assets/youth-celebration.jpg";
+import youthDiscovery from "@/assets/youth-discovery.jpg";
+import CrisisDataSection from "@/components/landing/CrisisDataSection";
 import DynamicsSection from "@/components/landing/DynamicsSection";
 import InteractiveToolsShowcase from "@/components/landing/InteractiveToolsShowcase";
 import CourseStructure from "@/components/landing/CourseStructure";
