@@ -4,49 +4,54 @@ import { ChevronDown, HelpCircle } from "lucide-react";
 
 const faqs = [
   {
-    q: "O curso é realmente gratuito?",
-    a: "Sim! O plano gratuito dá acesso completo aos 5 módulos, 32 vídeos com legendas em português, quiz nível 1, flashcards e AlegrIA (5 perguntas por dia). É baseado no curso aberto de Yale.",
-    icon: "🆓"
+    q: "Existe versão gratuita e versão paga?",
+    a: "Sim. Temos 3 planos: (1) Gratuito — 5 módulos completos, 32 vídeos com legendas em PT-BR, quiz nível 1, flashcards básicos, AlegrIA (5 perguntas/dia) e dashboard de progresso, para sempre, sem cartão. (2) Premium Individual (R$ 29/mês ou R$ 279/ano) — desbloqueia 19 dinâmicas interativas, AlegrIA ilimitada, certificado e relatório PDF. (3) Escolar — preço por aluno com descontos progressivos por volume e rede. Use a calculadora na seção Planos para simular.",
+    icon: "💎"
+  },
+  {
+    q: "Como funciona o plano Escolar e quem paga?",
+    a: "A escola, secretaria de educação ou ONG contrata por aluno. Quanto maior a turma (e a rede), menor o preço por aluno — começa em R$ 19 e cai até R$ 7. Gestores e coordenadores são GRATUITOS (1 a cada 50 alunos). Escolas públicas e ONGs comprovadas têm 30% adicional de desconto. Use a calculadora ou agende uma apresentação para receber proposta formal.",
+    icon: "🏫"
   },
   {
     q: "Preciso saber inglês para acompanhar?",
-    a: "Não. Todos os vídeos possuem legendas em português geradas automaticamente. A interface, quizzes, flashcards e a AlegrIA funcionam 100% em português.",
+    a: "Não. Todos os vídeos possuem legendas em português. A interface, quizzes, flashcards e a AlegrIA funcionam 100% em português brasileiro.",
     icon: "🌎"
   },
   {
     q: "Qual a idade recomendada?",
-    a: "O curso foi adaptado para adolescentes de 14 a 19 anos, mas é acessível para qualquer pessoa interessada em ciência do bem-estar.",
+    a: "Adaptado para adolescentes de 14 a 19 anos, mas acessível para qualquer pessoa interessada em ciência do bem-estar.",
     icon: "🎂"
   },
   {
     q: "O que é a AlegrIA?",
-    a: "A AlegrIA é uma tutora de inteligência artificial treinada nos conteúdos dos 5 módulos do curso. Ela usa o método socrático para guiar seu aprendizado com citações científicas reais.",
+    a: "Tutora de inteligência artificial treinada nos conteúdos dos 5 módulos. Usa o método socrático para guiar seu aprendizado com citações científicas reais e auditáveis.",
     icon: "🤖"
   },
   {
     q: "Como funciona a gamificação?",
-    a: "Você ganha XP ao completar atividades: assistir vídeos (+10 XP), fazer quizzes (+15 XP), usar o simulador (+25 XP). O sistema de níveis, streaks e conquistas mantém sua motivação.",
+    a: "Você ganha XP completando atividades (vídeos +10, quizzes +15, simulador +25). Níveis, streaks e conquistas mantêm a motivação, baseados em Self-Determination Theory (Deci & Ryan).",
     icon: "🎮"
   },
   {
-    q: "Posso usar a plataforma na minha escola?",
-    a: "Sim! O plano Avançado inclui um painel de gestor com dados agregados de turma, relatórios e dashboards de engajamento. Preencha o formulário de parceiros para saber mais.",
-    icon: "🏫"
-  },
-  {
     q: "As fontes científicas são verificáveis?",
-    a: "Absolutamente. Cada afirmação é acompanhada da citação (Autor, Ano) e link para o artigo original. A seção 'Auditoria Científica' em cada módulo classifica claims como verificado, parcial ou simplificação.",
+    a: "Absolutamente. Cada afirmação traz citação (Autor, Ano) e link para o artigo original. A seção 'Auditoria Científica' em cada módulo classifica claims como verificado, parcial ou simplificação.",
     icon: "🔬"
   },
   {
+    q: "Posso cancelar quando quiser?",
+    a: "Sim. Sem fidelidade. Cancele a qualquer momento e mantenha acesso até o fim do ciclo já pago. Garantia de devolução de 7 dias na primeira compra.",
+    icon: "🔓"
+  },
+  {
     q: "Quanto tempo leva para completar o curso?",
-    a: "O curso é estruturado em 5 semanas (1 módulo por semana), com ~2-3 horas de conteúdo por semana. Mas você pode ir no seu ritmo.",
+    a: "5 semanas (1 módulo/semana), ~2-3 horas por semana. Vá no seu ritmo — o progresso fica salvo na sua conta.",
     icon: "⏱️"
   },
 ];
 
 export default function FAQSection() {
-  const [open, setOpen] = useState<number | null>(null);
+  const [open, setOpen] = useState<number | null>(0);
 
   return (
     <section className="py-24 relative overflow-hidden" id="faq">
@@ -64,6 +69,7 @@ export default function FAQSection() {
           <h2 className="text-3xl md:text-5xl font-display font-bold mb-4">
             Perguntas <span className="text-gradient">Frequentes</span>
           </h2>
+          <p className="text-muted-foreground">Tudo sobre planos, preços e funcionamento.</p>
         </motion.div>
 
         <div className="space-y-3">
@@ -74,7 +80,7 @@ export default function FAQSection() {
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.05 }}
+              transition={{ delay: i * 0.04 }}
             >
               <button
                 onClick={() => setOpen(open === i ? null : i)}

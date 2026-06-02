@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Play, BookOpen, Sparkles, Users, Star, TrendingUp, Heart, ArrowRight, ArrowDown, Shield, Zap, GraduationCap } from "lucide-react";
-import heroYouthBg from "@/assets/hero-youth-bg.jpg";
+import heroDiscovery from "@/assets/hero-discovery.jpg";
 import logoIcon from "@/assets/logo-icon.png";
 import logoLightBg from "@/assets/logo-light-bg.png";
 import youthConnection from "@/assets/youth-connection.jpg";
@@ -15,6 +15,7 @@ import ImpactNumbers from "@/components/landing/ImpactNumbers";
 import InstituteSection from "@/components/landing/InstituteSection";
 import LeadCaptureForm from "@/components/landing/LeadCaptureForm";
 import PricingSection from "@/components/landing/PricingSection";
+import SchoolCalculator from "@/components/landing/SchoolCalculator";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import FAQSection from "@/components/landing/FAQSection";
 import SocialProofBar from "@/components/landing/SocialProofBar";
@@ -62,29 +63,35 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero */}
+      {/* Hero — cinematic, alive, premium contrast */}
       <section className="pt-24 pb-20 relative overflow-hidden min-h-[92vh] flex items-center">
         <div className="absolute inset-0">
-          <img src={heroYouthBg} alt="" className="w-full h-full object-cover" loading="eager" />
-          <div className="absolute inset-0 bg-background/85" />
-          <div className="absolute inset-0 gradient-mesh" />
+          <img src={heroDiscovery} alt="" className="w-full h-full object-cover" loading="eager" fetchPriority="high" />
+          {/* Multi-layer cinematic overlay for legibility + emotion */}
+          <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/80 to-background/95" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+          <div className="absolute inset-0 gradient-mesh opacity-70" />
+          {/* Vignette */}
+          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 30%, hsl(var(--background)/0.6) 100%)" }} />
+          {/* Animated grain */}
+          <div className="absolute inset-0 noise opacity-[0.15] mix-blend-overlay" />
         </div>
 
-        {/* Animated orbs */}
+        {/* Animated orbs — aurora */}
         <motion.div
-          className="absolute top-20 right-[15%] w-48 h-48 rounded-full bg-primary/8 blur-3xl pointer-events-none"
-          animate={{ y: [-20, 20, -20], x: [-10, 10, -10], scale: [1, 1.1, 1] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-20 right-[10%] w-72 h-72 rounded-full bg-primary/15 blur-3xl pointer-events-none"
+          animate={{ y: [-30, 30, -30], x: [-15, 15, -15], scale: [1, 1.2, 1] }}
+          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
-          className="absolute bottom-20 left-[10%] w-64 h-64 rounded-full bg-secondary/8 blur-3xl pointer-events-none"
-          animate={{ y: [15, -15, 15], scale: [1.1, 1, 1.1] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-20 left-[8%] w-96 h-96 rounded-full bg-secondary/12 blur-3xl pointer-events-none"
+          animate={{ y: [20, -20, 20], scale: [1.1, 1, 1.1] }}
+          transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
-          className="absolute top-1/3 left-1/4 w-36 h-36 rounded-full bg-accent/6 blur-3xl pointer-events-none"
-          animate={{ y: [8, -20, 8], x: [0, 15, 0] }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-1/3 left-1/4 w-48 h-48 rounded-full bg-accent/10 blur-3xl pointer-events-none"
+          animate={{ y: [10, -25, 10], x: [0, 20, 0] }}
+          transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }}
         />
 
         <div className="container relative max-w-5xl text-center">
@@ -294,6 +301,7 @@ export default function LandingPage() {
       <TestimonialsSection />
       <InstituteSection />
       <PricingSection />
+      <SchoolCalculator />
       <FAQSection />
       <LeadCaptureForm />
 
