@@ -16,30 +16,51 @@ export type Database = {
     Tables: {
       leads: {
         Row: {
+          billing_interval: string | null
+          calculated_price_cents: number | null
           city: string | null
           created_at: string
           email: string
+          estimated_students: number | null
           id: string
+          is_public_ngo: boolean | null
+          message: string | null
           name: string
           organization: string | null
+          preferred_demo_at: string | null
+          schools_count: number | null
           segment: string | null
         }
         Insert: {
+          billing_interval?: string | null
+          calculated_price_cents?: number | null
           city?: string | null
           created_at?: string
           email: string
+          estimated_students?: number | null
           id?: string
+          is_public_ngo?: boolean | null
+          message?: string | null
           name: string
           organization?: string | null
+          preferred_demo_at?: string | null
+          schools_count?: number | null
           segment?: string | null
         }
         Update: {
+          billing_interval?: string | null
+          calculated_price_cents?: number | null
           city?: string | null
           created_at?: string
           email?: string
+          estimated_students?: number | null
           id?: string
+          is_public_ngo?: boolean | null
+          message?: string | null
           name?: string
           organization?: string | null
+          preferred_demo_at?: string | null
+          schools_count?: number | null
           segment?: string | null
         }
         Relationships: []
