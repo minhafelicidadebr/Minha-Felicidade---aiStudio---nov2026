@@ -301,6 +301,7 @@ export default function LandingPage() {
       <TestimonialsSection />
       <InstituteSection />
       <PricingSection />
+      <SchoolCalculator />
       <FAQSection />
       <LeadCaptureForm />
 
