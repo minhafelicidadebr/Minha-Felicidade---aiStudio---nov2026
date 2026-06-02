@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Play, BookOpen, Sparkles, Users, Star, TrendingUp, Heart, ArrowRight, ArrowDown, Shield, Zap, GraduationCap } from "lucide-react";
-import heroYouthBg from "@/assets/hero-youth-bg.jpg";
+import heroDiscovery from "@/assets/hero-discovery.jpg";
 import logoIcon from "@/assets/logo-icon.png";
 import logoLightBg from "@/assets/logo-light-bg.png";
 import youthConnection from "@/assets/youth-connection.jpg";
@@ -15,6 +15,7 @@ import ImpactNumbers from "@/components/landing/ImpactNumbers";
 import InstituteSection from "@/components/landing/InstituteSection";
 import LeadCaptureForm from "@/components/landing/LeadCaptureForm";
 import PricingSection from "@/components/landing/PricingSection";
+import SchoolCalculator from "@/components/landing/SchoolCalculator";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import FAQSection from "@/components/landing/FAQSection";
 import SocialProofBar from "@/components/landing/SocialProofBar";
