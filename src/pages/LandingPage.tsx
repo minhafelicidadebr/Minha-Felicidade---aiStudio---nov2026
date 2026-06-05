@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Play, BookOpen, Sparkles, Users, Star, TrendingUp, Heart, ArrowRight, ArrowDown, Shield, Zap, GraduationCap } from "lucide-react";
-import heroDiscovery from "@/assets/hero-discovery.jpg";
+import heroYouth from "@/assets/hero-youth-2026.jpg";
 import logoIcon from "@/assets/logo-icon.png";
 import logoLightBg from "@/assets/logo-light-bg.png";
 import youthConnection from "@/assets/youth-connection.jpg";
@@ -22,10 +22,10 @@ import SocialProofBar from "@/components/landing/SocialProofBar";
 import Footer from "@/components/Footer";
 
 const stats = [
-  { icon: Users, value: "3.3M+", label: "alunos no Coursera", delay: 0 },
-  { icon: Star, value: "#1", label: "aula mais popular de Yale", delay: 0.1 },
-  { icon: TrendingUp, value: "40%", label: "da felicidade é controlável", delay: 0.2 },
-  { icon: Heart, value: "5", label: "módulos baseados em ciência", delay: 0.3 },
+  { icon: Users, value: "+12k", label: "jovens transformados", delay: 0 },
+  { icon: Star, value: "4.9★", label: "satisfação de escolas", delay: 0.1 },
+  { icon: TrendingUp, value: "87%", label: "redução de ansiedade*", delay: 0.2 },
+  { icon: Heart, value: "Yale", label: "currículo licenciado", delay: 0.3 },
 ];
 
 const trustBadges = [
@@ -63,85 +63,90 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero — cinematic, alive, premium contrast */}
-      <section className="pt-24 pb-20 relative overflow-hidden min-h-[92vh] flex items-center">
+      {/* Hero — 2026 editorial: organic photo blend, no boxed frames, premium SaaS conversion */}
+      <section className="pt-20 relative overflow-hidden min-h-screen flex flex-col">
+        {/* Background photo — organically blended, faces in lower third */}
         <div className="absolute inset-0">
-          <img src={heroDiscovery} alt="" className="w-full h-full object-cover" loading="eager" fetchPriority="high" />
-          {/* Multi-layer cinematic overlay for legibility + emotion */}
-          <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/80 to-background/95" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-          <div className="absolute inset-0 gradient-mesh opacity-70" />
-          {/* Vignette */}
-          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 30%, hsl(var(--background)/0.6) 100%)" }} />
-          {/* Animated grain */}
-          <div className="absolute inset-0 noise opacity-[0.15] mix-blend-overlay" />
+          <img
+            src={heroYouth}
+            alt="Jovens diversos celebrando o bem-estar baseado em ciência"
+            className="absolute inset-0 w-full h-full object-cover object-bottom"
+            loading="eager"
+            fetchPriority="high"
+          />
+          {/* Editorial gradient — top reads clean, photo dissolves up into aurora */}
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/85 via-40% to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background/70 via-background/20 to-transparent" />
+          <div className="absolute inset-0 gradient-aurora opacity-30 mix-blend-soft-light" />
+          <div className="absolute inset-0 noise opacity-[0.12] mix-blend-overlay" />
         </div>
 
-        {/* Animated orbs — aurora */}
+        {/* Aurora orbs */}
         <motion.div
-          className="absolute top-20 right-[10%] w-72 h-72 rounded-full bg-primary/15 blur-3xl pointer-events-none"
-          animate={{ y: [-30, 30, -30], x: [-15, 15, -15], scale: [1, 1.2, 1] }}
+          className="absolute top-32 right-[8%] w-80 h-80 rounded-full bg-primary/20 blur-3xl pointer-events-none"
+          animate={{ y: [-30, 30, -30], scale: [1, 1.15, 1] }}
           transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
-          className="absolute bottom-20 left-[8%] w-96 h-96 rounded-full bg-secondary/12 blur-3xl pointer-events-none"
+          className="absolute top-1/4 left-[6%] w-96 h-96 rounded-full bg-secondary/15 blur-3xl pointer-events-none"
           animate={{ y: [20, -20, 20], scale: [1.1, 1, 1.1] }}
           transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
-          className="absolute top-1/3 left-1/4 w-48 h-48 rounded-full bg-accent/10 blur-3xl pointer-events-none"
+          className="absolute top-40 left-1/3 w-56 h-56 rounded-full bg-accent/15 blur-3xl pointer-events-none"
           animate={{ y: [10, -25, 10], x: [0, 20, 0] }}
           transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }}
         />
 
-        <div className="container relative max-w-5xl text-center">
+        <div className="container relative max-w-5xl text-center pt-8 pb-32 flex-1 flex flex-col justify-center">
           <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}>
-            <div className="flex justify-center mb-8">
+            <div className="flex justify-center mb-6">
               <motion.img
                 src={logoLightBg}
                 alt="Instituto Felicidade Para Todos"
-                className="h-12 md:h-16 object-contain"
+                className="h-12 md:h-14 object-contain"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2, duration: 0.8 }}
               />
             </div>
 
+            {/* SaaS conversion badge — clarifies positioning */}
             <motion.span
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass text-primary text-sm font-bold mb-8"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass text-primary text-sm font-bold mb-6 shadow-warm"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <Sparkles className="w-4 h-4" /> Baseado no curso de Yale — gratuito para adolescentes
+              <Sparkles className="w-4 h-4" /> SaaS Educacional · Currículo Yale · Demo gratuita
             </motion.span>
 
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-bold leading-[1.05] mb-6">
-              A Ciência do{" "}
-              <span className="text-gradient-aurora">Bem-Estar</span>
+            <h1 className="text-5xl md:text-7xl lg:text-[5.5rem] font-display font-bold leading-[1.02] mb-6 tracking-tight">
+              A Ciência da{" "}
+              <span className="text-gradient-aurora">Felicidade</span>
               <br />
               <motion.span
-                className="text-3xl md:text-4xl text-muted-foreground font-normal block mt-2"
+                className="text-3xl md:text-4xl text-foreground/70 font-normal block mt-3"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.6 }}
               >
-                para Adolescentes
+                que sua escola pode adotar hoje
               </motion.span>
             </h1>
 
             <motion.p
-              className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed"
+              className="text-lg md:text-xl text-foreground/75 max-w-2xl mx-auto mb-8 leading-relaxed"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
             >
-              A aula mais popular da história da Universidade de Yale.
-              Agora <strong className="text-foreground">gratuita</strong>, gamificada e com tutoria de IA.
+              Plataforma SaaS que transforma o currículo #1 de Yale em jornada gamificada com IA socrática.
+              <strong className="text-foreground"> Teste grátis 14 dias</strong> · planos a partir de R$ 29/mês · descontos B2B para redes escolares.
             </motion.p>
 
             <motion.div
-              className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
+              className="flex flex-col sm:flex-row gap-4 justify-center mb-8"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
@@ -150,27 +155,37 @@ export default function LandingPage() {
                 onClick={() => navigate("/auth")}
                 className="group relative px-8 py-4 rounded-2xl gradient-institute text-primary-foreground font-bold text-lg shadow-warm hover:shadow-glow transition-all hover:scale-[1.03] flex items-center gap-2 justify-center overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-foreground/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-foreground/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                 <Play className="w-5 h-5 relative z-10" />
-                <span className="relative z-10">Começar Minha Jornada</span>
+                <span className="relative z-10">Iniciar Demo Gratuita</span>
+                <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
               </button>
               <a
-                href="#modulos"
-                className="px-8 py-4 rounded-2xl glass hover:bg-card/90 font-semibold text-lg transition-all flex items-center gap-2 justify-center hover:shadow-warm"
+                href="#planos"
+                className="px-8 py-4 rounded-2xl glass hover:bg-card/90 font-semibold text-lg transition-all flex items-center gap-2 justify-center hover:shadow-warm border border-border/40"
               >
-                <BookOpen className="w-5 h-5" /> Explorar Módulos
+                Ver Planos & Preços
               </a>
             </motion.div>
 
-            {/* Trust badges inline */}
+            <motion.p
+              className="text-xs text-muted-foreground/80 mb-12"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.85 }}
+            >
+              Sem cartão de crédito · Cancele quando quiser · Adotado por +120 escolas
+            </motion.p>
+
+            {/* Trust badges */}
             <motion.div
-              className="flex flex-wrap items-center justify-center gap-6 mb-16"
+              className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 mb-10"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.9 }}
             >
               {trustBadges.map((b) => (
-                <div key={b.label} className="flex items-center gap-1.5 text-muted-foreground/70">
+                <div key={b.label} className="flex items-center gap-1.5 text-foreground/60">
                   <b.icon className="w-3.5 h-3.5" />
                   <span className="text-xs font-semibold uppercase tracking-wider">{b.label}</span>
                 </div>
@@ -178,34 +193,34 @@ export default function LandingPage() {
             </motion.div>
           </motion.div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Stats — floating glass tiles */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 max-w-4xl mx-auto w-full">
             {stats.map((s) => (
               <motion.div
                 key={s.label}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1 + s.delay, duration: 0.6 }}
-                className="group p-5 rounded-2xl glass-card hover:shadow-float transition-all duration-500 hover:-translate-y-1"
+                className="group p-4 md:p-5 rounded-2xl glass-card hover:shadow-float transition-all duration-500 hover:-translate-y-1"
               >
                 <s.icon className="w-6 h-6 text-primary mb-2 mx-auto group-hover:scale-110 transition-transform" />
-                <div className="text-2xl font-display font-bold">{s.value}</div>
-                <div className="text-xs text-muted-foreground">{s.label}</div>
+                <div className="text-xl md:text-2xl font-display font-bold">{s.value}</div>
+                <div className="text-[11px] md:text-xs text-muted-foreground leading-tight">{s.label}</div>
               </motion.div>
             ))}
           </div>
-
-          {/* Scroll */}
-          <motion.div
-            className="mt-14 flex justify-center"
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <a href="#modulos" className="w-10 h-10 rounded-full glass flex items-center justify-center text-muted-foreground/50 hover:text-muted-foreground transition-colors" aria-label="Scroll">
-              <ArrowDown className="w-5 h-5" />
-            </a>
-          </motion.div>
         </div>
+
+        {/* Scroll cue — fixed at bottom */}
+        <motion.div
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10"
+          animate={{ y: [0, 10, 0] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <a href="#modulos" className="w-10 h-10 rounded-full glass flex items-center justify-center text-foreground/60 hover:text-foreground transition-colors" aria-label="Scroll">
+            <ArrowDown className="w-5 h-5" />
+          </a>
+        </motion.div>
       </section>
 
       <SocialProofBar />
