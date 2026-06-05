@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useProgress } from "@/hooks/useProgress";
 import { useXPBurst, ConfettiCelebration, EncouragementBubble } from "@/components/learning/LearningFX";
+import { useNeonFX } from "@/components/learning/NeonConfettiFX";
 
 export default function QuizPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -21,6 +22,8 @@ export default function QuizPage() {
   const [encourageTrigger, setEncourageTrigger] = useState(0);
   const { trackActivity } = useProgress();
   const xpFx = useXPBurst();
+  const neonFx = useNeonFX();
+  const [wrongShake, setWrongShake] = useState(0);
 
   const questions = useMemo(() => quizQuestions.filter((q) => q.level === level && (!activeModule || q.module === activeModule)), [level, activeModule]);
   const current = questions[currentIdx];
@@ -29,12 +32,17 @@ export default function QuizPage() {
     if (showResult) return;
     setSelected(idx);
     setShowResult(true);
+    const ev = e ? { clientX: e.clientX, clientY: e.clientY } : undefined;
     if (idx === current.correctIndex) {
       const gained = level * 10;
       setScore((s) => s + 1);
       setXp((x) => x + gained);
-      xpFx.trigger(gained, e ? { clientX: e.clientX, clientY: e.clientY } : undefined);
+      xpFx.trigger(gained, ev);
+      neonFx.correct(ev);
       setEncourageTrigger(t => t + 1);
+    } else {
+      neonFx.wrong(ev);
+      setWrongShake(t => t + 1);
     }
   };
 
@@ -115,7 +123,16 @@ export default function QuizPage() {
                 </div>
               </motion.div>
             ) : current ? (
-              <motion.div key={current.id} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="bg-card rounded-2xl p-8 shadow-warm">
+              <motion.div
+                key={current.id + "-" + wrongShake}
+                initial={{ opacity: 0, x: 30 }}
+                animate={wrongShake > 0 && showResult && selected !== current.correctIndex
+                  ? { opacity: 1, x: [0, -12, 12, -8, 8, -4, 4, 0] }
+                  : { opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: wrongShake > 0 ? 0.5 : 0.3 }}
+                className="bg-card rounded-2xl p-8 shadow-warm"
+              >
                 <div className="flex items-center justify-between mb-6">
                   <span className="text-sm text-muted-foreground">Pergunta {currentIdx + 1} de {questions.length}</span>
                   <span className="text-sm font-medium text-primary">{score} corretas</span>
@@ -158,6 +175,7 @@ export default function QuizPage() {
         </motion.div>
       </div>
       {xpFx.node}
+      {neonFx.node}
       <EncouragementBubble trigger={encourageTrigger} />
       <ConfettiCelebration active={finished && score / Math.max(1, questions.length) >= 0.7} />
     </div>
