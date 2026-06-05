@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useProgress } from "@/hooks/useProgress";
 import { useXPBurst, EncouragementBubble, ConfettiCelebration } from "@/components/learning/LearningFX";
+import { useNeonFX } from "@/components/learning/NeonConfettiFX";
 
 export default function FlashcardsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -19,6 +20,7 @@ export default function FlashcardsPage() {
   const [encourageTrigger, setEncourageTrigger] = useState(0);
   const { trackActivity } = useProgress();
   const xpFx = useXPBurst();
+  const neonFx = useNeonFX();
 
   const card = filtered[idx] || filtered[0];
   if (!card) return <div className="min-h-screen bg-background"><Navbar /><div className="container pt-24 text-center text-muted-foreground">Nenhum flashcard disponível.</div></div>;
@@ -29,7 +31,9 @@ export default function FlashcardsPage() {
     if (!known.has(card.id)) {
       setKnown((s) => new Set(s).add(card.id));
       setTotalXp(p => p + 5);
-      xpFx.trigger(5, e ? { clientX: e.clientX, clientY: e.clientY } : undefined);
+      const ev = e ? { clientX: e.clientX, clientY: e.clientY } : undefined;
+      xpFx.trigger(5, ev);
+      neonFx.correct(ev);
       setEncourageTrigger(t => t + 1);
       trackActivity({ moduleId: card.module, activityType: "flashcard", activityId: card.id, score: 100, data: { status: "known" } });
     }
@@ -138,6 +142,7 @@ export default function FlashcardsPage() {
         </motion.div>
       </div>
       {xpFx.node}
+      {neonFx.node}
       <EncouragementBubble trigger={encourageTrigger} />
       <ConfettiCelebration active={allDone} />
       <Footer />
