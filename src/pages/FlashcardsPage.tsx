@@ -146,6 +146,7 @@ export default function FlashcardsPage() {
       {neonFx.node}
       <EncouragementBubble trigger={encourageTrigger} />
       <ConfettiCelebration active={allDone} />
+      <AlegriaFAB moduleId={activeModule ?? undefined} />
       <Footer />
     </div>
   );

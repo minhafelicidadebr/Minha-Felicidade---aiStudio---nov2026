@@ -86,6 +86,7 @@ export default function PoetryPage() {
           </div>
         </motion.div>
       </div>
+      <AlegriaFAB moduleId={activeModule ?? undefined} />
       <Footer />
     </div>
   );

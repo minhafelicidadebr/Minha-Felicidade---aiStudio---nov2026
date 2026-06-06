@@ -83,6 +83,7 @@ export default function EvidencePage() {
           </div>
         </motion.div>
       </div>
+      <AlegriaFAB moduleId={activeModule ?? undefined} />
       <Footer />
     </div>
   );
