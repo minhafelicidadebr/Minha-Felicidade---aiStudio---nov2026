@@ -124,6 +124,7 @@ export default function SimulatorPage() {
               )}
             </motion.div>
           </AnimatePresence>
+      <AlegriaFAB moduleId={activeModule ?? undefined} />
         </motion.div>
       </div>
     </div>

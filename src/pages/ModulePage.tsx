@@ -431,7 +431,7 @@ export default function ModulePage() {
         </DialogContent>
       </Dialog>
 
-      <AlegriaFAB moduleId={moduleId} />
+      <AlegriaFAB moduleId={id} />
       <Footer />
     </div>
   );
