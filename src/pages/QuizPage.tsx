@@ -5,7 +5,7 @@ import { quizQuestions, modules } from "@/data/courseData";
 import { CheckCircle2, XCircle, ArrowRight, RotateCcw, Trophy, Zap } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { AlegriaFAB } from "@/components/AlegriaCTA";
+// AlegriaFAB import
 import { useProgress } from "@/hooks/useProgress";
 import { useXPBurst, ConfettiCelebration, EncouragementBubble } from "@/components/learning/LearningFX";
 import { useNeonFX } from "@/components/learning/NeonConfettiFX";
