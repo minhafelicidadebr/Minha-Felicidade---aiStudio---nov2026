@@ -5,6 +5,7 @@ import { flashcards, modules } from "@/data/courseData";
 import { RotateCcw, ChevronLeft, ChevronRight, Sparkles, Trophy } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { AlegriaFAB } from "@/components/AlegriaCTA";
 import { useProgress } from "@/hooks/useProgress";
 import { useXPBurst, EncouragementBubble, ConfettiCelebration } from "@/components/learning/LearningFX";
 import { useNeonFX } from "@/components/learning/NeonConfettiFX";

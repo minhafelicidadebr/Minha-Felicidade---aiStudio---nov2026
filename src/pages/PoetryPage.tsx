@@ -6,6 +6,7 @@ import { modules } from "@/data/courseData";
 import { ChevronLeft, ChevronRight, PenLine } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { AlegriaFAB } from "@/components/AlegriaCTA";
 import { useProgress } from "@/hooks/useProgress";
 
 export default function PoetryPage() {
