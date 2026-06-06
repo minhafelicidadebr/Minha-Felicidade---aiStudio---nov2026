@@ -61,11 +61,11 @@ const WELCOME_MESSAGE: Msg = {
   content: "Olá! 🌟 Sou a **AlegrIA**, sua companheira de viagem pela ciência do bem-estar.\n\nEstou aqui para explorar com você os 5 módulos do curso de Yale — de misconceptions sobre felicidade a como formar hábitos duradouros. Minhas respostas são baseadas em **evidências científicas** com citações verificáveis.\n\nO que você gostaria de descobrir hoje?",
 };
 
-async function streamChat({ messages, onDelta, onDone, onError }: { messages: Msg[]; onDelta: (t: string) => void; onDone: () => void; onError: (msg: string) => void }) {
+async function streamChat({ messages, moduleContext, onDelta, onDone, onError }: { messages: Msg[]; moduleContext?: string; onDelta: (t: string) => void; onDone: () => void; onError: (msg: string) => void }) {
   const resp = await fetch(CHAT_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify({ messages, moduleContext }),
   });
   if (!resp.ok) {
     const body = await resp.json().catch(() => ({ error: "Erro de conexão" }));
