@@ -5,6 +5,7 @@ import { quizQuestions, modules } from "@/data/courseData";
 import { CheckCircle2, XCircle, ArrowRight, RotateCcw, Trophy, Zap } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { AlegriaFAB } from "@/components/AlegriaCTA";
 import { useProgress } from "@/hooks/useProgress";
 import { useXPBurst, ConfettiCelebration, EncouragementBubble } from "@/components/learning/LearningFX";
 import { useNeonFX } from "@/components/learning/NeonConfettiFX";
@@ -178,6 +179,7 @@ export default function QuizPage() {
       {neonFx.node}
       <EncouragementBubble trigger={encourageTrigger} />
       <ConfettiCelebration active={finished && score / Math.max(1, questions.length) >= 0.7} />
+      <AlegriaFAB moduleId={activeModule ?? undefined} />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { evidenceItems, modules } from "@/data/courseData";
 import { ExternalLink, Search, Filter } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { AlegriaFAB } from "@/components/AlegriaCTA";
 
 const levelColors = { alto: "bg-success/10 text-success", médio: "bg-secondary/20 text-secondary-foreground", exploratório: "bg-muted text-muted-foreground" };
 
@@ -82,6 +83,7 @@ export default function EvidencePage() {
           </div>
         </motion.div>
       </div>
+      <AlegriaFAB moduleId={activeModule ?? undefined} />
       <Footer />
     </div>
   );

@@ -6,6 +6,7 @@ import { modules } from "@/data/courseData";
 import { ArrowRight, MessageSquare, Scale } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { AlegriaFAB } from "@/components/AlegriaCTA";
 import { useProgress } from "@/hooks/useProgress";
 
 export default function DebatePage() {
@@ -141,6 +142,7 @@ export default function DebatePage() {
           <div className="text-center text-xs text-muted-foreground">Debate {topicIdx + 1} de {filtered.length}</div>
         </motion.div>
       </div>
+      <AlegriaFAB moduleId={activeModule ?? undefined} />
       <Footer />
     </div>
   );

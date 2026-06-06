@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { BookOpen, Play, Trophy, Flame, ArrowRight, LogOut, Download, Star, BarChart3, Target, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { AlegriaHeroCard, AlegriaTag } from "@/components/AlegriaCTA";
 
 const ACHIEVEMENTS = [
   { id: "first_video", icon: "🎬", title: "Primeira Aula", desc: "Assistiu seu primeiro vídeo", check: (p: any[]) => p.some(x => x.activity_type === "video" && x.completed) },
@@ -198,6 +199,9 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* AlegrIA — cérebro do ecossistema */}
+          <AlegriaHeroCard />
+
           {/* Level & XP */}
           <div className="p-6 rounded-3xl glass-card mb-6 relative overflow-hidden">
             <motion.div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-primary/5 blur-3xl" animate={{ y: [-5, 5, -5] }} transition={{ duration: 4, repeat: Infinity }} />
@@ -317,6 +321,9 @@ export default function DashboardPage() {
                           <motion.div className="h-full rounded-full gradient-warm" initial={{ width: 0 }} animate={{ width: `${Math.min((modProgress / Math.max(modVideos + 4, 1)) * 100, 100)}%` }} transition={{ duration: 1 }} />
                         </div>
                         <span className="text-xs text-muted-foreground whitespace-nowrap">{modProgress} atividades</span>
+                      </div>
+                      <div className="mt-2">
+                        <AlegriaTag moduleId={mod.id} prompt={`Me explique o módulo "${mod.title}" começando por uma pergunta socrática.`} />
                       </div>
                     </div>
                     <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />

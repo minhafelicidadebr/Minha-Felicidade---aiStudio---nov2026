@@ -6,6 +6,7 @@ import { modules } from "@/data/courseData";
 import { ArrowRight, RotateCcw, Zap, CheckCircle2, XCircle, MinusCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { AlegriaFAB } from "@/components/AlegriaCTA";
 import { useProgress } from "@/hooks/useProgress";
 
 const impactConfig = {
@@ -123,6 +124,7 @@ export default function SimulatorPage() {
               )}
             </motion.div>
           </AnimatePresence>
+      <AlegriaFAB moduleId={activeModule ?? undefined} />
         </motion.div>
       </div>
     </div>

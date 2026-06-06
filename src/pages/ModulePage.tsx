@@ -6,6 +6,7 @@ import { moduleContents, simulatorScenarios, debateTopics, poems, coDesignTempla
 import { ArrowLeft, Clock, AlertTriangle, CheckCircle2, Info, Lightbulb, ArrowRight, Play, ExternalLink, Zap, X, Sparkles, Trophy, Star, Rocket } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { AlegriaFAB } from "@/components/AlegriaCTA";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useProgress } from "@/hooks/useProgress";
 
@@ -430,6 +431,7 @@ export default function ModulePage() {
         </DialogContent>
       </Dialog>
 
+      <AlegriaFAB moduleId={id} />
       <Footer />
     </div>
   );
