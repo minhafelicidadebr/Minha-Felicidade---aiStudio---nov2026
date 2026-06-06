@@ -107,6 +107,15 @@ export default function AlegriaPage() {
 
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }); }, [messages]);
 
+  // Auto-send when navigated with ?q=
+  const presetQ = searchParams.get("q");
+  useEffect(() => {
+    if (presetQ && messages.length === 1 && !isLoading) {
+      send(presetQ);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presetQ]);
+
   const send = async (text: string) => {
     if (!text.trim() || isLoading) return;
     const userMsg: Msg = { role: "user", content: text.trim() };
@@ -127,6 +136,7 @@ export default function AlegriaPage() {
     try {
       await streamChat({
         messages: [...messages, userMsg].filter((m) => m !== WELCOME_MESSAGE),
+        moduleContext: mod ? `Módulo ${mod.number}: ${mod.title}` : undefined,
         onDelta: upsert,
         onDone: () => setIsLoading(false),
         onError: (msg) => { toast({ title: "Ops!", description: msg, variant: "destructive" }); setIsLoading(false); },
