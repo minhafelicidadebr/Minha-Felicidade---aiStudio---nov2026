@@ -19,6 +19,9 @@ import SchoolCalculator from "@/components/landing/SchoolCalculator";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import FAQSection from "@/components/landing/FAQSection";
 import SocialProofBar from "@/components/landing/SocialProofBar";
+import HeroAlegriaLive from "@/components/landing/HeroAlegriaLive";
+import MoodCheckIn from "@/components/landing/MoodCheckIn";
+import WellbeingScrollStory from "@/components/landing/WellbeingScrollStory";
 import Footer from "@/components/Footer";
 
 const stats = [
@@ -209,6 +212,9 @@ export default function LandingPage() {
               </motion.div>
             ))}
           </div>
+
+          {/* Innovation #1 — Live AlegrIA demo inline */}
+          <HeroAlegriaLive />
         </div>
 
         {/* Scroll cue — fixed at bottom */}
@@ -226,7 +232,13 @@ export default function LandingPage() {
       <SocialProofBar />
 
       {/* Crisis section — neuromarketing data storytelling with sourced stats */}
+      {/* Innovation #2 — Mood-driven personalization */}
+      <MoodCheckIn />
+
       <CrisisDataSection />
+
+      {/* Innovation #3 — Scroll-driven transformation narrative */}
+      <WellbeingScrollStory />
 
       {/* What you'll learn — with editorial transformation photo */}
       <section className="py-24 relative overflow-hidden">
