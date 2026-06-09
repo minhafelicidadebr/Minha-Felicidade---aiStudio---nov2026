@@ -80,7 +80,7 @@ function InlineQuiz({ moduleId, onOpenFull }: { moduleId: string; onOpenFull: ()
   const advance = () => {
     if (idx + 1 < questions.length) { setIdx(idx + 1); setSel(null); }
     else {
-      setDone(true); fx.milestone();
+      setDone(true); fx.correct();
       trackActivity({ moduleId, activityType: "quiz", activityId: `quiz-inline-${moduleId}`, score: Math.round((score / questions.length) * 100), data: { inline: true } });
     }
   };
