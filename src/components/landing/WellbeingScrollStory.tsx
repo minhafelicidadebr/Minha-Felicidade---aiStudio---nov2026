@@ -184,8 +184,8 @@ export default function WellbeingScrollStory() {
           })}
         </div>
 
-        {/* Acts */}
-        <div className="relative container max-w-4xl">
+        {/* Acts — absolute layer fills the sticky viewport so each Act (inset-0) stacks correctly */}
+        <div className={reduce ? "relative container max-w-4xl py-16" : "absolute inset-0"}>
           {ACTS.map((act, i) => (
             <Act key={act.n} act={act} i={i} total={ACTS.length} scrollYProgress={scrollYProgress} reduce={!!reduce} />
           ))}
@@ -210,7 +210,7 @@ export default function WellbeingScrollStory() {
         {/* Scroll hint (first act only) */}
         {!reduce && (
           <motion.div
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 text-xs text-muted-foreground uppercase tracking-[0.3em] flex items-center gap-2"
+            className="absolute bottom-24 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground uppercase tracking-[0.3em] flex items-center gap-2 pointer-events-none"
             style={{ opacity: useTransform(scrollYProgress, [0, 0.1], [1, 0]) }}
           >
             <span>Role para viver a jornada</span>
