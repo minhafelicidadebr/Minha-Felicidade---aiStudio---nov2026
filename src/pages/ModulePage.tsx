@@ -166,23 +166,38 @@ export default function ModulePage() {
           <AnimatePresence>
             {showVideoPanel && activeVideoId && selectedVideo && (
               <motion.section
+                id="video-panel"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="mb-10 glass-card rounded-3xl overflow-hidden border border-border/30"
+                className="mb-10 glass-card rounded-3xl overflow-hidden border border-primary/20 shadow-warm scroll-mt-24"
               >
-                <div className="flex items-center justify-between px-6 pt-5 pb-3">
-                  <div>
-                    <span className="text-xs font-bold text-primary uppercase tracking-wider">Aula {selectedVideo.order}</span>
-                    <h3 className="font-display font-bold text-lg">{selectedVideo.titlePt}</h3>
+                <div className="flex items-center justify-between gap-3 px-4 sm:px-6 pt-5 pb-3 border-b border-border/20">
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[10px] sm:text-xs font-bold text-primary uppercase tracking-wider">▶ Assistindo • Aula {selectedVideo.order}</span>
+                    <h3 className="font-display font-bold text-base sm:text-lg truncate">{selectedVideo.titlePt}</h3>
                   </div>
-                  <button onClick={() => setShowVideoPanel(false)} className="p-2 rounded-xl hover:bg-muted transition-colors">
-                    <X className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <a
+                      href={`https://www.youtube.com/watch?v=${activeVideoId}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+                      aria-label="Abrir no YouTube em tela cheia"
+                    >
+                      <Maximize2 className="w-3 h-3" /> YouTube
+                    </a>
+                    <button
+                      onClick={closeVideoPanel}
+                      className="p-2 rounded-xl hover:bg-muted transition-colors"
+                      aria-label="Fechar painel do vídeo"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
                   {/* Video */}
-                  <div className="lg:col-span-2 px-6 pb-6">
+                  <div className="lg:col-span-3 px-4 sm:px-6 pt-4 pb-5">
                     <div className="aspect-video rounded-2xl overflow-hidden bg-black shadow-lg">
                       <iframe
                         width="100%" height="100%"
@@ -194,63 +209,45 @@ export default function ModulePage() {
                         allowFullScreen
                       />
                     </div>
-                    <div className="mt-3 p-4 rounded-2xl bg-gradient-to-r from-blue-500/10 via-primary/5 to-purple-500/10 border border-primary/10">
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-base">🌐</div>
-                        <div className="space-y-2 flex-1">
-                          <p className="text-sm font-semibold text-foreground">Como ativar legendas em Português</p>
-                          <div className="space-y-1.5">
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-[10px]">1</span>
-                              <span>No player, clique em <strong className="text-foreground">⚙️ Configurações</strong> (engrenagem)</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-[10px]">2</span>
-                              <span>Selecione <strong className="text-foreground">Legendas/CC</strong> → ative as legendas em inglês</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-[10px]">3</span>
-                              <span>Clique em <strong className="text-foreground">Tradução Automática</strong> → escolha <strong className="text-foreground">Português</strong></span>
-                            </div>
+                    <details className="mt-3 rounded-2xl bg-gradient-to-r from-blue-500/10 via-primary/5 to-purple-500/10 border border-primary/10 group">
+                      <summary className="cursor-pointer p-3 list-none flex items-center gap-2 text-xs font-semibold">
+                        <span className="w-7 h-7 rounded-xl bg-primary/10 flex items-center justify-center text-sm">🌐</span>
+                        Ativar legendas em Português
+                        <ArrowRight className="w-3 h-3 ml-auto transition-transform group-open:rotate-90" />
+                      </summary>
+                      <div className="px-3 pb-3 space-y-1.5">
+                        {[
+                          ["1", <>No player, clique em <strong className="text-foreground">⚙️ Configurações</strong></>],
+                          ["2", <>Selecione <strong className="text-foreground">Legendas/CC</strong> → ative em inglês</>],
+                          ["3", <>Em <strong className="text-foreground">Tradução Automática</strong> escolha <strong className="text-foreground">Português</strong></>],
+                        ].map(([n, txt]) => (
+                          <div key={n as string} className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-[10px]">{n}</span>
+                            <span>{txt}</span>
                           </div>
-                          <p className="text-[11px] text-muted-foreground/70 italic mt-1">💡 Após ativar uma vez, o YouTube lembrará sua preferência nos próximos vídeos!</p>
-                        </div>
+                        ))}
+                        <p className="text-[10px] text-muted-foreground/70 italic">💡 O YouTube lembra sua preferência nos próximos vídeos.</p>
                       </div>
-                    </div>
-                  </div>
-                  {/* Quick Activities Sidebar */}
-                  <div className="px-6 pb-6 lg:border-l border-border/20">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">⚡ Atividades Rápidas</h4>
-                    <div className="space-y-2">
-                      {[
-                        { icon: "🎯", title: "Quiz", path: `/quiz?module=${id}`, desc: "Teste o que aprendeu" },
-                        { icon: "🃏", title: "Flashcards", path: `/flashcards?module=${id}`, desc: "Revisar conceitos" },
-                        { icon: "🎭", title: "Poesia", path: `/poetry?module=${id}`, desc: "Reflexão criativa" },
-                        { icon: "🤖", title: "AlegrIA", path: `/alegria?module=${id}`, desc: "Pergunte ao chatbot" },
-                        { icon: "🗺️", title: "Mapa Mental", path: `/mindmap?module=${id}`, desc: "Visualizar conceitos" },
-                      ].map((act, i) => (
-                        <motion.button
-                          key={act.title}
-                          initial={{ opacity: 0, x: 10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.1 + i * 0.05 }}
-                          onClick={() => navigate(act.path)}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-all text-left group"
-                        >
-                          <span className="text-lg group-hover:scale-110 transition-transform">{act.icon}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold">{act.title}</p>
-                            <p className="text-xs text-muted-foreground">{act.desc}</p>
-                          </div>
-                          <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-                        </motion.button>
-                      ))}
-                    </div>
+                    </details>
                     <button
-                      onClick={() => { setShowVideoPanel(false); }}
-                      className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors"
+                      onClick={closeVideoPanel}
+                      className="mt-3 w-full lg:hidden flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors"
                     >
-                      <Play className="w-3 h-3" /> Voltar ao conteúdo do módulo
+                      <ArrowLeft className="w-3 h-3" /> Voltar ao conteúdo do módulo
+                    </button>
+                  </div>
+                  {/* Inline learning activities */}
+                  <div className="lg:col-span-2 px-4 sm:px-6 pt-4 pb-5 lg:border-l border-t lg:border-t-0 border-border/20 bg-muted/10">
+                    <InlineActivities
+                      moduleId={id!}
+                      backHref={`/module/${id}?video=${activeVideoId}`}
+                      backLabel={`Aula ${selectedVideo.order}: ${selectedVideo.titlePt}`}
+                    />
+                    <button
+                      onClick={closeVideoPanel}
+                      className="mt-3 hidden lg:flex w-full items-center justify-center gap-2 px-3 py-2 rounded-xl bg-primary/10 text-primary text-[11px] font-semibold hover:bg-primary/20 transition-colors"
+                    >
+                      <ArrowLeft className="w-3 h-3" /> Voltar ao módulo
                     </button>
                   </div>
                 </div>
