@@ -5,6 +5,7 @@ import { ArrowLeft, ZoomIn, ZoomOut, Maximize2, RotateCcw, Sparkles } from "luci
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { modules } from "@/data/courseData";
+import BackToVideoBanner from "@/components/learning/BackToVideoBanner";
 
 const MIND_MAPS: Record<string, { center: string; branches: { label: string; children: string[]; color: string }[] }> = {
   mentiras: {
@@ -96,6 +97,7 @@ export default function MindMapPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
+      <BackToVideoBanner />
       <div className="flex-1 container pt-24 pb-16 max-w-5xl">
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
           <ArrowLeft className="w-4 h-4" /> Voltar
