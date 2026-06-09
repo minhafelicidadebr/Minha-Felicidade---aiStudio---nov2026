@@ -1,12 +1,13 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { modules, quizQuestions, flashcards, evidenceItems, videoLessons } from "@/data/courseData";
 import { moduleContents, simulatorScenarios, debateTopics, poems, coDesignTemplates } from "@/data/moduleContents";
-import { ArrowLeft, Clock, AlertTriangle, CheckCircle2, Info, Lightbulb, ArrowRight, Play, ExternalLink, Zap, X, Sparkles, Trophy, Star, Rocket } from "lucide-react";
+import { ArrowLeft, Clock, AlertTriangle, CheckCircle2, Info, Lightbulb, ArrowRight, Play, ExternalLink, Zap, X, Sparkles, Trophy, Star, Rocket, Maximize2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { AlegriaFAB } from "@/components/AlegriaCTA";
+import InlineActivities from "@/components/learning/InlineActivities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useProgress } from "@/hooks/useProgress";
 
@@ -52,6 +53,7 @@ const STIMULUS_PHRASES = [
 export default function ModulePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const mod = modules.find((m) => m.id === id);
   const content = id ? moduleContents[id] : undefined;
   const videos = id ? videoLessons.filter((v) => v.module === id) : [];
@@ -60,6 +62,24 @@ export default function ModulePage() {
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
   const { trackActivity } = useProgress();
   const [stimulusIdx] = useState(() => Math.floor(Math.random() * STIMULUS_PHRASES.length));
+
+  // Auto-open the panel when arriving back from an activity via ?video=<youtubeId>
+  useEffect(() => {
+    const videoParam = searchParams.get("video");
+    if (videoParam && !showVideoPanel) {
+      const v = videos.find((x) => x.youtubeId === videoParam);
+      if (v) {
+        setSelectedVideo(v);
+        setActiveVideoId(v.youtubeId);
+        setShowVideoPanel(true);
+        // smooth scroll into view after mount
+        setTimeout(() => {
+          document.getElementById("video-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 120);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, videos.length]);
 
   if (!mod || !content) {
     return (
