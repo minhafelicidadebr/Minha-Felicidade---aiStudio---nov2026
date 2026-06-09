@@ -99,7 +99,19 @@ export default function ModulePage() {
     setSelectedVideo(video);
     setActiveVideoId(video.youtubeId);
     setShowVideoPanel(true);
+    // reflect in URL so back-from-activity works deterministically
+    const p = new URLSearchParams(searchParams);
+    p.set("video", video.youtubeId);
+    setSearchParams(p, { replace: true });
     trackActivity({ moduleId: id!, activityType: "video", activityId: video.id, data: { title: video.titlePt } });
+    setTimeout(() => document.getElementById("video-panel")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  };
+
+  const closeVideoPanel = () => {
+    setShowVideoPanel(false);
+    const p = new URLSearchParams(searchParams);
+    p.delete("video");
+    setSearchParams(p, { replace: true });
   };
 
   const gradientMap = { coral: "gradient-card-coral", gold: "gradient-card-gold", navy: "gradient-card-navy" };
