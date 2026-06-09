@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { AlegriaFAB } from "@/components/AlegriaCTA";
 import { useProgress } from "@/hooks/useProgress";
+import BackToVideoBanner from "@/components/learning/BackToVideoBanner";
 
 export default function PoetryPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -40,6 +41,7 @@ export default function PoetryPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
+      <BackToVideoBanner />
       <div className="flex-1 container pt-24 pb-16 max-w-2xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="text-3xl font-display font-bold mb-2">🎭 Poesia Pedagógica</h1>

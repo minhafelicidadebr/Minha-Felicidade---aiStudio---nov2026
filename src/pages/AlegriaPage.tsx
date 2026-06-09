@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { modules } from "@/data/courseData";
+import BackToVideoBanner from "@/components/learning/BackToVideoBanner";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -156,6 +157,7 @@ export default function AlegriaPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
+      <BackToVideoBanner />
       <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full pt-20 pb-4 px-4">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-4 mb-4 px-2">

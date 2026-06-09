@@ -9,6 +9,7 @@ import { AlegriaFAB } from "@/components/AlegriaCTA";
 import { useProgress } from "@/hooks/useProgress";
 import { useXPBurst, ConfettiCelebration, EncouragementBubble } from "@/components/learning/LearningFX";
 import { useNeonFX } from "@/components/learning/NeonConfettiFX";
+import BackToVideoBanner from "@/components/learning/BackToVideoBanner";
 
 export default function QuizPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -80,6 +81,7 @@ export default function QuizPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+      <BackToVideoBanner />
       <div className="container pt-24 pb-16 max-w-3xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center justify-between mb-4">
