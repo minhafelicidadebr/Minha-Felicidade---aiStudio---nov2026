@@ -184,8 +184,8 @@ export default function WellbeingScrollStory() {
           })}
         </div>
 
-        {/* Acts */}
-        <div className="relative container max-w-4xl">
+        {/* Acts — absolute layer fills the sticky viewport so each Act (inset-0) stacks correctly */}
+        <div className={reduce ? "relative container max-w-4xl py-16" : "absolute inset-0"}>
           {ACTS.map((act, i) => (
             <Act key={act.n} act={act} i={i} total={ACTS.length} scrollYProgress={scrollYProgress} reduce={!!reduce} />
           ))}
