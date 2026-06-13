@@ -475,3 +475,182 @@
     animation: none !important;
   }
 }
+
+/* ============================================
+   PREMIUM POLISH — Icons · Cards · Lighting · Imagery
+   ============================================ */
+
+/* Icon tiles — gradient depth + inner highlight + soft glow */
+.icon-tile-premium {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 30% 25%, hsl(var(--primary) / 0.95), hsl(var(--secondary) / 0.85) 60%, hsl(var(--accent) / 0.8)),
+    linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.4),
+    inset 0 -8px 16px hsl(var(--accent) / 0.25),
+    0 8px 24px -8px hsl(var(--primary) / 0.55),
+    0 0 0 1px hsl(var(--primary) / 0.2);
+  color: hsl(var(--primary-foreground));
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
+}
+.icon-tile-premium:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.5),
+    inset 0 -8px 16px hsl(var(--accent) / 0.3),
+    0 16px 36px -10px hsl(var(--primary) / 0.7),
+    0 0 32px hsl(var(--primary) / 0.4);
+}
+.icon-tile-soft {
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--secondary) / 0.12));
+  border: 1px solid hsl(var(--primary) / 0.25);
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.3),
+    0 4px 12px -4px hsl(var(--primary) / 0.2);
+  color: hsl(var(--primary));
+  backdrop-filter: blur(8px);
+}
+
+/* Premium cards — layered depth, gradient border, hover lift */
+.card-premium {
+  position: relative;
+  background:
+    linear-gradient(180deg, hsl(var(--card) / 0.92), hsl(var(--card) / 0.78));
+  border: 1px solid hsl(var(--border) / 0.6);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.5),
+    0 1px 2px hsl(var(--foreground) / 0.04),
+    0 12px 32px -12px hsl(var(--primary) / 0.18),
+    0 24px 48px -20px hsl(var(--accent) / 0.12);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s ease, border-color 0.5s ease;
+  overflow: hidden;
+}
+.card-premium::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.35), transparent 40%, transparent 60%, hsl(var(--accent) / 0.3));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.7;
+}
+.card-premium::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(110deg, transparent, hsl(0 0% 100% / 0.08), transparent);
+  transition: left 0.9s ease;
+  pointer-events: none;
+}
+.card-premium:hover {
+  transform: translateY(-6px);
+  border-color: hsl(var(--primary) / 0.45);
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.6),
+    0 1px 2px hsl(var(--foreground) / 0.06),
+    0 24px 56px -16px hsl(var(--primary) / 0.32),
+    0 40px 72px -28px hsl(var(--accent) / 0.25),
+    0 0 0 1px hsl(var(--primary) / 0.15);
+}
+.card-premium:hover::after { left: 130%; }
+
+/* Cinematic imagery — color/contrast/saturation grading */
+.img-cinematic {
+  filter: contrast(1.08) saturate(1.15) brightness(1.02);
+  transition: filter 0.6s ease, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.img-cinematic:hover { filter: contrast(1.12) saturate(1.25) brightness(1.05); }
+.img-frame-premium {
+  position: relative;
+  border-radius: 2rem;
+  overflow: hidden;
+  box-shadow:
+    0 1px 0 hsl(0 0% 100% / 0.4) inset,
+    0 24px 56px -16px hsl(var(--primary) / 0.28),
+    0 48px 96px -32px hsl(var(--accent) / 0.22),
+    0 0 0 1px hsl(var(--border) / 0.6);
+}
+.img-frame-premium::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, hsl(0 0% 100% / 0.08), transparent 30%, transparent 70%, hsl(var(--primary) / 0.1));
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+/* Lighting — premium aurora orb */
+@keyframes orb-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(20px, -30px) scale(1.15); }
+  66% { transform: translate(-15px, 20px) scale(0.9); }
+}
+.orb-aurora {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.5;
+  animation: orb-drift 14s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Stat tile premium — glassy with internal light */
+.stat-tile {
+  position: relative;
+  background:
+    radial-gradient(circle at 50% 0%, hsl(var(--primary) / 0.12), transparent 70%),
+    linear-gradient(180deg, hsl(var(--card) / 0.85), hsl(var(--card) / 0.65));
+  border: 1px solid hsl(var(--border) / 0.5);
+  backdrop-filter: blur(16px) saturate(1.6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.5),
+    0 8px 24px -8px hsl(var(--primary) / 0.18),
+    0 16px 40px -16px hsl(var(--accent) / 0.12);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
+}
+.stat-tile:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.6),
+    0 16px 36px -10px hsl(var(--primary) / 0.3),
+    0 24px 56px -20px hsl(var(--accent) / 0.2),
+    0 0 0 1px hsl(var(--primary) / 0.2);
+}
+
+/* Trust badge premium */
+.trust-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  background: hsl(var(--card) / 0.55);
+  border: 1px solid hsl(var(--border) / 0.5);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.3), 0 2px 8px -2px hsl(var(--primary) / 0.1);
+  transition: all 0.3s ease;
+}
+.trust-chip:hover {
+  border-color: hsl(var(--primary) / 0.4);
+  background: hsl(var(--card) / 0.8);
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb-aurora { animation: none !important; }
+  .card-premium, .stat-tile, .icon-tile-premium, .img-cinematic { transition: none !important; }
+}
