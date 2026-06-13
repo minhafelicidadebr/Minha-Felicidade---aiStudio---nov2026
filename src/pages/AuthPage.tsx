@@ -7,13 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import logoIcon from "@/assets/logo-icon.png";
 import logoLightBg from "@/assets/logo-light-bg.png";
 import heroYouthBg from "@/assets/hero-youth-bg.jpg";
-
-function getSafeRedirectPath(redirect: string | null) {
-  if (!redirect || !redirect.startsWith("/") || redirect.startsWith("//") || redirect.includes("\\"))
-    return "/dashboard";
-  if (redirect.startsWith("/auth")) return "/dashboard";
-  return redirect;
-}
+import { getSafeRedirectPath } from "@/lib/redirect";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);

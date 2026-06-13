@@ -162,12 +162,33 @@ if (!existsSync(authPage)) {
   fail(`Missing auth page: ${authPage}`);
 } else {
   const text = readIfExists(authPage);
-  if (!text.includes("getSafeRedirectPath") || !text.includes('redirect.startsWith("//")') || !text.includes('redirect.includes("\\\\")')) {
-    fail("AuthPage must sanitize redirect destinations before navigation");
+  if (!text.includes('import { getSafeRedirectPath } from "@/lib/redirect"')) {
+    fail("AuthPage must use the shared safe redirect helper before navigation");
   }
   if (!text.includes("useSearchParams") || !text.includes("navigate(redirectPath, { replace: true })")) {
     fail("AuthPage must return authenticated users to the sanitized redirect path");
   }
+}
+
+const redirectHelper = "src/lib/redirect.ts";
+if (!existsSync(redirectHelper)) {
+  fail(`Missing redirect helper: ${redirectHelper}`);
+} else {
+  const text = readIfExists(redirectHelper);
+  if (!text.includes("getSafeRedirectPath") || !text.includes('redirect.startsWith("//")') || !text.includes('redirect.includes("\\\\")')) {
+    fail("Redirect helper must reject external, protocol-relative, and backslash redirects");
+  }
+  if (!text.includes('redirect.startsWith("/auth")')) {
+    fail("Redirect helper must prevent redirect loops back into /auth");
+  }
+}
+
+if (!existsSync("src/lib/redirect.test.ts")) {
+  fail("Missing redirect helper unit tests: src/lib/redirect.test.ts");
+}
+
+if (!existsSync("src/lib/auth-profile.test.ts")) {
+  fail("Missing auth profile helper unit tests: src/lib/auth-profile.test.ts");
 }
 
 const aiAuthHelper = "supabase/functions/_shared/auth.ts";
