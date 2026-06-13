@@ -40,7 +40,7 @@ export function useProgress() {
 
         const xp = completed ? (XP_MAP[activityType] || 10) : 0;
 
-        const { data: result, error } = await supabase.from("user_progress").insert({
+        const { data: result, error } = await supabase.from("user_progress").insert([{
           user_id: session.user.id,
           module_id: moduleId,
           activity_type: activityType,
@@ -49,7 +49,7 @@ export function useProgress() {
           xp_earned: xp,
           completed,
           data: data || {},
-        }).select().single();
+        }]).select().single();
 
         if (error) {
           // Silently fail for duplicate entries
