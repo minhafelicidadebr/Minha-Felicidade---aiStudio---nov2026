@@ -385,10 +385,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_learning_progress_overview: { Args: Record<PropertyKey, never>; Returns: Json }
-      get_my_learning_progress_summary: { Args: Record<PropertyKey, never>; Returns: Json }
-      get_my_plan: { Args: Record<PropertyKey, never>; Returns: Json }
-      get_my_profile: { Args: Record<PropertyKey, never>; Returns: Json }
+      get_learning_progress_overview: { Args: never; Returns: Json }
+      get_my_learning_progress_summary: { Args: never; Returns: Json }
+      get_my_plan: { Args: never; Returns: Json }
+      get_my_profile: { Args: never; Returns: Json }
       get_user_plan: { Args: { _user_id: string }; Returns: Json }
       has_role: {
         Args: {
