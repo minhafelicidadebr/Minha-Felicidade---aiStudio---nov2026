@@ -335,7 +335,9 @@ export default function ModulePage() {
                   aria-label={`Abrir ${act.title} para módulo ${mod.number}`}
                 >
                   <div className="absolute top-0 right-0 w-16 h-16 bg-background/5 rounded-full -translate-x-4 -translate-y-4 group-hover:scale-150 transition-transform duration-500" />
-                  <span className="text-2xl block mb-2 group-hover:scale-110 transition-transform inline-block relative" aria-hidden="true">{act.icon}</span>
+                  <span className={`icon-tile-premium w-11 h-11 rounded-xl mb-3 flex items-center justify-center ${act.accent} group-hover:scale-105 transition-transform relative`} aria-hidden="true">
+                    <act.Icon className="w-5 h-5" strokeWidth={1.75} />
+                  </span>
                   <h4 className="font-display font-bold text-sm relative">{act.title}</h4>
                   <p className="text-[10px] text-muted-foreground mt-0.5 relative">{act.desc}</p>
                   <ArrowRight className="w-3 h-3 text-muted-foreground absolute bottom-3 right-3 group-hover:text-primary transition-colors" />
