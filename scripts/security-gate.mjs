@@ -85,6 +85,19 @@ if (!existsSync(aiAuthHelper)) {
   }
 }
 
+const aiUsageHelper = "supabase/functions/_shared/ai-usage.ts";
+if (!existsSync(aiUsageHelper)) {
+  fail(`Missing AI usage helper: ${aiUsageHelper}`);
+} else {
+  const text = readIfExists(aiUsageHelper);
+  if (!text.includes('rpc("enforce_ai_usage_limit"') || !text.includes("AiUsageLimitError")) {
+    fail("AI usage helper must enforce database-backed quota before AI gateway calls");
+  }
+  if (!text.includes("Authentication required") || !text.includes("429")) {
+    fail("AI usage helper must preserve auth failures and expose a 429 quota failure");
+  }
+}
+
 const authenticatedAiFunctions = [
   "supabase/functions/aledria-chat/index.ts",
   "supabase/functions/cognitive-mirror/index.ts",
@@ -98,11 +111,11 @@ for (const file of authenticatedAiFunctions) {
     continue;
   }
   const text = readIfExists(file);
-  if (!text.includes('../_shared/auth.ts') || !text.includes('requireUser(req.headers.get("Authorization"))')) {
-    fail(`AI Edge Function must require a verified caller JWT before calling the AI gateway: ${file}`);
+  if (!text.includes('../_shared/ai-usage.ts') || !text.includes('enforceAiUsageLimit(req.headers.get("Authorization")')) {
+    fail(`AI Edge Function must enforce authenticated per-user usage limits before calling the AI gateway: ${file}`);
   }
-  if (!text.includes("Authentication required") || !text.includes("401")) {
-    fail(`AI Edge Function must return 401 for unauthenticated requests: ${file}`);
+  if (!text.includes("getEdgeErrorStatus") || !text.includes("getEdgeErrorMessage")) {
+    fail(`AI Edge Function must map auth and quota failures through shared error handling: ${file}`);
   }
 }
 
@@ -225,6 +238,29 @@ if (!existsSync(defaultPrivilegesMigration)) {
   }
   if (!migration.includes("REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC, anon, authenticated")) {
     fail("Function default privileges migration does not revoke default client EXECUTE");
+  }
+}
+
+const aiUsageMigration = "supabase/migrations/20260613190000_ai_usage_rate_limits.sql";
+if (!existsSync(aiUsageMigration)) {
+  fail(`Missing AI usage rate limit migration: ${aiUsageMigration}`);
+} else {
+  const migration = readFileSync(aiUsageMigration, "utf8");
+  const requiredSnippets = [
+    "CREATE TABLE IF NOT EXISTS public.ai_usage_limits",
+    "CREATE OR REPLACE FUNCTION public.enforce_ai_usage_limit",
+    "SECURITY DEFINER",
+    "SET search_path = public",
+    "CREATE POLICY \"No client access to AI usage limits\"",
+    "REVOKE EXECUTE ON FUNCTION public.enforce_ai_usage_limit(text) FROM PUBLIC, anon, authenticated",
+    "GRANT EXECUTE ON FUNCTION public.enforce_ai_usage_limit(text) TO authenticated",
+    "'ai_usage_allowed'",
+    "'ai_usage_blocked'",
+  ];
+  for (const snippet of requiredSnippets) {
+    if (!migration.includes(snippet)) {
+      fail(`AI usage migration is missing invariant snippet: ${snippet}`);
+    }
   }
 }
 

@@ -5,9 +5,11 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(15);
+SELECT plan(20);
 
 SELECT has_table('public', 'data_access_logs', 'audit log table exists');
+SELECT has_table('public', 'ai_usage_limits', 'AI usage rate-limit table exists');
+SELECT has_function('public', 'enforce_ai_usage_limit', ARRAY['text']::name[], 'AI usage quota RPC exists');
 
 SELECT is(
   (
@@ -153,6 +155,52 @@ SELECT is(
   ),
   5,
   'authenticated role can execute every safe self-scoped RPC'
+);
+
+SELECT is(
+  (
+    SELECT COUNT(*)::integer
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'ai_usage_limits'
+      AND policyname = 'No client access to AI usage limits'
+  ),
+  1,
+  'AI usage table has explicit deny-all client policy'
+);
+
+SELECT is_empty(
+  $$
+    SELECT 1
+    FROM information_schema.role_table_grants
+    WHERE table_schema = 'public'
+      AND table_name = 'ai_usage_limits'
+      AND grantee IN ('anon', 'authenticated')
+  $$,
+  'AI usage table has no direct client grants'
+);
+
+SELECT is(
+  (
+    SELECT COUNT(*)::integer
+    FROM information_schema.routine_privileges
+    WHERE routine_schema = 'public'
+      AND routine_name = 'enforce_ai_usage_limit'
+      AND grantee IN ('anon', 'PUBLIC')
+  ),
+  0,
+  'AI usage quota RPC is not executable by anon or PUBLIC'
+);
+
+SELECT isnt_empty(
+  $$
+    SELECT 1
+    FROM information_schema.routine_privileges
+    WHERE routine_schema = 'public'
+      AND routine_name = 'enforce_ai_usage_limit'
+      AND grantee = 'authenticated'
+  $$,
+  'authenticated role can execute AI usage quota RPC'
 );
 
 SELECT * FROM finish();

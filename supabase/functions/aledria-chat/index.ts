@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { requireUser } from "../_shared/auth.ts";
+import { enforceAiUsageLimit, getEdgeErrorMessage, getEdgeErrorStatus } from "../_shared/ai-usage.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -119,7 +119,7 @@ serve(async (req) => {
   }
 
   try {
-    await requireUser(req.headers.get("Authorization"));
+    await enforceAiUsageLimit(req.headers.get("Authorization"), "aledria-chat");
 
     const { messages, moduleContext } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -175,10 +175,9 @@ serve(async (req) => {
     });
   } catch (e) {
     console.error("aledria-chat error:", e);
-    const status = e instanceof Error && e.message === "Authentication required" ? 401 : 500;
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }),
-      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: getEdgeErrorMessage(e) }),
+      { status: getEdgeErrorStatus(e), headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

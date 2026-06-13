@@ -268,6 +268,110 @@ WITH checks AS (
       ),
       'functions missing'
     )
+
+  UNION ALL
+  SELECT
+    110,
+    'ai_usage_limits exists with RLS enabled',
+    COALESCE(
+      (
+        SELECT c.relrowsecurity
+        FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'public'
+          AND c.relname = 'ai_usage_limits'
+      ),
+      false
+    ),
+    COALESCE(
+      (
+        SELECT 'relrowsecurity=' || c.relrowsecurity::text
+        FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'public'
+          AND c.relname = 'ai_usage_limits'
+      ),
+      'table missing'
+    )
+
+  UNION ALL
+  SELECT
+    120,
+    'ai_usage_limits has no client table grants',
+    NOT EXISTS (
+      SELECT 1
+      FROM information_schema.role_table_grants
+      WHERE table_schema = 'public'
+        AND table_name = 'ai_usage_limits'
+        AND grantee IN ('anon', 'authenticated')
+    ),
+    COALESCE(
+      (
+        SELECT string_agg(grantee || ':' || privilege_type, ', ' ORDER BY grantee, privilege_type)
+        FROM information_schema.role_table_grants
+        WHERE table_schema = 'public'
+          AND table_name = 'ai_usage_limits'
+          AND grantee IN ('anon', 'authenticated')
+      ),
+      'no anon/authenticated table grants'
+    )
+
+  UNION ALL
+  SELECT
+    130,
+    'enforce_ai_usage_limit is authenticated-only',
+    NOT EXISTS (
+      SELECT 1
+      FROM information_schema.routine_privileges
+      WHERE routine_schema = 'public'
+        AND routine_name = 'enforce_ai_usage_limit'
+        AND grantee IN ('anon', 'PUBLIC')
+    )
+    AND EXISTS (
+      SELECT 1
+      FROM information_schema.routine_privileges
+      WHERE routine_schema = 'public'
+        AND routine_name = 'enforce_ai_usage_limit'
+        AND grantee = 'authenticated'
+    ),
+    COALESCE(
+      (
+        SELECT string_agg(grantee, ', ' ORDER BY grantee)
+        FROM information_schema.routine_privileges
+        WHERE routine_schema = 'public'
+          AND routine_name = 'enforce_ai_usage_limit'
+      ),
+      'no EXECUTE grants'
+    )
+
+  UNION ALL
+  SELECT
+    140,
+    'enforce_ai_usage_limit is SECURITY DEFINER with fixed search_path',
+    EXISTS (
+      SELECT 1
+      FROM pg_proc p
+      JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname = 'public'
+        AND p.proname = 'enforce_ai_usage_limit'
+        AND p.prosecdef = true
+        AND EXISTS (
+          SELECT 1
+          FROM unnest(COALESCE(p.proconfig, ARRAY[]::text[])) AS config(setting)
+          WHERE setting = 'search_path=public'
+        )
+    ),
+    COALESCE(
+      (
+        SELECT p.proname || ':secdef=' || p.prosecdef::text || ':config=' || COALESCE(p.proconfig::text, '{}')
+        FROM pg_proc p
+        JOIN pg_namespace n ON n.oid = p.pronamespace
+        WHERE n.nspname = 'public'
+          AND p.proname = 'enforce_ai_usage_limit'
+        LIMIT 1
+      ),
+      'function missing'
+    )
 )
 SELECT
   CASE WHEN passed THEN 'PASS' ELSE 'FAIL' END AS status,

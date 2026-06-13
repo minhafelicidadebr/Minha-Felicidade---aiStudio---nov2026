@@ -5,7 +5,12 @@ type AuthenticatedUser = {
   email?: string;
 };
 
-export async function requireUser(authHeader: string | null): Promise<AuthenticatedUser> {
+type AuthContext = {
+  user: AuthenticatedUser;
+  supabase: ReturnType<typeof createClient>;
+};
+
+export async function requireAuthContext(authHeader: string | null): Promise<AuthContext> {
   if (!authHeader) {
     throw new Error("Authentication required");
   }
@@ -25,5 +30,13 @@ export async function requireUser(authHeader: string | null): Promise<Authentica
     throw new Error("Authentication required");
   }
 
-  return { id: user.id, email: user.email ?? undefined };
+  return {
+    user: { id: user.id, email: user.email ?? undefined },
+    supabase,
+  };
+}
+
+export async function requireUser(authHeader: string | null): Promise<AuthenticatedUser> {
+  const { user } = await requireAuthContext(authHeader);
+  return user;
 }
