@@ -120,7 +120,7 @@ export default function SocialMissionsPage() {
                     {isExpanded && (
                       <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="px-5 pb-5">
                         <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 mb-4">
-                          <p className="text-xs font-semibold text-primary leading-relaxed">📎 {mission.science}</p>
+                          <p className="text-xs font-semibold text-primary leading-relaxed flex items-start gap-2"><Quote className="w-3.5 h-3.5 shrink-0 mt-0.5" /> <span>{mission.science}</span></p>
                         </div>
                         <div className="flex items-center gap-1 mb-4">
                           {Array.from({ length: diff.stars }).map((_, s) => (
