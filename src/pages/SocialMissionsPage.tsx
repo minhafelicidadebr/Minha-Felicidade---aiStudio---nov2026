@@ -88,7 +88,7 @@ export default function SocialMissionsPage() {
               {completed.length === MISSIONS.length && (
                 <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center mt-6 relative z-10">
                   <Trophy className="w-12 h-12 text-secondary mx-auto mb-2" />
-                  <p className="font-display font-bold text-xl">🌟 Herói Social Completo!</p>
+                  <p className="font-display font-bold text-xl flex items-center justify-center gap-2"><Sparkles className="w-5 h-5 text-secondary" /> Herói Social Completo</p>
                 </motion.div>
               )}
             </AnimatePresence>
