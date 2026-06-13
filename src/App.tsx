@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, type ReactElement } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
 import RequireAuth from "@/components/routing/RequireAuth";
+import RequireRole from "@/components/routing/RequireRole";
 
 const queryClient = new QueryClient();
 
@@ -43,7 +44,14 @@ const RouteFallback = () => (
   <div className="min-h-screen bg-background" aria-busy="true" />
 );
 
-const privateRoutes = [
+type AppRole = "student" | "teacher" | "manager";
+type PrivateRoute = {
+  path: string;
+  element: ReactElement;
+  roles?: AppRole[];
+};
+
+const privateRoutes: PrivateRoute[] = [
   { path: "/dashboard", element: <DashboardPage /> },
   { path: "/module/:id", element: <ModulePage /> },
   { path: "/quiz", element: <QuizPage /> },
@@ -54,7 +62,7 @@ const privateRoutes = [
   { path: "/poetry", element: <PoetryPage /> },
   { path: "/codesign", element: <CoDesignPage /> },
   { path: "/alegria", element: <AlegriaPage /> },
-  { path: "/admin", element: <AdminPage /> },
+  { path: "/admin", element: <AdminPage />, roles: ["teacher", "manager"] },
   { path: "/profile", element: <ProfilePage /> },
   { path: "/breathing", element: <BreathingPage /> },
   { path: "/lifewheel", element: <LifeWheelPage /> },
@@ -87,7 +95,15 @@ const App = () => (
               <Route
                 key={route.path}
                 path={route.path}
-                element={<RequireAuth>{route.element}</RequireAuth>}
+                element={
+                  <RequireAuth>
+                    {route.roles ? (
+                      <RequireRole allowedRoles={route.roles}>{route.element}</RequireRole>
+                    ) : (
+                      route.element
+                    )}
+                  </RequireAuth>
+                }
               />
             ))}
             <Route path="*" element={<NotFound />} />

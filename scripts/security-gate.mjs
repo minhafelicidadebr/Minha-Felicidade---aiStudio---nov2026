@@ -85,6 +85,19 @@ if (!existsSync(requireAuthComponent)) {
   }
 }
 
+const requireRoleComponent = "src/components/routing/RequireRole.tsx";
+if (!existsSync(requireRoleComponent)) {
+  fail(`Missing route role guard: ${requireRoleComponent}`);
+} else {
+  const text = readIfExists(requireRoleComponent);
+  if (!text.includes('rpc("get_my_profile"') || text.includes('from("user_roles"')) {
+    fail("RequireRole must use get_my_profile self-scoped RPC instead of direct role table reads");
+  }
+  if (!text.includes("<Navigate") || !text.includes('to="/dashboard"')) {
+    fail("RequireRole must deny unauthorized users without rendering protected content");
+  }
+}
+
 const appRouter = "src/App.tsx";
 if (!existsSync(appRouter)) {
   fail(`Missing app router: ${appRouter}`);
@@ -122,8 +135,17 @@ if (!existsSync(appRouter)) {
   if (!text.includes('import RequireAuth from "@/components/routing/RequireAuth"')) {
     fail("App router must import RequireAuth");
   }
-  if (!text.includes("const privateRoutes = [") || !text.includes("<RequireAuth>{route.element}</RequireAuth>")) {
+  if (!text.includes('import RequireRole from "@/components/routing/RequireRole"')) {
+    fail("App router must import RequireRole");
+  }
+  if (!text.includes("const privateRoutes: PrivateRoute[] = [") || !text.includes("<RequireAuth>")) {
     fail("App router must render privateRoutes through RequireAuth");
+  }
+  if (!text.includes('path: "/admin", element: <AdminPage />, roles: ["teacher", "manager"]')) {
+    fail("Admin route must be protected by the teacher/manager RequireRole gate");
+  }
+  if (!text.includes("<RequireRole allowedRoles={route.roles}>{route.element}</RequireRole>")) {
+    fail("Role-scoped routes must render through RequireRole");
   }
   for (const route of requiredPrivateRoutes) {
     if (!text.includes(`path: "${route}"`)) {
