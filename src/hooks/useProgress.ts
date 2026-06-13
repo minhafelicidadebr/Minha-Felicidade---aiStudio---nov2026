@@ -48,7 +48,7 @@ export function useProgress() {
           score: score || null,
           xp_earned: xp,
           completed,
-          data: data || {},
+          data: (data || {}) as never,
         }]).select().single();
 
         if (error) {
