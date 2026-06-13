@@ -344,7 +344,7 @@ export default function LandingPage() {
               width={1600}
               height={1067}
               loading="lazy"
-              className="absolute inset-0 w-full h-full object-cover"
+              className="img-cinematic absolute inset-0 w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-background/30 via-transparent to-primary/20" />
             <div className="absolute inset-0 lg:hidden bg-gradient-to-b from-transparent to-background/80" />
