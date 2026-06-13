@@ -50,6 +50,58 @@ for (const file of sourceFiles) {
   }
 }
 
+const adminDashboardFunction = "supabase/functions/admin-dashboard/index.ts";
+if (!existsSync(adminDashboardFunction)) {
+  fail(`Missing admin dashboard function: ${adminDashboardFunction}`);
+} else {
+  const text = readFileSync(adminDashboardFunction, "utf8");
+  if (!text.includes('Deno.env.get("SUPABASE_ANON_KEY")')) {
+    fail("admin-dashboard must use the anon key plus caller JWT, not privileged credentials");
+  }
+  if (!text.includes('rpc("get_learning_progress_overview"')) {
+    fail("admin-dashboard must read progress through get_learning_progress_overview RPC");
+  }
+  if (/students\s*:|studentRows|full_name|studentEmail|studentUserId|email\s*:/.test(text)) {
+    fail("admin-dashboard function must not return or assemble nominal student fields");
+  }
+}
+
+const generateReportFunction = "supabase/functions/generate-report/index.ts";
+if (!existsSync(generateReportFunction)) {
+  fail(`Missing generate-report function: ${generateReportFunction}`);
+} else {
+  const text = readFileSync(generateReportFunction, "utf8");
+  if (!text.includes("Cross-user reports are disabled")) {
+    fail("generate-report must explicitly reject cross-user individual reports");
+  }
+  if (/rpc\(["']has_role["']/.test(text)) {
+    fail("generate-report must not use role checks to bypass self-report boundaries");
+  }
+}
+
+const subscriptionHook = "src/hooks/useSubscription.ts";
+if (!existsSync(subscriptionHook)) {
+  fail(`Missing subscription hook: ${subscriptionHook}`);
+} else {
+  const text = readFileSync(subscriptionHook, "utf8");
+  if (!text.includes('rpc("get_my_plan"')) {
+    fail("useSubscription must use get_my_plan self-scoped RPC");
+  }
+  if (text.includes("get_user_plan")) {
+    fail("useSubscription must not call legacy get_user_plan(user_id)");
+  }
+}
+
+const adminPage = "src/pages/AdminPage.tsx";
+if (!existsSync(adminPage)) {
+  fail(`Missing admin page: ${adminPage}`);
+} else {
+  const text = readFileSync(adminPage, "utf8");
+  if (/data\.students|students\.map|student\.full_name|student\.email|student\.user_id|download.*student/i.test(text)) {
+    fail("AdminPage must not render nominal student records or individual report actions");
+  }
+}
+
 const hardeningMigration = "supabase/migrations/20260613143000_security_invariants_foundation.sql";
 if (!existsSync(hardeningMigration)) {
   fail(`Missing hardening migration: ${hardeningMigration}`);

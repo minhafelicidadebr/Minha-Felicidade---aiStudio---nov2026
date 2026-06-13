@@ -28,6 +28,12 @@ type ProfileRow = {
   created_at?: string | null;
 };
 
+type ReportRequest = {
+  data?: unknown;
+  targetUserId?: unknown;
+  userId?: unknown;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -46,17 +52,13 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) throw new Error("Unauthorized");
 
-    const { data: rawTargetUserId } = await req.json().catch(() => ({ data: null }));
-    const targetUserId = typeof rawTargetUserId === "string" ? rawTargetUserId : null;
-
-    // Check if requesting another user's data (needs teacher/manager role)
-    let queryUserId = user.id;
-    if (targetUserId && targetUserId !== user.id) {
-      const { data: roles } = await supabase.rpc("has_role", { _user_id: user.id, _role: "teacher" });
-      const { data: managerRole } = await supabase.rpc("has_role", { _user_id: user.id, _role: "manager" });
-      if (!roles && !managerRole) throw new Error("Insufficient permissions");
-      queryUserId = targetUserId;
+    const body = (await req.json().catch(() => ({}))) as ReportRequest;
+    const requestedUserId = body.targetUserId ?? body.userId ?? body.data;
+    if (typeof requestedUserId === "string" && requestedUserId !== user.id) {
+      throw new Error("Cross-user reports are disabled; use the aggregate admin dashboard");
     }
+
+    const queryUserId = user.id;
 
     // Fetch profile
     const { data: profile } = await supabase

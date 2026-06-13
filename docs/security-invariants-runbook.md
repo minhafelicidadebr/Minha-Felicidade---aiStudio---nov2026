@@ -29,6 +29,7 @@ When Lovable or local Docker is unavailable, use the Supabase Dashboard SQL Edit
 - Subscription tables expose no client write policies.
 - The aggregate dashboard RPC avoids direct PII fields.
 - Safe RPCs are `SECURITY DEFINER` with fixed `search_path=public`.
+- Individual progress reports are self-only. Cross-user reporting must use a future tenant-scoped, audited RPC, not direct table reads.
 
 ## Quality Gate
 
