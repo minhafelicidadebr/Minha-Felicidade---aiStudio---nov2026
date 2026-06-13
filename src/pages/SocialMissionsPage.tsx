@@ -105,7 +105,7 @@ export default function SocialMissionsPage() {
                   className={`glass-card rounded-2xl overflow-hidden transition-all border ${done ? "border-success/30 bg-success/5" : "border-border/30"}`}
                 >
                   <button onClick={() => setExpandedId(isExpanded ? null : mission.id)} className="w-full text-left p-5 flex items-start gap-3">
-                    <motion.span className="text-3xl mt-0.5" whileHover={{ scale: 1.15 }}>{mission.icon}</motion.span>
+                    <motion.span className={`w-12 h-12 rounded-xl flex items-center justify-center icon-tile-premium shrink-0 ${mission.accent}`} whileHover={{ scale: 1.08 }}><mission.Icon className="w-5 h-5" strokeWidth={1.75} /></motion.span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h3 className={`font-display font-bold text-sm ${done ? "line-through text-muted-foreground" : ""}`}>{mission.title}</h3>
