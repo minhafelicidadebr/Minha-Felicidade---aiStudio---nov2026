@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Sparkles, Star, Rocket, Flame, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
 
 const CELEBRATIONS = [
   { threshold: 25, icon: "🌱", title: "Explorador!", message: "Você completou 25% — continue assim!", color: "from-green-500/20 to-emerald-500/20" },
@@ -90,5 +90,3 @@ export function ProgressCelebration({ progress, show, onClose, xp }: Props) {
     </AnimatePresence>
   );
 }
-
-export { NEURO_PHRASES, CELEBRATIONS };

@@ -29,7 +29,7 @@ export function useProgress() {
       activityType: string;
       activityId?: string;
       score?: number;
-      data?: Record<string, any>;
+      data?: Record<string, unknown>;
       completed?: boolean;
     }) => {
       try {

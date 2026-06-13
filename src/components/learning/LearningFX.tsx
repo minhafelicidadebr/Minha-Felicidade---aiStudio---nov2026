@@ -5,7 +5,7 @@
  */
 import { useEffect, useRef, useState, ReactNode, MouseEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Trophy, Flame, Brain, Zap, Target, Star } from "lucide-react";
+import { Trophy, Brain } from "lucide-react";
 
 /* ============= Sprint 1: Neural Background ============= */
 export function NeuralBackground({ className = "" }: { className?: string }) {
@@ -244,9 +244,6 @@ export function BrainPulse({ active = true }: { active?: boolean }) {
     </div>
   );
 }
-
-/* ============= Sprint 11-18 helpers exported for direct use ============= */
-export { Sparkles, Trophy, Flame, Brain, Zap, Target, Star };
 
 /* ============= Hook: useXPBurst ============= */
 export function useXPBurst() {

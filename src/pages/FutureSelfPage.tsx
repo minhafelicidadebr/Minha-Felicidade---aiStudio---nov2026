@@ -75,7 +75,7 @@ export default function FutureSelfPage() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setTimeline(data);
+      setTimeline(data as Timeline);
       setActiveScene(0);
       burstXP(40, { clientX: window.innerWidth / 2, clientY: 200 });
       setConfetti(true);
@@ -83,8 +83,9 @@ export default function FutureSelfPage() {
       setAchievement({ title: "Cronista do Futuro", desc: "Linha do tempo gerada! +40 XP" });
       setEncouragement(t => t + 1);
       trackActivity({ moduleId: "all", activityType: "evidence", activityId: "future-self-generate", data: { habit, value } });
-    } catch (e: any) {
-      toast({ title: "Não foi possível gerar agora", description: e?.message || "Tente em instantes.", variant: "destructive" });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Tente em instantes.";
+      toast({ title: "Não foi possível gerar agora", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }

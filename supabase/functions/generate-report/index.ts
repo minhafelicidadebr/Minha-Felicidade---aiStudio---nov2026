@@ -15,6 +15,19 @@ const MODULES = [
   { id: "habitos", number: 5, title: "Virando o Jogo da Vida Real", icon: "🚀" },
 ];
 
+type ProgressRow = {
+  activity_type: string;
+  completed: boolean;
+  created_at: string;
+  module_id: string;
+  xp_earned: number;
+};
+
+type ProfileRow = {
+  full_name?: string | null;
+  created_at?: string | null;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -33,7 +46,8 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) throw new Error("Unauthorized");
 
-    const { data: targetUserId } = await req.json().catch(() => ({ data: null }));
+    const { data: rawTargetUserId } = await req.json().catch(() => ({ data: null }));
+    const targetUserId = typeof rawTargetUserId === "string" ? rawTargetUserId : null;
 
     // Check if requesting another user's data (needs teacher/manager role)
     let queryUserId = user.id;
@@ -58,17 +72,18 @@ serve(async (req) => {
       .eq("user_id", queryUserId)
       .order("created_at", { ascending: false });
 
-    const allProgress = progress || [];
-    const totalXp = allProgress.reduce((s: number, p: any) => s + (p.xp_earned || 0), 0);
-    const completedCount = allProgress.filter((p: any) => p.completed).length;
-    const videosWatched = allProgress.filter((p: any) => p.activity_type === "video" && p.completed).length;
+    const allProgress = (progress || []) as ProgressRow[];
+    const profileRow = profile as ProfileRow | null;
+    const totalXp = allProgress.reduce((s, p) => s + (p.xp_earned || 0), 0);
+    const completedCount = allProgress.filter((p) => p.completed).length;
+    const videosWatched = allProgress.filter((p) => p.activity_type === "video" && p.completed).length;
 
     const moduleStats = MODULES.map((mod) => {
-      const modProgress = allProgress.filter((p: any) => p.module_id === mod.id);
-      const completed = modProgress.filter((p: any) => p.completed).length;
-      const xp = modProgress.reduce((s: number, p: any) => s + (p.xp_earned || 0), 0);
+      const modProgress = allProgress.filter((p) => p.module_id === mod.id);
+      const completed = modProgress.filter((p) => p.completed).length;
+      const xp = modProgress.reduce((s, p) => s + (p.xp_earned || 0), 0);
       const activities: Record<string, number> = {};
-      modProgress.forEach((p: any) => {
+      modProgress.forEach((p) => {
         activities[p.activity_type] = (activities[p.activity_type] || 0) + 1;
       });
       return { ...mod, completed, xp, activities };
@@ -76,16 +91,15 @@ serve(async (req) => {
 
     // Activity breakdown
     const activityTypes: Record<string, { count: number; xp: number }> = {};
-    allProgress.forEach((p: any) => {
+    allProgress.forEach((p) => {
       if (!activityTypes[p.activity_type]) activityTypes[p.activity_type] = { count: 0, xp: 0 };
       activityTypes[p.activity_type].count++;
       activityTypes[p.activity_type].xp += p.xp_earned || 0;
     });
 
     // Streak calculation (consecutive days with activity)
-    const uniqueDays = [...new Set(allProgress.map((p: any) => p.created_at?.split("T")[0]))].sort().reverse();
+    const uniqueDays = [...new Set(allProgress.map((p) => p.created_at?.split("T")[0]))].sort().reverse();
     let streak = 0;
-    const today = new Date().toISOString().split("T")[0];
     for (let i = 0; i < uniqueDays.length; i++) {
       const expected = new Date(Date.now() - i * 86400000).toISOString().split("T")[0];
       if (uniqueDays[i] === expected) streak++;
@@ -95,9 +109,9 @@ serve(async (req) => {
     const report = {
       generatedAt: new Date().toISOString(),
       student: {
-        name: profile?.full_name || "Estudante",
+        name: profileRow?.full_name || "Estudante",
         email: user.email,
-        joinedAt: profile?.created_at,
+        joinedAt: profileRow?.created_at,
       },
       summary: {
         totalXp,
@@ -109,7 +123,7 @@ serve(async (req) => {
       },
       modules: moduleStats,
       activityBreakdown: activityTypes,
-      recentActivity: allProgress.slice(0, 20).map((p: any) => ({
+      recentActivity: allProgress.slice(0, 20).map((p) => ({
         type: p.activity_type,
         module: p.module_id,
         xp: p.xp_earned,

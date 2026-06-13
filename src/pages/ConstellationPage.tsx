@@ -371,7 +371,7 @@ export default function ConstellationPage() {
                   key={n.id}
                   transform={`translate(${p.x}, ${p.y})`}
                   className="cursor-pointer group"
-                  onClick={(e) => handleNodeClick(n, e as any)}
+                  onClick={(e) => handleNodeClick(n, e)}
                 >
                   {(isSelected || isConnected) && (
                     <circle r="32" fill={moduleColor[n.module]} opacity="0.15">
@@ -480,7 +480,7 @@ export default function ConstellationPage() {
                       return (
                         <button
                           key={i}
-                          onClick={(ev) => handleNodeClick(other, ev as any)}
+                          onClick={(ev) => handleNodeClick(other, ev)}
                           className="w-full text-left flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
                         >
                           <span className="w-2 h-2 rounded-full shrink-0" style={{ background: moduleColor[other.module] }} />

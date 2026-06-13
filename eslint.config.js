@@ -23,4 +23,22 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
+  {
+    files: ["src/components/ui/**/*.{ts,tsx}"],
+    rules: {
+      // shadcn/ui intentionally colocates variant helpers and primitives.
+      "react-refresh/only-export-components": "off",
+    },
+  },
+  {
+    files: [
+      "src/components/learning/LearningFX.tsx",
+      "src/components/learning/NarrativeJourney.tsx",
+      "src/components/learning/NeonConfettiFX.tsx",
+    ],
+    rules: {
+      // These learning kits intentionally colocate visual primitives, hooks, and reusable content definitions.
+      "react-refresh/only-export-components": "off",
+    },
+  },
 );

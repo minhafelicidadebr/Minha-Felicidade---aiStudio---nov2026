@@ -7,10 +7,19 @@ import { useSubscription } from "@/hooks/useSubscription";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
+type SubscriptionPlan = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  price_monthly: number;
+  price_yearly: number;
+};
+
 export default function SubscriptionPage() {
   const navigate = useNavigate();
   const { plan, loading, isPremium, refetch } = useSubscription();
-  const [plans, setPlans] = useState<any[]>([]);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
 
   useEffect(() => {
     const checkAuth = async () => {

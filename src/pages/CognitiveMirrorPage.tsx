@@ -38,6 +38,29 @@ type Analysis = {
   feynman_rewrite: string;
 };
 
+type SpeechRecognitionEventLike = {
+  resultIndex: number;
+  results: ArrayLike<{ 0: { transcript: string } }>;
+};
+
+type SpeechRecognitionLike = {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
+
+type SpeechRecognitionWindow = Window &
+  typeof globalThis & {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  };
+
 export default function CognitiveMirrorPage() {
   const [concept, setConcept] = useState(CONCEPTS[0]);
   const [explanation, setExplanation] = useState("");
@@ -53,7 +76,8 @@ export default function CognitiveMirrorPage() {
   const wordCount = explanation.trim().split(/\s+/).filter(Boolean).length;
 
   const startVoice = () => {
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const speechWindow = window as SpeechRecognitionWindow;
+    const SR = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
     if (!SR) {
       toast({ title: "Reconhecimento de voz não suportado", description: "Use Chrome/Edge.", variant: "destructive" });
       return;
@@ -62,7 +86,7 @@ export default function CognitiveMirrorPage() {
     rec.lang = "pt-BR";
     rec.continuous = true;
     rec.interimResults = true;
-    rec.onresult = (e: any) => {
+    rec.onresult = (e) => {
       let txt = "";
       for (let i = e.resultIndex; i < e.results.length; i++) txt += e.results[i][0].transcript;
       setExplanation(prev => prev + " " + txt);
@@ -86,20 +110,22 @@ export default function CognitiveMirrorPage() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setAnalysis(data);
+      const result = data as Analysis;
+      setAnalysis(result);
       burstXP(50, { clientX: window.innerWidth / 2, clientY: 200 });
       setEncouragement(t => t + 1);
-      if (data.depth_score >= 70) setShowConfetti(true);
+      if (result.depth_score >= 70) setShowConfetti(true);
       trackActivity({
         moduleId: "all",
         activityType: "debate",
         activityId: `mirror-${concept}`,
-        score: data.depth_score,
-        data: { concept, explanation, analysis: data },
+        score: result.depth_score,
+        data: { concept, explanation, analysis: result },
       });
       setTimeout(() => setShowConfetti(false), 4000);
-    } catch (e: any) {
-      toast({ title: "Erro na análise", description: e.message || "Tente novamente.", variant: "destructive" });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Tente novamente.";
+      toast({ title: "Erro na análise", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }

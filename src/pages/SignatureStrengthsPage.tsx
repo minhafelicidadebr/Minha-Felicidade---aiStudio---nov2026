@@ -100,6 +100,25 @@ const ALL_STRENGTHS = VIRTUES.flatMap((v) => v.strengths.map((s) => ({ ...s, vir
 
 type Picked = { id: string; name: string; emoji: string };
 
+type StrengthPractice = {
+  day: string;
+  strength: string;
+  action: string;
+  shadow: string;
+};
+
+type StrengthLetter = {
+  title?: string;
+  anchor_strength?: string;
+  anchor_insight?: string;
+  synergy?: string;
+  practices?: StrengthPractice[];
+  letter?: string;
+  if_then_anchor?: string;
+  scientific_basis?: string;
+  error?: string;
+};
+
 export default function SignatureStrengthsPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -110,7 +129,7 @@ export default function SignatureStrengthsPage() {
   const [name, setName] = useState("");
   const [context, setContext] = useState("");
   const [loading, setLoading] = useState(false);
-  const [letter, setLetter] = useState<any>(null);
+  const [letter, setLetter] = useState<StrengthLetter | null>(null);
   const [act, setAct] = useState<1 | 2 | 3>(1); // 1: pick, 2: order, 3: reveal
   const [encore, setEncore] = useState(0);
   const podiumRef = useRef<HTMLDivElement>(null);
@@ -150,7 +169,7 @@ export default function SignatureStrengthsPage() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setLetter(data);
+      setLetter(data as StrengthLetter);
       setAct(3);
       await trackActivity({
         moduleId: "module-3",
@@ -160,8 +179,9 @@ export default function SignatureStrengthsPage() {
         data: { top: picked.map((p) => p.id) },
       });
       xp.trigger(40);
-    } catch (e: any) {
-      toast({ title: "Erro", description: e.message || "Tente novamente.", variant: "destructive" });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Tente novamente.";
+      toast({ title: "Erro", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -445,7 +465,7 @@ export default function SignatureStrengthsPage() {
                     🌱 Práticas de 7 dias <Badge variant="secondary">para suas top 3 forças</Badge>
                   </h3>
                   <div className="grid md:grid-cols-3 gap-4">
-                    {letter.practices.map((pr: any, i: number) => (
+                    {letter.practices.map((pr, i) => (
                       <motion.div
                         key={i}
                         initial={{ opacity: 0, y: 20 }}

@@ -1,10 +1,19 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Check, Sparkles, Crown, Rocket, ArrowRight, Building2, Users, Zap } from "lucide-react";
+import { Check, Sparkles, Crown, Rocket, ArrowRight, Building2, Users, Zap, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-const planMeta: Record<string, { icon: any; gradient: string }> = {
+type SubscriptionPlan = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  price_monthly: number;
+  price_yearly: number;
+};
+
+const planMeta: Record<string, { icon: LucideIcon; gradient: string }> = {
   free: { icon: Sparkles, gradient: "bg-card" },
   intermediate: { icon: Crown, gradient: "gradient-card-gold" },
   advanced: { icon: Rocket, gradient: "bg-card" },
@@ -52,7 +61,7 @@ const featureLabels: Record<string, string[]> = {
 export default function PricingSection() {
   const navigate = useNavigate();
   const [annual, setAnnual] = useState(false);
-  const [plans, setPlans] = useState<any[]>([]);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [showSchool, setShowSchool] = useState(false);
 
   useEffect(() => {

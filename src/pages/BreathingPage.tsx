@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Play, Pause, RotateCcw, Wind, Timer, Sparkles, Info } from "lucide-react";
@@ -31,19 +31,18 @@ export default function BreathingPage() {
   const phaseIdxRef = useRef(0);
   const tech = TECHNIQUES[techIdx];
 
-  const getPhases = () => {
-    const phases: { phase: Phase; duration: number }[] = [
+  const phases = useMemo(() => {
+    const techniquePhases: { phase: Phase; duration: number }[] = [
       { phase: "inhale", duration: tech.inhale },
       { phase: "hold", duration: tech.hold },
       { phase: "exhale", duration: tech.exhale },
     ];
-    if ("holdOut" in tech && tech.holdOut) phases.push({ phase: "holdOut", duration: tech.holdOut });
-    return phases;
-  };
+    if ("holdOut" in tech && tech.holdOut) techniquePhases.push({ phase: "holdOut", duration: tech.holdOut });
+    return techniquePhases;
+  }, [tech]);
 
   useEffect(() => {
     if (!playing) { if (intervalRef.current) clearInterval(intervalRef.current); return; }
-    const phases = getPhases();
     phaseIdxRef.current = 0;
     setPhase(phases[0].phase);
     setSecondsLeft(phases[0].duration);
@@ -61,7 +60,7 @@ export default function BreathingPage() {
       setTotalSeconds(t => t + 1);
     }, 1000);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [playing, techIdx]);
+  }, [playing, phases]);
 
   const handleStop = () => {
     setPlaying(false); setPhase("idle");
@@ -73,8 +72,7 @@ export default function BreathingPage() {
   const circleDuration = phase === "inhale" ? tech.inhale : phase === "exhale" ? tech.exhale : 0.5;
 
   // Progress ring for current phase
-  const currentPhases = getPhases();
-  const currentPhaseDef = currentPhases[phaseIdxRef.current] || currentPhases[0];
+  const currentPhaseDef = phases[phaseIdxRef.current] || phases[0];
   const phaseProgress = playing ? 1 - (secondsLeft / currentPhaseDef.duration) : 0;
 
   return (

@@ -128,6 +128,36 @@ function Act({
   );
 }
 
+function RailMarker({ index, day, scrollYProgress }: { index: number; day: string; scrollYProgress: MotionValue<number> }) {
+  const start = index / ACTS.length;
+  const end = (index + 1) / ACTS.length;
+  const opacity = useTransform(scrollYProgress, [start, (start + end) / 2, end], [0.4, 1, 0.4]);
+  const scale = useTransform(scrollYProgress, [start, (start + end) / 2, end], [1, 1.6, 1]);
+
+  return (
+    <motion.div className="relative flex items-center gap-3 pl-1" style={{ opacity }}>
+      <motion.div className="w-2 h-2 rounded-full bg-primary relative z-10" style={{ scale }} />
+      <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-foreground/70 hidden md:block">
+        {day}
+      </div>
+    </motion.div>
+  );
+}
+
+function ScrollHint({ scrollYProgress }: { scrollYProgress: MotionValue<number> }) {
+  const opacity = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
+
+  return (
+    <motion.div
+      className="absolute bottom-24 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground uppercase tracking-[0.3em] flex items-center gap-2 pointer-events-none"
+      style={{ opacity }}
+    >
+      <span>Role para viver a jornada</span>
+      <motion.span animate={{ y: [0, 6, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>â†“</motion.span>
+    </motion.div>
+  );
+}
+
 /**
  * Innovation #3 (v2) — Scroll-driven 4-act narrative with quote cards,
  * per-act metrics, labeled progress rail, and final CTA.
@@ -168,20 +198,9 @@ export default function WellbeingScrollStory() {
               style={{ height: railProgress }}
             />
           </div>
-          {ACTS.map((a, i) => {
-            const s = i / ACTS.length;
-            const e = (i + 1) / ACTS.length;
-            const opacity = useTransform(scrollYProgress, [s, (s + e) / 2, e], [0.4, 1, 0.4]);
-            const scale = useTransform(scrollYProgress, [s, (s + e) / 2, e], [1, 1.6, 1]);
-            return (
-              <motion.div key={i} className="relative flex items-center gap-3 pl-1" style={{ opacity }}>
-                <motion.div className="w-2 h-2 rounded-full bg-primary relative z-10" style={{ scale }} />
-                <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-foreground/70 hidden md:block">
-                  {a.day}
-                </div>
-              </motion.div>
-            );
-          })}
+          {ACTS.map((a, i) => (
+            <RailMarker key={a.n} index={i} day={a.day} scrollYProgress={scrollYProgress} />
+          ))}
         </div>
 
         {/* Acts — absolute layer fills the sticky viewport so each Act (inset-0) stacks correctly */}
@@ -211,7 +230,7 @@ export default function WellbeingScrollStory() {
         {!reduce && (
           <motion.div
             className="absolute bottom-24 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground uppercase tracking-[0.3em] flex items-center gap-2 pointer-events-none"
-            style={{ opacity: useTransform(scrollYProgress, [0, 0.1], [1, 0]) }}
+            style={{ opacity: 1 }}
           >
             <span>Role para viver a jornada</span>
             <motion.span animate={{ y: [0, 6, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>↓</motion.span>

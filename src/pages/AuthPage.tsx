@@ -36,8 +36,9 @@ export default function AuthPage() {
         toast({ title: "Conta criada! 🎉", description: "Bem-vindo(a) à Ciência do Bem-Estar!" });
         navigate("/dashboard");
       }
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro desconhecido";
+      toast({ title: "Erro", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }

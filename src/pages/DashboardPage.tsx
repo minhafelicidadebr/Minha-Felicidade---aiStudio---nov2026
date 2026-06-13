@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 import { modules, videoLessons } from "@/data/courseData";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -9,15 +11,29 @@ import { BookOpen, Play, Trophy, Flame, ArrowRight, LogOut, Download, Star, BarC
 import { useToast } from "@/hooks/use-toast";
 import { AlegriaHeroCard, AlegriaTag } from "@/components/AlegriaCTA";
 
+type ProgressRecord = Tables<"user_progress">;
+type ProfileRecord = Tables<"profiles">;
+type ProgressReport = {
+  generatedAt: string;
+  student: { name: string };
+  summary: {
+    totalXp: number;
+    completedActivities: number;
+    videosWatched: number;
+    currentStreak: number;
+  };
+  modules: { icon: string; number: number; title: string; completed: number; xp: number }[];
+};
+
 const ACHIEVEMENTS = [
-  { id: "first_video", icon: "🎬", title: "Primeira Aula", desc: "Assistiu seu primeiro vídeo", check: (p: any[]) => p.some(x => x.activity_type === "video" && x.completed) },
-  { id: "quiz_master", icon: "🎯", title: "Quiz Master", desc: "Completou 5 quizzes", check: (p: any[]) => p.filter(x => x.activity_type === "quiz" && x.completed).length >= 5 },
-  { id: "xp_100", icon: "⚡", title: "Centelha", desc: "Acumulou 100 XP", check: (p: any[]) => p.reduce((s: number, x: any) => s + (x.xp_earned || 0), 0) >= 100 },
-  { id: "xp_500", icon: "🔥", title: "Em Chamas", desc: "Acumulou 500 XP", check: (p: any[]) => p.reduce((s: number, x: any) => s + (x.xp_earned || 0), 0) >= 500 },
-  { id: "all_modules", icon: "🏆", title: "Explorador", desc: "Atividade em todos os módulos", check: (p: any[]) => new Set(p.map(x => x.module_id)).size >= 5 },
-  { id: "poet", icon: "🎭", title: "Poeta", desc: "Completou uma poesia", check: (p: any[]) => p.some(x => x.activity_type === "poetry" && x.completed) },
-  { id: "debater", icon: "⚔️", title: "Debatedor", desc: "Participou de um debate", check: (p: any[]) => p.some(x => x.activity_type === "debate" && x.completed) },
-  { id: "streak_3", icon: "📅", title: "Consistente", desc: "3 dias seguidos", check: (p: any[]) => { const days = [...new Set(p.map((x: any) => x.created_at?.split("T")[0]))].sort().reverse(); let s = 0; for (let i = 0; i < days.length; i++) { const exp = new Date(Date.now() - i * 86400000).toISOString().split("T")[0]; if (days[i] === exp) s++; else break; } return s >= 3; } },
+  { id: "first_video", icon: "🎬", title: "Primeira Aula", desc: "Assistiu seu primeiro vídeo", check: (p: ProgressRecord[]) => p.some(x => x.activity_type === "video" && x.completed) },
+  { id: "quiz_master", icon: "🎯", title: "Quiz Master", desc: "Completou 5 quizzes", check: (p: ProgressRecord[]) => p.filter(x => x.activity_type === "quiz" && x.completed).length >= 5 },
+  { id: "xp_100", icon: "⚡", title: "Centelha", desc: "Acumulou 100 XP", check: (p: ProgressRecord[]) => p.reduce((s, x) => s + (x.xp_earned || 0), 0) >= 100 },
+  { id: "xp_500", icon: "🔥", title: "Em Chamas", desc: "Acumulou 500 XP", check: (p: ProgressRecord[]) => p.reduce((s, x) => s + (x.xp_earned || 0), 0) >= 500 },
+  { id: "all_modules", icon: "🏆", title: "Explorador", desc: "Atividade em todos os módulos", check: (p: ProgressRecord[]) => new Set(p.map(x => x.module_id)).size >= 5 },
+  { id: "poet", icon: "🎭", title: "Poeta", desc: "Completou uma poesia", check: (p: ProgressRecord[]) => p.some(x => x.activity_type === "poetry" && x.completed) },
+  { id: "debater", icon: "⚔️", title: "Debatedor", desc: "Participou de um debate", check: (p: ProgressRecord[]) => p.some(x => x.activity_type === "debate" && x.completed) },
+  { id: "streak_3", icon: "📅", title: "Consistente", desc: "3 dias seguidos", check: (p: ProgressRecord[]) => { const days = [...new Set(p.map((x) => x.created_at?.split("T")[0]))].sort().reverse(); let s = 0; for (let i = 0; i < days.length; i++) { const exp = new Date(Date.now() - i * 86400000).toISOString().split("T")[0]; if (days[i] === exp) s++; else break; } return s >= 3; } },
 ];
 
 function getLast7Days() {
@@ -31,9 +47,9 @@ function getLast7Days() {
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
-  const [progress, setProgress] = useState<any[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<ProfileRecord | null>(null);
+  const [progress, setProgress] = useState<ProgressRecord[]>([]);
   const [userRole, setUserRole] = useState<string>("student");
   const [loading, setLoading] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -100,7 +116,7 @@ export default function DashboardPage() {
         body: JSON.stringify({}),
       });
       if (!resp.ok) throw new Error("Erro");
-      const report = await resp.json();
+      const report = (await resp.json()) as ProgressReport;
       const lines = [
         `═══════════════════════════════════════`,
         `  RELATÓRIO DE PROGRESSO — CIÊNCIA DO BEM-ESTAR`,
@@ -115,7 +131,7 @@ export default function DashboardPage() {
         `🔥 Sequência: ${report.summary.currentStreak} dias`,
         `⭐ Nível: ${Math.floor(report.summary.totalXp / 100) + 1}`, ``,
         `─── MÓDULOS ───`,
-        ...report.modules.map((m: any) => `${m.icon} M${m.number} — ${m.title}: ${m.completed} atividades, ${m.xp} XP`), ``,
+        ...report.modules.map((m) => `${m.icon} M${m.number} — ${m.title}: ${m.completed} atividades, ${m.xp} XP`), ``,
         `─── CONQUISTAS ───`,
         ...earned.map(a => `${a.icon} ${a.title} — ${a.desc}`), ``,
         `═══════════════════════════════════════`,

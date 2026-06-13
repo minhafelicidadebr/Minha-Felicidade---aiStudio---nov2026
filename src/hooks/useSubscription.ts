@@ -35,7 +35,7 @@ export function useSubscription() {
         return;
       }
 
-      const { data, error } = await supabase.rpc("get_user_plan", { _user_id: session.user.id });
+      const { data, error } = await supabase.rpc("get_my_plan");
       if (error) throw error;
 
       const raw = data as unknown as Record<string, unknown>;

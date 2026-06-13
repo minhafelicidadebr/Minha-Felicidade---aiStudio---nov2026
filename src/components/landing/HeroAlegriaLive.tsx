@@ -114,8 +114,9 @@ export default function HeroAlegriaLive() {
           } catch { /* ignore */ }
         }
       }
-    } catch (e: any) {
-      if (e.name !== "AbortError") {
+    } catch (e: unknown) {
+      const errorName = e instanceof Error ? e.name : "";
+      if (errorName !== "AbortError") {
         setResponse("Não consegui responder agora. Tente de novo em instantes 💛");
       }
     } finally {

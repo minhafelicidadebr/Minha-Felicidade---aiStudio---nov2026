@@ -1,25 +1,16 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { modules } from "@/data/courseData";
 import Navbar from "@/components/Navbar";
-import { Users, Trophy, Activity, BarChart3, ArrowLeft, Download, Search, Shield } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-
-interface StudentData {
-  userId: string;
-  name: string;
-  role: string;
-  totalXp: number;
-  completedActivities: number;
-  videosWatched: number;
-  modulesActive: number;
-  lastActivity: string | null;
-}
+import { Activity, ArrowLeft, BarChart3, Lock, Shield, Trophy, Users } from "lucide-react";
 
 interface AdminData {
   role: string;
+  scopeType: string;
+  insufficientSample: boolean;
+  minimumSample: number;
   global: {
     totalStudents: number;
     totalXp: number;
@@ -28,42 +19,42 @@ interface AdminData {
   };
   moduleEngagement: { moduleId: string; totalActivities: number; totalXp: number; uniqueStudents: number }[];
   activityDistribution: Record<string, number>;
-  students: StudentData[];
 }
 
 const ACTIVITY_LABELS: Record<string, string> = {
-  video: "📹 Vídeos",
-  quiz: "🎯 Quiz",
-  flashcard: "🃏 Flashcards",
-  simulator: "🎮 Simulador",
-  debate: "⚔️ Debate",
-  poetry: "🎭 Poesia",
-  codesign: "🏗️ Co-design",
-  evidence: "📊 Evidências",
+  video: "Videos",
+  quiz: "Quiz",
+  flashcard: "Flashcards",
+  simulator: "Simulador",
+  debate: "Debate",
+  poetry: "Poesia",
+  codesign: "Co-design",
+  evidence: "Evidencias",
 };
 
 export default function AdminPage() {
   const [data, setData] = useState<AdminData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { navigate("/auth"); return; }
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-dashboard`,
-        {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-dashboard`, {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       if (!resp.ok) {
         const body = await resp.json().catch(() => ({}));
@@ -75,37 +66,9 @@ export default function AdminPage() {
       setData(await resp.json());
       setLoading(false);
     };
+
     fetchData();
   }, [navigate]);
-
-  const downloadReport = async (userId: string) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    const resp = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-report`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ data: userId }),
-      }
-    );
-    if (!resp.ok) {
-      toast({ title: "Erro", description: "Não foi possível gerar o relatório", variant: "destructive" });
-      return;
-    }
-    const report = await resp.json();
-    const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `relatorio_${report.student?.name?.replace(/\s+/g, "_") || "aluno"}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast({ title: "Relatório gerado! 📄", description: "Download iniciado" });
-  };
 
   if (loading) {
     return (
@@ -121,7 +84,7 @@ export default function AdminPage() {
         <Navbar />
         <div className="container pt-24 text-center">
           <Shield className="w-16 h-16 text-destructive mx-auto mb-4" />
-          <h1 className="text-2xl font-display font-bold mb-2">Acesso Restrito</h1>
+          <h1 className="text-2xl font-display font-bold mb-2">Acesso restrito</h1>
           <p className="text-muted-foreground mb-6">{error}</p>
           <button onClick={() => navigate("/dashboard")} className="text-primary hover:underline">
             Voltar ao Dashboard
@@ -133,16 +96,15 @@ export default function AdminPage() {
 
   if (!data) return null;
 
-  const filteredStudents = data.students.filter((s) =>
-    s.name.toLowerCase().includes(search.toLowerCase())
-  );
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container pt-24 pb-16 max-w-6xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <button onClick={() => navigate("/dashboard")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6">
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
+          >
             <ArrowLeft className="w-4 h-4" /> Voltar
           </button>
 
@@ -151,22 +113,38 @@ export default function AdminPage() {
               <BarChart3 className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-3xl font-display font-bold">Painel {data.role === "manager" ? "do Gestor" : "do Professor"}</h1>
-              <p className="text-muted-foreground text-sm">Dados agregados da plataforma</p>
+              <h1 className="text-3xl font-display font-bold">
+                Painel {data.role === "manager" ? "do Gestor" : "do Professor"}
+              </h1>
+              <p className="text-muted-foreground text-sm">
+                Dados agregados, com N minimo e sem exposicao nominal de estudantes
+              </p>
             </div>
           </div>
 
-          {/* Global Stats */}
+          {data.insufficientSample && (
+            <div className="p-5 rounded-2xl bg-card border border-border mb-8 flex gap-3">
+              <Lock className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <div>
+                <h2 className="font-display font-bold text-lg mb-1">Amostra insuficiente</h2>
+                <p className="text-sm text-muted-foreground">
+                  O painel so exibe metricas agregadas quando ha pelo menos {data.minimumSample} estudantes com
+                  atividade. Esta regra reduz risco de reidentificacao.
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
             <div className="p-5 rounded-2xl bg-card border border-border">
               <Users className="w-5 h-5 text-primary mb-2" />
               <div className="text-2xl font-display font-bold">{data.global.totalStudents}</div>
-              <div className="text-xs text-muted-foreground">Alunos</div>
+              <div className="text-xs text-muted-foreground">Participantes</div>
             </div>
             <div className="p-5 rounded-2xl bg-card border border-border">
               <Trophy className="w-5 h-5 text-secondary mb-2" />
               <div className="text-2xl font-display font-bold">{data.global.totalXp.toLocaleString()}</div>
-              <div className="text-xs text-muted-foreground">XP Total</div>
+              <div className="text-xs text-muted-foreground">XP coletivo</div>
             </div>
             <div className="p-5 rounded-2xl bg-card border border-border">
               <Activity className="w-5 h-5 text-success mb-2" />
@@ -176,31 +154,29 @@ export default function AdminPage() {
             <div className="p-5 rounded-2xl bg-card border border-border">
               <BarChart3 className="w-5 h-5 text-primary mb-2" />
               <div className="text-2xl font-display font-bold">{data.global.averageXpPerStudent}</div>
-              <div className="text-xs text-muted-foreground">XP Médio/Aluno</div>
+              <div className="text-xs text-muted-foreground">XP medio</div>
             </div>
           </div>
 
-          {/* Module Engagement */}
-          <h2 className="text-2xl font-display font-bold mb-4">📊 Engajamento por Módulo</h2>
+          <h2 className="text-2xl font-display font-bold mb-4">Engajamento por modulo</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-10">
-            {data.moduleEngagement.map((me) => {
-              const mod = modules.find((m) => m.id === me.moduleId);
+            {data.moduleEngagement.map((moduleEngagement) => {
+              const courseModule = modules.find((moduleItem) => moduleItem.id === moduleEngagement.moduleId);
               return (
-                <div key={me.moduleId} className="p-4 rounded-2xl bg-card border border-border">
-                  <span className="text-2xl">{mod?.icon || "📦"}</span>
-                  <h4 className="font-display font-bold text-sm mt-2">M{mod?.number || "?"}</h4>
+                <div key={moduleEngagement.moduleId} className="p-4 rounded-2xl bg-card border border-border">
+                  <span className="text-2xl">{courseModule?.icon || "M"}</span>
+                  <h4 className="font-display font-bold text-sm mt-2">M{courseModule?.number || "?"}</h4>
                   <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                    <div>{me.uniqueStudents} alunos</div>
-                    <div>{me.totalActivities} atividades</div>
-                    <div>{me.totalXp} XP</div>
+                    <div>{moduleEngagement.uniqueStudents} participantes</div>
+                    <div>{moduleEngagement.totalActivities} atividades</div>
+                    <div>{moduleEngagement.totalXp} XP</div>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* Activity Distribution */}
-          <h2 className="text-2xl font-display font-bold mb-4">🎯 Distribuição por Atividade</h2>
+          <h2 className="text-2xl font-display font-bold mb-4">Distribuicao por atividade</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">
             {Object.entries(data.activityDistribution).map(([type, count]) => (
               <div key={type} className="p-4 rounded-2xl bg-card border border-border text-center">
@@ -210,70 +186,17 @@ export default function AdminPage() {
             ))}
           </div>
 
-          {/* Student List */}
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-display font-bold">👥 Alunos</h2>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Buscar aluno..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 pr-4 py-2 rounded-xl bg-muted border border-border text-sm focus:ring-2 focus:ring-primary/20 outline-none w-64"
-              />
+          <div className="p-5 rounded-2xl bg-card border border-border">
+            <div className="flex items-start gap-3">
+              <Shield className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <div>
+                <h2 className="text-lg font-display font-bold mb-1">Invariante de privacidade ativa</h2>
+                <p className="text-sm text-muted-foreground">
+                  Este painel nao retorna nome, email, user_id ou relatorio individual de estudante. As leituras passam
+                  por RPC agregada, aplicam N minimo e registram acesso em auditoria.
+                </p>
+              </div>
             </div>
-          </div>
-
-          <div className="bg-card rounded-2xl border border-border overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm" role="table">
-                <thead>
-                  <tr className="border-b border-border bg-muted/50">
-                    <th className="text-left p-4 font-semibold">Aluno</th>
-                    <th className="text-center p-4 font-semibold">Papel</th>
-                    <th className="text-center p-4 font-semibold">XP</th>
-                    <th className="text-center p-4 font-semibold">Atividades</th>
-                    <th className="text-center p-4 font-semibold">Vídeos</th>
-                    <th className="text-center p-4 font-semibold">Módulos</th>
-                    <th className="text-center p-4 font-semibold">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredStudents.map((student, i) => (
-                    <tr key={student.userId} className={`border-b border-border/50 ${i % 2 === 0 ? "" : "bg-muted/20"}`}>
-                      <td className="p-4 font-medium">{student.name}</td>
-                      <td className="p-4 text-center">
-                        <span className={`px-2 py-0.5 rounded-md text-xs font-semibold ${
-                          student.role === "manager" ? "bg-destructive/10 text-destructive" :
-                          student.role === "teacher" ? "bg-primary/10 text-primary" :
-                          "bg-secondary/10 text-secondary-foreground"
-                        }`}>
-                          {student.role === "student" ? "Aluno" : student.role === "teacher" ? "Professor" : "Gestor"}
-                        </span>
-                      </td>
-                      <td className="p-4 text-center font-bold text-secondary">{student.totalXp}</td>
-                      <td className="p-4 text-center">{student.completedActivities}</td>
-                      <td className="p-4 text-center">{student.videosWatched}</td>
-                      <td className="p-4 text-center">{student.modulesActive}/5</td>
-                      <td className="p-4 text-center">
-                        <button
-                          onClick={() => downloadReport(student.userId)}
-                          className="p-2 rounded-lg hover:bg-muted transition-colors"
-                          title="Baixar relatório"
-                          aria-label={`Baixar relatório de ${student.name}`}
-                        >
-                          <Download className="w-4 h-4 text-primary" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {filteredStudents.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">Nenhum aluno encontrado.</div>
-            )}
           </div>
         </motion.div>
       </div>
