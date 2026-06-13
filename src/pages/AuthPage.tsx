@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Eye, EyeOff, Sparkles, ArrowLeft } from "lucide-react";
@@ -7,6 +7,13 @@ import { useToast } from "@/hooks/use-toast";
 import logoIcon from "@/assets/logo-icon.png";
 import logoLightBg from "@/assets/logo-light-bg.png";
 import heroYouthBg from "@/assets/hero-youth-bg.jpg";
+
+function getSafeRedirectPath(redirect: string | null) {
+  if (!redirect || !redirect.startsWith("/") || redirect.startsWith("//") || redirect.includes("\\"))
+    return "/dashboard";
+  if (redirect.startsWith("/auth")) return "/dashboard";
+  return redirect;
+}
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -16,7 +23,21 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const redirectPath = getSafeRedirectPath(searchParams.get("redirect"));
+
+  useEffect(() => {
+    let active = true;
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (active && session) navigate(redirectPath, { replace: true });
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [navigate, redirectPath]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +46,7 @@ export default function AuthPage() {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate("/dashboard");
+        navigate(redirectPath, { replace: true });
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -34,7 +55,7 @@ export default function AuthPage() {
         });
         if (error) throw error;
         toast({ title: "Conta criada! 🎉", description: "Bem-vindo(a) à Ciência do Bem-Estar!" });
-        navigate("/dashboard");
+        navigate(redirectPath, { replace: true });
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";

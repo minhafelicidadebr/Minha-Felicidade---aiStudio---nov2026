@@ -72,6 +72,79 @@ for (const file of frontendFiles) {
   }
 }
 
+const requireAuthComponent = "src/components/routing/RequireAuth.tsx";
+if (!existsSync(requireAuthComponent)) {
+  fail(`Missing route auth guard: ${requireAuthComponent}`);
+} else {
+  const text = readIfExists(requireAuthComponent);
+  if (!text.includes("supabase.auth.getSession()") || !text.includes("onAuthStateChange")) {
+    fail("RequireAuth must validate the current Supabase session and subscribe to auth changes");
+  }
+  if (!text.includes("/auth?redirect=") || !text.includes("<Navigate")) {
+    fail("RequireAuth must redirect guests to /auth with the original path preserved");
+  }
+}
+
+const appRouter = "src/App.tsx";
+if (!existsSync(appRouter)) {
+  fail(`Missing app router: ${appRouter}`);
+} else {
+  const text = readIfExists(appRouter);
+  const requiredPrivateRoutes = [
+    "/dashboard",
+    "/module/:id",
+    "/quiz",
+    "/flashcards",
+    "/evidence",
+    "/simulator",
+    "/debate",
+    "/poetry",
+    "/codesign",
+    "/alegria",
+    "/admin",
+    "/profile",
+    "/breathing",
+    "/lifewheel",
+    "/gratitude",
+    "/memory",
+    "/mindmap",
+    "/emotions",
+    "/challenge21",
+    "/hypothesis",
+    "/missions",
+    "/subscription",
+    "/constellation",
+    "/mirror",
+    "/future-self",
+    "/strengths",
+  ];
+
+  if (!text.includes('import RequireAuth from "@/components/routing/RequireAuth"')) {
+    fail("App router must import RequireAuth");
+  }
+  if (!text.includes("const privateRoutes = [") || !text.includes("<RequireAuth>{route.element}</RequireAuth>")) {
+    fail("App router must render privateRoutes through RequireAuth");
+  }
+  for (const route of requiredPrivateRoutes) {
+    if (!text.includes(`path: "${route}"`)) {
+      fail(`Private route is missing from RequireAuth-protected route table: ${route}`);
+    }
+  }
+}
+
+const authPage = "src/pages/AuthPage.tsx";
+if (!existsSync(authPage)) {
+  fail(`Missing auth page: ${authPage}`);
+} else {
+  const text = readIfExists(authPage);
+  if (!text.includes("getSafeRedirectPath") || !text.includes('redirect.startsWith("//")') || !text.includes('redirect.includes("\\\\")')) {
+    fail("AuthPage must sanitize redirect destinations before navigation");
+  }
+  if (!text.includes("useSearchParams") || !text.includes("navigate(redirectPath, { replace: true })")) {
+    fail("AuthPage must return authenticated users to the sanitized redirect path");
+  }
+}
+
 const aiAuthHelper = "supabase/functions/_shared/auth.ts";
 if (!existsSync(aiAuthHelper)) {
   fail(`Missing Edge Function auth helper: ${aiAuthHelper}`);

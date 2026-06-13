@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
+import RequireAuth from "@/components/routing/RequireAuth";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,35 @@ const RouteFallback = () => (
   <div className="min-h-screen bg-background" aria-busy="true" />
 );
 
+const privateRoutes = [
+  { path: "/dashboard", element: <DashboardPage /> },
+  { path: "/module/:id", element: <ModulePage /> },
+  { path: "/quiz", element: <QuizPage /> },
+  { path: "/flashcards", element: <FlashcardsPage /> },
+  { path: "/evidence", element: <EvidencePage /> },
+  { path: "/simulator", element: <SimulatorPage /> },
+  { path: "/debate", element: <DebatePage /> },
+  { path: "/poetry", element: <PoetryPage /> },
+  { path: "/codesign", element: <CoDesignPage /> },
+  { path: "/alegria", element: <AlegriaPage /> },
+  { path: "/admin", element: <AdminPage /> },
+  { path: "/profile", element: <ProfilePage /> },
+  { path: "/breathing", element: <BreathingPage /> },
+  { path: "/lifewheel", element: <LifeWheelPage /> },
+  { path: "/gratitude", element: <GratitudePage /> },
+  { path: "/memory", element: <MemoryGamePage /> },
+  { path: "/mindmap", element: <MindMapPage /> },
+  { path: "/emotions", element: <EmotionTrackerPage /> },
+  { path: "/challenge21", element: <Challenge21Page /> },
+  { path: "/hypothesis", element: <HypothesisLabPage /> },
+  { path: "/missions", element: <SocialMissionsPage /> },
+  { path: "/subscription", element: <SubscriptionPage /> },
+  { path: "/constellation", element: <ConstellationPage /> },
+  { path: "/mirror", element: <CognitiveMirrorPage /> },
+  { path: "/future-self", element: <FutureSelfPage /> },
+  { path: "/strengths", element: <SignatureStrengthsPage /> },
+];
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -53,32 +83,13 @@ const App = () => (
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/auth" element={<AuthPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/module/:id" element={<ModulePage />} />
-            <Route path="/quiz" element={<QuizPage />} />
-            <Route path="/flashcards" element={<FlashcardsPage />} />
-            <Route path="/evidence" element={<EvidencePage />} />
-            <Route path="/simulator" element={<SimulatorPage />} />
-            <Route path="/debate" element={<DebatePage />} />
-            <Route path="/poetry" element={<PoetryPage />} />
-            <Route path="/codesign" element={<CoDesignPage />} />
-            <Route path="/alegria" element={<AlegriaPage />} />
-            <Route path="/admin" element={<AdminPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/breathing" element={<BreathingPage />} />
-            <Route path="/lifewheel" element={<LifeWheelPage />} />
-            <Route path="/gratitude" element={<GratitudePage />} />
-            <Route path="/memory" element={<MemoryGamePage />} />
-            <Route path="/mindmap" element={<MindMapPage />} />
-            <Route path="/emotions" element={<EmotionTrackerPage />} />
-            <Route path="/challenge21" element={<Challenge21Page />} />
-            <Route path="/hypothesis" element={<HypothesisLabPage />} />
-            <Route path="/missions" element={<SocialMissionsPage />} />
-            <Route path="/subscription" element={<SubscriptionPage />} />
-            <Route path="/constellation" element={<ConstellationPage />} />
-            <Route path="/mirror" element={<CognitiveMirrorPage />} />
-            <Route path="/future-self" element={<FutureSelfPage />} />
-            <Route path="/strengths" element={<SignatureStrengthsPage />} />
+            {privateRoutes.map((route) => (
+              <Route
+                key={route.path}
+                path={route.path}
+                element={<RequireAuth>{route.element}</RequireAuth>}
+              />
+            ))}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
