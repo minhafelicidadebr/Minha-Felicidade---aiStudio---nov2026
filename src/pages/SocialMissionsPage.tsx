@@ -1,21 +1,21 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Users, Star, Trophy, CheckCircle2, Sparkles } from "lucide-react";
+import { ArrowLeft, Users, Star, Trophy, CheckCircle2, Sparkles, MessageCircle, HandHeart, BookOpen, HeartHandshake, PartyPopper, Mail, PhoneOff, Globe2, Zap, RotateCcw, Check, Quote } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useProgress } from "@/hooks/useProgress";
 
 const MISSIONS = [
-  { id: "m1", title: "Conexão Genuína", description: "Tenha uma conversa de 10 min com alguém sem olhar o celular", xp: 15, category: "Conexão", icon: "💬", difficulty: "Fácil", science: "Epley & Schroeder (2014): conversar com estranhos aumenta o bem-estar mais do que imaginamos" },
-  { id: "m2", title: "Corrente de Bondade", description: "Faça 3 atos de bondade em um dia e observe os efeitos", xp: 25, category: "Bondade", icon: "💝", difficulty: "Médio", science: "Lyubomirsky (2005): atos de bondade concentrados geram mais felicidade que espalhados" },
-  { id: "m3", title: "Mentor de Felicidade", description: "Ensine um conceito deste curso para 2 pessoas", xp: 30, category: "Ensino", icon: "📚", difficulty: "Médio", science: "Efeito Protégé: ensinar reforça a aprendizagem (Nestojko et al., 2014)" },
-  { id: "m4", title: "Grupo de Gratidão", description: "Crie um grupo de 3+ pessoas para compartilhar gratidão diária por 1 semana", xp: 40, category: "Gratidão", icon: "🙏", difficulty: "Difícil", science: "Emmons (2003): gratidão social amplifica efeitos do journaling individual" },
-  { id: "m5", title: "Experiência Compartilhada", description: "Organize uma atividade gratuita com amigos (caminhada, jogo, cozinhar)", xp: 25, category: "Experiências", icon: "🎉", difficulty: "Médio", science: "Van Boven (2005): experiências compartilhadas geram mais felicidade duradoura" },
-  { id: "m6", title: "Carta de Impacto", description: "Escreva e entregue uma carta de gratidão para alguém que impactou sua vida", xp: 35, category: "Gratidão", icon: "✉️", difficulty: "Difícil", science: "Seligman (2005): visita de gratidão é a intervenção mais poderosa de bem-estar" },
-  { id: "m7", title: "Desafio do Silêncio Digital", description: "Passe 24h sem redes sociais e convide 2 amigos para fazer junto", xp: 30, category: "Presença", icon: "📵", difficulty: "Difícil", science: "Hunt et al. (2018): reduzir redes sociais diminui solidão e depressão" },
-  { id: "m8", title: "Voluntário por um Dia", description: "Dedique 2h a uma causa social voluntária", xp: 50, category: "Propósito", icon: "🌍", difficulty: "Épico", science: "Thoits & Hewitt (2001): voluntariado aumenta satisfação de vida e autoestima" },
-  { id: "m9", title: "Embaixador do Flow", description: "Ajude 2 pessoas a descobrirem suas forças de caráter (VIA Survey)", xp: 30, category: "Flow", icon: "⚡", difficulty: "Médio", science: "Peterson & Seligman (2004): usar forças de caráter aumenta engajamento" },
+  { id: "m1", title: "Conexão Genuína", description: "Tenha uma conversa de 10 min com alguém sem olhar o celular", xp: 15, category: "Conexão", Icon: MessageCircle, accent: "text-sky-400", difficulty: "Fácil", science: "Epley & Schroeder (2014): conversar com estranhos aumenta o bem-estar mais do que imaginamos" },
+  { id: "m2", title: "Corrente de Bondade", description: "Faça 3 atos de bondade em um dia e observe os efeitos", xp: 25, category: "Bondade", Icon: HandHeart, accent: "text-rose-400", difficulty: "Médio", science: "Lyubomirsky (2005): atos de bondade concentrados geram mais felicidade que espalhados" },
+  { id: "m3", title: "Mentor de Felicidade", description: "Ensine um conceito deste curso para 2 pessoas", xp: 30, category: "Ensino", Icon: BookOpen, accent: "text-blue-400", difficulty: "Médio", science: "Efeito Protégé: ensinar reforça a aprendizagem (Nestojko et al., 2014)" },
+  { id: "m4", title: "Grupo de Gratidão", description: "Crie um grupo de 3+ pessoas para compartilhar gratidão diária por 1 semana", xp: 40, category: "Gratidão", Icon: HeartHandshake, accent: "text-amber-400", difficulty: "Difícil", science: "Emmons (2003): gratidão social amplifica efeitos do journaling individual" },
+  { id: "m5", title: "Experiência Compartilhada", description: "Organize uma atividade gratuita com amigos (caminhada, jogo, cozinhar)", xp: 25, category: "Experiências", Icon: PartyPopper, accent: "text-orange-400", difficulty: "Médio", science: "Van Boven (2005): experiências compartilhadas geram mais felicidade duradoura" },
+  { id: "m6", title: "Carta de Impacto", description: "Escreva e entregue uma carta de gratidão para alguém que impactou sua vida", xp: 35, category: "Gratidão", Icon: Mail, accent: "text-pink-400", difficulty: "Difícil", science: "Seligman (2005): visita de gratidão é a intervenção mais poderosa de bem-estar" },
+  { id: "m7", title: "Silêncio Digital", description: "Passe 24h sem redes sociais e convide 2 amigos para fazer junto", xp: 30, category: "Presença", Icon: PhoneOff, accent: "text-slate-400", difficulty: "Difícil", science: "Hunt et al. (2018): reduzir redes sociais diminui solidão e depressão" },
+  { id: "m8", title: "Voluntário por um Dia", description: "Dedique 2h a uma causa social voluntária", xp: 50, category: "Propósito", Icon: Globe2, accent: "text-emerald-400", difficulty: "Épico", science: "Thoits & Hewitt (2001): voluntariado aumenta satisfação de vida e autoestima" },
+  { id: "m9", title: "Embaixador do Flow", description: "Ajude 2 pessoas a descobrirem suas forças de caráter (VIA Survey)", xp: 30, category: "Flow", Icon: Zap, accent: "text-violet-400", difficulty: "Médio", science: "Peterson & Seligman (2004): usar forças de caráter aumenta engajamento" },
 ];
 
 const difficultyConfig: Record<string, { color: string; stars: number; gradient: string }> = {
