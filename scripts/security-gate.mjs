@@ -88,8 +88,29 @@ if (!existsSync(grantsMigration)) {
   }
 }
 
+const defaultPrivilegesMigration = "supabase/migrations/20260613173000_function_default_privileges_hardening.sql";
+if (!existsSync(defaultPrivilegesMigration)) {
+  fail(`Missing function default privileges migration: ${defaultPrivilegesMigration}`);
+} else {
+  const migration = readFileSync(defaultPrivilegesMigration, "utf8");
+  if (!migration.includes("ALTER DEFAULT PRIVILEGES IN SCHEMA public")) {
+    fail("Function default privileges migration does not alter public schema defaults");
+  }
+  if (!migration.includes("REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC, anon, authenticated")) {
+    fail("Function default privileges migration does not revoke default client EXECUTE");
+  }
+}
+
 if (!existsSync("supabase/tests/security_invariants.sql")) {
   fail("Missing RLS test suite: supabase/tests/security_invariants.sql");
+}
+
+if (!existsSync("supabase/verification/security_invariants_manual.sql")) {
+  fail("Missing manual SQL verification script: supabase/verification/security_invariants_manual.sql");
+}
+
+if (!existsSync("docs/security-invariants-runbook.md")) {
+  fail("Missing security invariants runbook: docs/security-invariants-runbook.md");
 }
 
 if (!existsSync(".github/workflows/quality-gate.yml")) {
