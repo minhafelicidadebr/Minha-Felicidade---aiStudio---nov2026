@@ -16,31 +16,31 @@ type Props = {
 };
 
 const SHORTCUTS = [
-  { icon: "🎯", title: "Quiz", path: "/quiz", desc: "Teste o que aprendeu" },
-  { icon: "🃏", title: "Flashcards", path: "/flashcards", desc: "Revisar conceitos" },
-  { icon: "🎭", title: "Poesia", path: "/poetry", desc: "Reflexão criativa" },
-  { icon: "🤖", title: "AlegrIA", path: "/alegria", desc: "Pergunte ao chatbot" },
-  { icon: "🗺️", title: "Mapa Mental", path: "/mindmap", desc: "Visualizar conceitos" },
+  { Icon: Target, title: "Quiz", path: "/quiz", desc: "Teste o que aprendeu", accent: "text-orange-400" },
+  { Icon: Layers, title: "Flashcards", path: "/flashcards", desc: "Revisar conceitos", accent: "text-amber-400" },
+  { Icon: Drama, title: "Poesia", path: "/poetry", desc: "Reflexão criativa", accent: "text-pink-400" },
+  { Icon: Bot, title: "AlegrIA", path: "/alegria", desc: "Pergunte à tutora", accent: "text-violet-400" },
+  { Icon: Network, title: "Mapa Mental", path: "/mindmap", desc: "Visualizar conceitos", accent: "text-sky-400" },
 ];
 
 const ALL_TOOLS = [
-  { icon: "🎯", title: "Quiz", path: "/quiz", desc: "Teste seus conhecimentos" },
-  { icon: "🃏", title: "Flashcards", path: "/flashcards", desc: "Repetição espaçada" },
-  { icon: "📊", title: "Evidências", path: "/evidence", desc: "Base científica" },
-  { icon: "🎮", title: "Simulador", path: "/simulator", desc: "Cenários de decisão" },
-  { icon: "⚔️", title: "Debate", path: "/debate", desc: "Arena de argumentos" },
-  { icon: "🎭", title: "Poesia", path: "/poetry", desc: "Expressão criativa" },
-  { icon: "🏗️", title: "Co-design", path: "/codesign", desc: "Construção coletiva" },
-  { icon: "🧘", title: "Respiração", path: "/breathing", desc: "Técnicas guiadas" },
-  { icon: "🎯", title: "Roda da Vida", path: "/lifewheel", desc: "Avaliação de bem-estar" },
-  { icon: "📝", title: "Gratidão", path: "/gratitude", desc: "Diário de gratidão" },
-  { icon: "🧩", title: "Memória", path: "/memory", desc: "Jogo de memória" },
-  { icon: "🗺️", title: "Mapa Mental", path: "/mindmap", desc: "Mapeamento conceitual" },
-  { icon: "📊", title: "Emoções", path: "/emotions", desc: "Termômetro emocional" },
-  { icon: "🎲", title: "21 Dias", path: "/challenge21", desc: "Micro-hábitos" },
-  { icon: "🔬", title: "Hipóteses", path: "/hypothesis", desc: "Lab científico" },
-  { icon: "🏆", title: "Missões", path: "/missions", desc: "Desafios sociais" },
-  { icon: "🤖", title: "AlegrIA", path: "/alegria", desc: "Tutora socrática" },
+  { Icon: Target, title: "Quiz", path: "/quiz", desc: "Teste seus conhecimentos", accent: "text-orange-400" },
+  { Icon: Layers, title: "Flashcards", path: "/flashcards", desc: "Repetição espaçada", accent: "text-amber-400" },
+  { Icon: BarChart3, title: "Evidências", path: "/evidence", desc: "Base científica", accent: "text-blue-400" },
+  { Icon: Gamepad2, title: "Simulador", path: "/simulator", desc: "Cenários de decisão", accent: "text-emerald-400" },
+  { Icon: Swords, title: "Debate", path: "/debate", desc: "Arena de argumentos", accent: "text-red-400" },
+  { Icon: Drama, title: "Poesia", path: "/poetry", desc: "Expressão criativa", accent: "text-pink-400" },
+  { Icon: Blocks, title: "Co-design", path: "/codesign", desc: "Construção coletiva", accent: "text-indigo-400" },
+  { Icon: Wind, title: "Respiração", path: "/breathing", desc: "Técnicas guiadas", accent: "text-teal-400" },
+  { Icon: Compass, title: "Roda da Vida", path: "/lifewheel", desc: "Avaliação integral", accent: "text-emerald-400" },
+  { Icon: NotebookPen, title: "Gratidão", path: "/gratitude", desc: "Diário guiado", accent: "text-yellow-400" },
+  { Icon: Puzzle, title: "Memória", path: "/memory", desc: "Jogo cognitivo", accent: "text-purple-400" },
+  { Icon: Network, title: "Mapa Mental", path: "/mindmap", desc: "Mapeamento conceitual", accent: "text-sky-400" },
+  { Icon: Activity, title: "Emoções", path: "/emotions", desc: "Termômetro emocional", accent: "text-rose-400" },
+  { Icon: CalendarDays, title: "21 Dias", path: "/challenge21", desc: "Micro-hábitos", accent: "text-lime-400" },
+  { Icon: FlaskConical, title: "Hipóteses", path: "/hypothesis", desc: "Lab científico", accent: "text-cyan-400" },
+  { Icon: Award, title: "Missões", path: "/missions", desc: "Desafios sociais", accent: "text-amber-400" },
+  { Icon: Bot, title: "AlegrIA", path: "/alegria", desc: "Tutora socrática", accent: "text-violet-400" },
 ];
 
 function withCtx(path: string, moduleId: string, backHref: string, backLabel: string) {
