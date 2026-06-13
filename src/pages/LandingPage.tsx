@@ -73,7 +73,7 @@ export default function LandingPage() {
           <img
             src={heroYouth}
             alt="Jovens diversos celebrando o bem-estar baseado em ciência"
-            className="absolute inset-0 w-full h-full object-cover object-bottom"
+            className="img-cinematic absolute inset-0 w-full h-full object-cover object-bottom opacity-90"
             loading="eager"
             fetchPriority="high"
           />
