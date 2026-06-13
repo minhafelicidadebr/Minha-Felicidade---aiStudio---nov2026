@@ -67,10 +67,21 @@ export default function FutureSelfPage() {
 
   const generate = async () => {
     if (habit.trim().length < 5) return;
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
+      toast({ title: "Login necessario", description: "Entre para gerar sua linha do tempo com IA.", variant: "destructive" });
+      return;
+    }
+
     setLoading(true);
     setTimeline(null);
     try {
       const { data, error } = await supabase.functions.invoke("future-self", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
         body: { name, habit, value },
       });
       if (error) throw error;

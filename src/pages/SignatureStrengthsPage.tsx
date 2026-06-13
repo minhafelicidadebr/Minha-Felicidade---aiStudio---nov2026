@@ -158,9 +158,20 @@ export default function SignatureStrengthsPage() {
       toast({ title: "Faltam forças", description: "Selecione exatamente 5 forças." });
       return;
     }
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
+      toast({ title: "Login necessario", description: "Entre para gerar a carta com IA.", variant: "destructive" });
+      return;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("signature-strengths", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
         body: {
           strengths: picked.map((p) => p.name),
           context,

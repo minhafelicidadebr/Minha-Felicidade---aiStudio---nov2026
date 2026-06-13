@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Send, Loader2, ArrowRight, Brain, BookOpen, Quote } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/client";
 
 const SUGGESTED = [
   { q: "Estou ansioso com o vestibular", tag: "Ansiedade" },
@@ -24,6 +25,9 @@ const PREVIEW_BUBBLES = [
   "A ciência mostra que pequenos rituais reorganizam o cérebro (Killingsworth, 2010).",
   "Posso te sugerir 1 prática de 90 segundos?",
 ];
+
+const buildLocalPreview = (question: string) =>
+  `**Versao demo:** sua pergunta foi "${question}". No app completo, a AlegrIA responde com RAG do curso, fontes verificadas e historico da sua trilha.\n\nUma micro-pratica agora: por 30 segundos, note onde essa pergunta aparece no corpo e nomeie a emocao principal. Mente divagante se relaciona a menor bem-estar no estudo de Killingsworth & Gilbert (2010).\n\nQuer testar ao vivo com seguranca? Abra o app completo.`;
 
 /**
  * Innovation #1 (v2) — Live AlegrIA hero with ToT-visible reasoning,
@@ -74,16 +78,25 @@ export default function HeroAlegriaLive() {
     abortRef.current = controller;
 
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        setResponse(buildLocalPreview(q));
+        return;
+      }
+
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/aledria-chat`;
       const res = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           messages: [{ role: "user", content: q }],
-          moduleContext: "Demo público — landing page (visitante não autenticado). Responda em ≤120 palavras, com 1 evidência citada (Autor, Ano) e 1 micro-prática de 30s.",
+          moduleContext: "Demo autenticado na landing page. Responda em ate 120 palavras, com 1 evidencia citada (Autor, Ano) e 1 micro-pratica de 30s.",
         }),
         signal: controller.signal,
       });

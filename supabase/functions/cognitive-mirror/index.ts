@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { requireUser } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,6 +51,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    await requireUser(req.headers.get("Authorization"));
+
     const { concept, explanation } = await req.json();
     if (!explanation || explanation.length < 30) {
       return new Response(JSON.stringify({ error: "Explicação muito curta (mín. 30 caracteres)." }), {
@@ -96,8 +99,9 @@ serve(async (req) => {
     });
   } catch (e) {
     console.error("cognitive-mirror error:", e);
+    const status = e instanceof Error && e.message === "Authentication required" ? 401 : 500;
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

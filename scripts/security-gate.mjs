@@ -57,6 +57,9 @@ for (const file of sourceFiles) {
 const frontendFiles = walkFiles("src").filter((file) => /\.(ts|tsx)$/.test(file));
 for (const file of frontendFiles) {
   const text = readFileSync(file, "utf8");
+  if (/Authorization[\s\S]{0,120}VITE_SUPABASE_PUBLISHABLE_KEY|VITE_SUPABASE_PUBLISHABLE_KEY[\s\S]{0,120}Authorization/.test(text)) {
+    fail(`Frontend must not use the Supabase publishable key as a bearer token: ${file}`);
+  }
   if (/rpc\(["'](?:get_user_plan|user_has_feature)["']/.test(text)) {
     fail(`Frontend must not call legacy parameterized entitlement RPCs: ${file}`);
   }
@@ -66,6 +69,56 @@ for (const file of frontendFiles) {
     )
   ) {
     fail(`Frontend must not write subscription state directly: ${file}`);
+  }
+}
+
+const aiAuthHelper = "supabase/functions/_shared/auth.ts";
+if (!existsSync(aiAuthHelper)) {
+  fail(`Missing Edge Function auth helper: ${aiAuthHelper}`);
+} else {
+  const text = readIfExists(aiAuthHelper);
+  if (!text.includes('Deno.env.get("SUPABASE_ANON_KEY")') || !text.includes(".auth.getUser()")) {
+    fail("Edge Function auth helper must validate caller JWT with the Supabase anon key");
+  }
+  if (!text.includes("Authentication required")) {
+    fail("Edge Function auth helper must fail closed for unauthenticated requests");
+  }
+}
+
+const authenticatedAiFunctions = [
+  "supabase/functions/aledria-chat/index.ts",
+  "supabase/functions/cognitive-mirror/index.ts",
+  "supabase/functions/future-self/index.ts",
+  "supabase/functions/signature-strengths/index.ts",
+];
+
+for (const file of authenticatedAiFunctions) {
+  if (!existsSync(file)) {
+    fail(`Missing authenticated AI function: ${file}`);
+    continue;
+  }
+  const text = readIfExists(file);
+  if (!text.includes('../_shared/auth.ts') || !text.includes('requireUser(req.headers.get("Authorization"))')) {
+    fail(`AI Edge Function must require a verified caller JWT before calling the AI gateway: ${file}`);
+  }
+  if (!text.includes("Authentication required") || !text.includes("401")) {
+    fail(`AI Edge Function must return 401 for unauthenticated requests: ${file}`);
+  }
+}
+
+const alegriaPage = "src/pages/AlegriaPage.tsx";
+if (existsSync(alegriaPage)) {
+  const text = readIfExists(alegriaPage);
+  if (!text.includes("supabase.auth.getSession()") || !text.includes("session.access_token")) {
+    fail("AlegriaPage must send a real user session token to aledria-chat");
+  }
+}
+
+const alegriaHero = "src/components/landing/HeroAlegriaLive.tsx";
+if (existsSync(alegriaHero)) {
+  const text = readIfExists(alegriaHero);
+  if (!text.includes("buildLocalPreview") || !text.includes("session.access_token")) {
+    fail("HeroAlegriaLive must use a local unauthenticated preview and real session token for live calls");
   }
 }
 

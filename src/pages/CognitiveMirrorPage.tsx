@@ -102,10 +102,21 @@ export default function CognitiveMirrorPage() {
       toast({ title: "Explique com mais detalhes", description: "Pelo menos 15 palavras para uma análise rica.", variant: "destructive" });
       return;
     }
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
+      toast({ title: "Login necessario", description: "Entre para usar a analise com IA.", variant: "destructive" });
+      return;
+    }
+
     setLoading(true);
     setAnalysis(null);
     try {
       const { data, error } = await supabase.functions.invoke("cognitive-mirror", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
         body: { concept, explanation },
       });
       if (error) throw error;

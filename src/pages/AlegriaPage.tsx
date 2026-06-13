@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { modules } from "@/data/courseData";
 import BackToVideoBanner from "@/components/learning/BackToVideoBanner";
+import { supabase } from "@/integrations/supabase/client";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -63,9 +64,19 @@ const WELCOME_MESSAGE: Msg = {
 };
 
 async function streamChat({ messages, moduleContext, onDelta, onDone, onError }: { messages: Msg[]; moduleContext?: string; onDelta: (t: string) => void; onDone: () => void; onError: (msg: string) => void }) {
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+
+  if (sessionError || !session) {
+    onError("Faca login para usar a AlegrIA.");
+    return;
+  }
+
   const resp = await fetch(CHAT_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
     body: JSON.stringify({ messages, moduleContext }),
   });
   if (!resp.ok) {
