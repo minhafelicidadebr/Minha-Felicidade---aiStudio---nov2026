@@ -84,22 +84,11 @@ export default function LandingPage() {
           <div className="absolute inset-0 noise opacity-[0.12] mix-blend-overlay" />
         </div>
 
-        {/* Aurora orbs */}
-        <motion.div
-          className="absolute top-32 right-[8%] w-80 h-80 rounded-full bg-primary/20 blur-3xl pointer-events-none"
-          animate={{ y: [-30, 30, -30], scale: [1, 1.15, 1] }}
-          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute top-1/4 left-[6%] w-96 h-96 rounded-full bg-secondary/15 blur-3xl pointer-events-none"
-          animate={{ y: [20, -20, 20], scale: [1.1, 1, 1.1] }}
-          transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute top-40 left-1/3 w-56 h-56 rounded-full bg-accent/15 blur-3xl pointer-events-none"
-          animate={{ y: [10, -25, 10], x: [0, 20, 0] }}
-          transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }}
-        />
+        {/* Aurora orbs — premium drifting lights */}
+        <div className="orb-aurora top-32 right-[8%] w-80 h-80 bg-primary/35" />
+        <div className="orb-aurora top-1/4 left-[6%] w-96 h-96 bg-secondary/30" style={{ animationDelay: "-4s", animationDuration: "18s" }} />
+        <div className="orb-aurora top-40 left-1/3 w-56 h-56 bg-accent/30" style={{ animationDelay: "-8s", animationDuration: "16s" }} />
+        <div className="orb-aurora bottom-20 right-1/4 w-72 h-72 bg-primary/20" style={{ animationDelay: "-2s", animationDuration: "20s" }} />
 
         <div className="container relative max-w-5xl text-center pt-8 pb-32 flex-1 flex flex-col justify-center">
           <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}>
