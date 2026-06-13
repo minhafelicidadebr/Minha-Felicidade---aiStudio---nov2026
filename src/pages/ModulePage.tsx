@@ -154,10 +154,10 @@ export default function ModulePage() {
             className="flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-primary/5 via-secondary/5 to-primary/5 border border-primary/10 mb-8"
           >
             <motion.span
-              className="text-2xl"
-              animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }}
-              transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-            >{stimulus.icon}</motion.span>
+              className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10 text-primary shrink-0"
+              animate={{ rotate: [0, 6, -6, 0] }}
+              transition={{ duration: 3, repeat: Infinity, repeatDelay: 4 }}
+            ><stimulus.Icon className="w-5 h-5" /></motion.span>
             <p className="text-sm font-medium text-foreground/80">{stimulus.text}</p>
             <Sparkles className="w-4 h-4 text-primary ml-auto shrink-0" />
           </motion.div>
