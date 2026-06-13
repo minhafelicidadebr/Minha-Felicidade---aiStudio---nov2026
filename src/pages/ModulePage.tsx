@@ -23,31 +23,31 @@ const statusLabel = {
 };
 
 const activityDefs = [
-  { key: "alegria", icon: "🤖", title: "AlegrIA", path: "/alegria", check: () => true, desc: "Chatbot pedagógico", color: "from-violet-500/20 to-purple-500/20" },
-  { key: "quiz", icon: "🎯", title: "Quiz", path: "/quiz", check: (id: string) => quizQuestions.some(q => q.module === id), desc: "Teste seus conhecimentos", color: "from-orange-500/20 to-red-500/20" },
-  { key: "flashcards", icon: "🃏", title: "Flashcards", path: "/flashcards", check: (id: string) => flashcards.some(f => f.module === id), desc: "Repetição espaçada", color: "from-amber-500/20 to-yellow-500/20" },
-  { key: "evidence", icon: "📊", title: "Evidências", path: "/evidence", check: (id: string) => evidenceItems.some(e => e.module === id), desc: "Base científica", color: "from-blue-500/20 to-cyan-500/20" },
-  { key: "simulator", icon: "🎮", title: "Simulador", path: "/simulator", check: (id: string) => simulatorScenarios.some(s => s.module === id), desc: "Cenários de decisão", color: "from-green-500/20 to-emerald-500/20" },
-  { key: "debate", icon: "⚔️", title: "Debate", path: "/debate", check: (id: string) => debateTopics.some(d => d.module === id), desc: "Arena de argumentos", color: "from-red-500/20 to-pink-500/20" },
-  { key: "poetry", icon: "🎭", title: "Poesia", path: "/poetry", check: (id: string) => poems.some(p => p.module === id), desc: "Expressão criativa", color: "from-pink-500/20 to-rose-500/20" },
-  { key: "codesign", icon: "🏗️", title: "Co-design", path: "/codesign", check: (id: string) => coDesignTemplates.some(c => c.module === id), desc: "Construção coletiva", color: "from-indigo-500/20 to-blue-500/20" },
-  { key: "breathing", icon: "🧘", title: "Respiração", path: "/breathing", check: () => true, desc: "Técnicas de respiração", color: "from-teal-500/20 to-cyan-500/20" },
-  { key: "lifewheel", icon: "🎯", title: "Roda da Vida", path: "/lifewheel", check: () => true, desc: "Avaliação de bem-estar", color: "from-emerald-500/20 to-green-500/20" },
-  { key: "gratitude", icon: "📝", title: "Gratidão", path: "/gratitude", check: () => true, desc: "Diário de gratidão", color: "from-yellow-500/20 to-amber-500/20" },
-  { key: "memory", icon: "🧩", title: "Memória", path: "/memory", check: () => true, desc: "Jogo de memória", color: "from-purple-500/20 to-violet-500/20" },
-  { key: "mindmap", icon: "🗺️", title: "Mapa Mental", path: "/mindmap", check: () => true, desc: "Mapeamento conceitual", color: "from-sky-500/20 to-blue-500/20" },
-  { key: "emotions", icon: "📊", title: "Emoções", path: "/emotions", check: () => true, desc: "Rastreador emocional", color: "from-rose-500/20 to-pink-500/20" },
-  { key: "challenge21", icon: "🎲", title: "21 Dias", path: "/challenge21", check: () => true, desc: "Micro-hábitos diários", color: "from-lime-500/20 to-green-500/20" },
-  { key: "hypothesis", icon: "🔬", title: "Hipóteses", path: "/hypothesis", check: () => true, desc: "Laboratório científico", color: "from-cyan-500/20 to-teal-500/20" },
-  { key: "missions", icon: "🏆", title: "Missões", path: "/missions", check: () => true, desc: "Desafios sociais", color: "from-amber-500/20 to-orange-500/20" },
+  { key: "alegria", Icon: Bot, title: "AlegrIA", path: "/alegria", check: () => true, desc: "Tutora socrática", color: "from-violet-500/15 to-purple-500/10", accent: "text-violet-400" },
+  { key: "quiz", Icon: Target, title: "Quiz", path: "/quiz", check: (id: string) => quizQuestions.some(q => q.module === id), desc: "Avaliação ativa", color: "from-orange-500/15 to-red-500/10", accent: "text-orange-400" },
+  { key: "flashcards", Icon: Layers, title: "Flashcards", path: "/flashcards", check: (id: string) => flashcards.some(f => f.module === id), desc: "Repetição espaçada", color: "from-amber-500/15 to-yellow-500/10", accent: "text-amber-400" },
+  { key: "evidence", Icon: BarChart3, title: "Evidências", path: "/evidence", check: (id: string) => evidenceItems.some(e => e.module === id), desc: "Base científica", color: "from-blue-500/15 to-cyan-500/10", accent: "text-blue-400" },
+  { key: "simulator", Icon: Gamepad2, title: "Simulador", path: "/simulator", check: (id: string) => simulatorScenarios.some(s => s.module === id), desc: "Decisões reais", color: "from-green-500/15 to-emerald-500/10", accent: "text-emerald-400" },
+  { key: "debate", Icon: Swords, title: "Debate", path: "/debate", check: (id: string) => debateTopics.some(d => d.module === id), desc: "Arena dialética", color: "from-red-500/15 to-pink-500/10", accent: "text-red-400" },
+  { key: "poetry", Icon: Drama, title: "Poesia", path: "/poetry", check: (id: string) => poems.some(p => p.module === id), desc: "Expressão criativa", color: "from-pink-500/15 to-rose-500/10", accent: "text-pink-400" },
+  { key: "codesign", Icon: Blocks, title: "Co-design", path: "/codesign", check: (id: string) => coDesignTemplates.some(c => c.module === id), desc: "Construção coletiva", color: "from-indigo-500/15 to-blue-500/10", accent: "text-indigo-400" },
+  { key: "breathing", Icon: Wind, title: "Respiração", path: "/breathing", check: () => true, desc: "Regulação somática", color: "from-teal-500/15 to-cyan-500/10", accent: "text-teal-400" },
+  { key: "lifewheel", Icon: Compass, title: "Roda da Vida", path: "/lifewheel", check: () => true, desc: "Diagnóstico integral", color: "from-emerald-500/15 to-green-500/10", accent: "text-emerald-400" },
+  { key: "gratitude", Icon: NotebookPen, title: "Gratidão", path: "/gratitude", check: () => true, desc: "Journaling guiado", color: "from-yellow-500/15 to-amber-500/10", accent: "text-yellow-400" },
+  { key: "memory", Icon: Puzzle, title: "Memória", path: "/memory", check: () => true, desc: "Cognição lúdica", color: "from-purple-500/15 to-violet-500/10", accent: "text-purple-400" },
+  { key: "mindmap", Icon: Network, title: "Mapa Mental", path: "/mindmap", check: () => true, desc: "Mapeamento conceitual", color: "from-sky-500/15 to-blue-500/10", accent: "text-sky-400" },
+  { key: "emotions", Icon: Activity, title: "Emoções", path: "/emotions", check: () => true, desc: "Termômetro afetivo", color: "from-rose-500/15 to-pink-500/10", accent: "text-rose-400" },
+  { key: "challenge21", Icon: CalendarDays, title: "21 Dias", path: "/challenge21", check: () => true, desc: "Micro-hábitos", color: "from-lime-500/15 to-green-500/10", accent: "text-lime-400" },
+  { key: "hypothesis", Icon: FlaskConical, title: "Hipóteses", path: "/hypothesis", check: () => true, desc: "Lab científico", color: "from-cyan-500/15 to-teal-500/10", accent: "text-cyan-400" },
+  { key: "missions", Icon: Award, title: "Missões", path: "/missions", check: () => true, desc: "Desafios sociais", color: "from-amber-500/15 to-orange-500/10", accent: "text-amber-400" },
 ];
 
 const STIMULUS_PHRASES = [
-  { text: "Cada atividade concluída fortalece suas conexões neurais!", icon: "🧠" },
-  { text: "Você está construindo hábitos que duram toda a vida!", icon: "💪" },
-  { text: "A ciência mostra: aprender ativamente aumenta a retenção em 75%!", icon: "📈" },
-  { text: "Explore, pratique, domine — o aprendizado é uma aventura!", icon: "🚀" },
-  { text: "Seu cérebro agradece por cada desafio que você aceita!", icon: "✨" },
+  { text: "Cada atividade concluída fortalece suas conexões neurais.", Icon: Brain },
+  { text: "Você está construindo hábitos que duram toda a vida.", Icon: Dumbbell },
+  { text: "Aprender ativamente aumenta a retenção em 75%.", Icon: TrendingUp },
+  { text: "Explore, pratique, domine — aprendizado é jornada.", Icon: Rocket },
+  { text: "Seu cérebro agradece cada desafio que você aceita.", Icon: Sparkles },
 ];
 
 export default function ModulePage() {
