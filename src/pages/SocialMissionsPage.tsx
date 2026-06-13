@@ -59,7 +59,7 @@ export default function SocialMissionsPage() {
           <div className="relative rounded-3xl p-8 mb-8 bg-gradient-to-br from-red-500/10 to-orange-500/10 border border-border/30 overflow-hidden">
             <div className="absolute inset-0 noise opacity-30 pointer-events-none" />
             <div className="relative text-center">
-              <span className="text-6xl mb-3 block">🏆</span>
+              <div className="w-16 h-16 mx-auto mb-3 rounded-2xl icon-tile-premium flex items-center justify-center text-primary"><Trophy className="w-8 h-8" strokeWidth={1.5} /></div>
               <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">Missões Sociais</h1>
               <p className="text-muted-foreground text-sm">Desafios de impacto social baseados em evidências científicas</p>
             </div>
