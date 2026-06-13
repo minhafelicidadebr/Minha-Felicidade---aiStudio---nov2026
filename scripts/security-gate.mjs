@@ -29,6 +29,10 @@ function walkFiles(root) {
   });
 }
 
+function readIfExists(file) {
+  return existsSync(file) ? readFileSync(file, "utf8") : "";
+}
+
 const trackedFiles = gitLsFiles();
 const forbiddenEnvFiles = trackedFiles.filter((file) => {
   const name = basename(file);
@@ -50,16 +54,34 @@ for (const file of sourceFiles) {
   }
 }
 
+const frontendFiles = walkFiles("src").filter((file) => /\.(ts|tsx)$/.test(file));
+for (const file of frontendFiles) {
+  const text = readFileSync(file, "utf8");
+  if (/rpc\(["'](?:get_user_plan|user_has_feature)["']/.test(text)) {
+    fail(`Frontend must not call legacy parameterized entitlement RPCs: ${file}`);
+  }
+  if (
+    /from\(["'](?:user_subscriptions|organization_subscriptions)["']\)\s*\.\s*(?:insert|update|upsert|delete)\s*\(/.test(
+      text,
+    )
+  ) {
+    fail(`Frontend must not write subscription state directly: ${file}`);
+  }
+}
+
 const adminDashboardFunction = "supabase/functions/admin-dashboard/index.ts";
 if (!existsSync(adminDashboardFunction)) {
   fail(`Missing admin dashboard function: ${adminDashboardFunction}`);
 } else {
-  const text = readFileSync(adminDashboardFunction, "utf8");
+  const text = readIfExists(adminDashboardFunction);
   if (!text.includes('Deno.env.get("SUPABASE_ANON_KEY")')) {
     fail("admin-dashboard must use the anon key plus caller JWT, not privileged credentials");
   }
   if (!text.includes('rpc("get_learning_progress_overview"')) {
     fail("admin-dashboard must read progress through get_learning_progress_overview RPC");
+  }
+  if (/from\(["']user_progress["']/.test(text)) {
+    fail("admin-dashboard must not read user_progress directly");
   }
   if (/students\s*:|studentRows|full_name|studentEmail|studentUserId|email\s*:/.test(text)) {
     fail("admin-dashboard function must not return or assemble nominal student fields");
@@ -70,7 +92,7 @@ const generateReportFunction = "supabase/functions/generate-report/index.ts";
 if (!existsSync(generateReportFunction)) {
   fail(`Missing generate-report function: ${generateReportFunction}`);
 } else {
-  const text = readFileSync(generateReportFunction, "utf8");
+  const text = readIfExists(generateReportFunction);
   if (!text.includes("Cross-user reports are disabled")) {
     fail("generate-report must explicitly reject cross-user individual reports");
   }
@@ -83,7 +105,7 @@ const subscriptionHook = "src/hooks/useSubscription.ts";
 if (!existsSync(subscriptionHook)) {
   fail(`Missing subscription hook: ${subscriptionHook}`);
 } else {
-  const text = readFileSync(subscriptionHook, "utf8");
+  const text = readIfExists(subscriptionHook);
   if (!text.includes('rpc("get_my_plan"')) {
     fail("useSubscription must use get_my_plan self-scoped RPC");
   }
@@ -96,7 +118,7 @@ const adminPage = "src/pages/AdminPage.tsx";
 if (!existsSync(adminPage)) {
   fail(`Missing admin page: ${adminPage}`);
 } else {
-  const text = readFileSync(adminPage, "utf8");
+  const text = readIfExists(adminPage);
   if (/data\.students|students\.map|student\.full_name|student\.email|student\.user_id|download.*student/i.test(text)) {
     fail("AdminPage must not render nominal student records or individual report actions");
   }

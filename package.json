@@ -10,8 +10,9 @@
     "lint": "eslint . --max-warnings 0",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "audit:security": "npm audit --audit-level=moderate",
     "security:gate": "node scripts/security-gate.mjs",
-    "quality": "npm run lint && npm run typecheck && npm run test && npm run build && npm run security:gate",
+    "quality": "npm run audit:security && npm run lint && npm run typecheck && npm run test && npm run build && npm run security:gate",
     "test": "vitest run",
     "test:watch": "vitest"
   },
