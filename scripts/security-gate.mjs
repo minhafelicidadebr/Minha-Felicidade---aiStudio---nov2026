@@ -69,6 +69,25 @@ if (!existsSync(hardeningMigration)) {
   }
 }
 
+const grantsMigration = "supabase/migrations/20260613170000_rpc_execute_grants_hardening.sql";
+if (!existsSync(grantsMigration)) {
+  fail(`Missing RPC grant hardening migration: ${grantsMigration}`);
+} else {
+  const migration = readFileSync(grantsMigration, "utf8");
+  const requiredSnippets = [
+    "REVOKE EXECUTE ON FUNCTION public.get_user_plan(uuid) FROM PUBLIC, anon, authenticated",
+    "REVOKE EXECUTE ON FUNCTION public.user_has_feature(uuid, text) FROM PUBLIC, anon, authenticated",
+    "REVOKE EXECUTE ON FUNCTION public.get_my_profile() FROM PUBLIC, anon, authenticated",
+    "GRANT EXECUTE ON FUNCTION public.get_my_plan() TO authenticated",
+    "GRANT EXECUTE ON FUNCTION public.get_learning_progress_overview() TO authenticated",
+  ];
+  for (const snippet of requiredSnippets) {
+    if (!migration.includes(snippet)) {
+      fail(`RPC grant hardening migration is missing invariant snippet: ${snippet}`);
+    }
+  }
+}
+
 if (!existsSync("supabase/tests/security_invariants.sql")) {
   fail("Missing RLS test suite: supabase/tests/security_invariants.sql");
 }

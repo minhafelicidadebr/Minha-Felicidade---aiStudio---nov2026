@@ -5,7 +5,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(13);
+SELECT plan(15);
 
 SELECT has_table('public', 'data_access_logs', 'audit log table exists');
 
@@ -117,6 +117,42 @@ SELECT isnt_empty(
       AND grantee = 'authenticated'
   $$,
   'authenticated role can execute aggregate RPC after role checks inside function'
+);
+
+SELECT is(
+  (
+    SELECT COUNT(*)::integer
+    FROM information_schema.routine_privileges
+    WHERE routine_schema = 'public'
+      AND routine_name IN (
+        'get_my_profile',
+        'get_my_plan',
+        'user_has_my_feature',
+        'get_my_learning_progress_summary',
+        'get_learning_progress_overview'
+      )
+      AND grantee IN ('anon', 'PUBLIC')
+  ),
+  0,
+  'safe SECURITY DEFINER RPCs are not executable by anon or PUBLIC'
+);
+
+SELECT is(
+  (
+    SELECT COUNT(DISTINCT routine_name)::integer
+    FROM information_schema.routine_privileges
+    WHERE routine_schema = 'public'
+      AND routine_name IN (
+        'get_my_profile',
+        'get_my_plan',
+        'user_has_my_feature',
+        'get_my_learning_progress_summary',
+        'get_learning_progress_overview'
+      )
+      AND grantee = 'authenticated'
+  ),
+  5,
+  'authenticated role can execute every safe self-scoped RPC'
 );
 
 SELECT * FROM finish();
