@@ -261,7 +261,7 @@ export default function InlineActivities({ moduleId, backHref, backLabel }: Prop
               onClick={() => go(act.path)}
               className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted/50 transition-all text-left group border border-transparent hover:border-border/40"
             >
-              <span className="text-lg group-hover:scale-110 transition-transform">{act.icon}</span>
+              <span className={`w-9 h-9 rounded-lg flex items-center justify-center bg-muted/60 group-hover:scale-105 transition-transform ${act.accent}`}><act.Icon className="w-4 h-4" strokeWidth={1.75} /></span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold leading-tight">{act.title}</p>
                 <p className="text-[11px] text-muted-foreground">{act.desc}</p>
