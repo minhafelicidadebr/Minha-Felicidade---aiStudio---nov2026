@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, CheckCircle2, ChevronRight, RotateCcw, Sparkles, Trophy, X, XCircle, Zap, Layers } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronRight, RotateCcw, Sparkles, Trophy, X, XCircle, Zap, Layers, Bot, Target, Drama, Network, BarChart3, Gamepad2, Swords, Blocks, Wind, Compass, NotebookPen, Puzzle, Activity, CalendarDays, FlaskConical, Award } from "lucide-react";
 import { quizQuestions, flashcards } from "@/data/courseData";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
