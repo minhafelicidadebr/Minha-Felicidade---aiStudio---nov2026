@@ -73,7 +73,7 @@ export default function LandingPage() {
           <img
             src={heroYouth}
             alt="Jovens diversos celebrando o bem-estar baseado em ciência"
-            className="absolute inset-0 w-full h-full object-cover object-bottom"
+            className="img-cinematic absolute inset-0 w-full h-full object-cover object-bottom opacity-90"
             loading="eager"
             fetchPriority="high"
           />
@@ -84,22 +84,11 @@ export default function LandingPage() {
           <div className="absolute inset-0 noise opacity-[0.12] mix-blend-overlay" />
         </div>
 
-        {/* Aurora orbs */}
-        <motion.div
-          className="absolute top-32 right-[8%] w-80 h-80 rounded-full bg-primary/20 blur-3xl pointer-events-none"
-          animate={{ y: [-30, 30, -30], scale: [1, 1.15, 1] }}
-          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute top-1/4 left-[6%] w-96 h-96 rounded-full bg-secondary/15 blur-3xl pointer-events-none"
-          animate={{ y: [20, -20, 20], scale: [1.1, 1, 1.1] }}
-          transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute top-40 left-1/3 w-56 h-56 rounded-full bg-accent/15 blur-3xl pointer-events-none"
-          animate={{ y: [10, -25, 10], x: [0, 20, 0] }}
-          transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }}
-        />
+        {/* Aurora orbs — premium drifting lights */}
+        <div className="orb-aurora top-32 right-[8%] w-80 h-80 bg-primary/35" />
+        <div className="orb-aurora top-1/4 left-[6%] w-96 h-96 bg-secondary/30" style={{ animationDelay: "-4s", animationDuration: "18s" }} />
+        <div className="orb-aurora top-40 left-1/3 w-56 h-56 bg-accent/30" style={{ animationDelay: "-8s", animationDuration: "16s" }} />
+        <div className="orb-aurora bottom-20 right-1/4 w-72 h-72 bg-primary/20" style={{ animationDelay: "-2s", animationDuration: "20s" }} />
 
         <div className="container relative max-w-5xl text-center pt-8 pb-32 flex-1 flex flex-col justify-center">
           <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}>
@@ -180,23 +169,25 @@ export default function LandingPage() {
               Sem cartão de crédito · Cancele quando quiser · Adotado por +120 escolas
             </motion.p>
 
-            {/* Trust badges */}
+            {/* Trust badges — premium chips */}
             <motion.div
-              className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 mb-10"
+              className="flex flex-wrap items-center justify-center gap-2.5 mb-10"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.9 }}
             >
               {trustBadges.map((b) => (
-                <div key={b.label} className="flex items-center gap-1.5 text-foreground/60">
-                  <b.icon className="w-3.5 h-3.5" />
+                <div key={b.label} className="trust-chip text-foreground/75">
+                  <span className="icon-tile-soft w-6 h-6 rounded-md">
+                    <b.icon className="w-3.5 h-3.5" />
+                  </span>
                   <span className="text-xs font-semibold uppercase tracking-wider">{b.label}</span>
                 </div>
               ))}
             </motion.div>
           </motion.div>
 
-          {/* Stats — floating glass tiles */}
+          {/* Stats — premium floating tiles */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 max-w-4xl mx-auto w-full">
             {stats.map((s) => (
               <motion.div
@@ -204,11 +195,13 @@ export default function LandingPage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1 + s.delay, duration: 0.6 }}
-                className="group p-4 md:p-5 rounded-2xl glass-card hover:shadow-float transition-all duration-500 hover:-translate-y-1"
+                className="stat-tile group p-4 md:p-5 rounded-2xl text-center"
               >
-                <s.icon className="w-6 h-6 text-primary mb-2 mx-auto group-hover:scale-110 transition-transform" />
-                <div className="text-xl md:text-2xl font-display font-bold">{s.value}</div>
-                <div className="text-[11px] md:text-xs text-muted-foreground leading-tight">{s.label}</div>
+                <span className="icon-tile-premium w-11 h-11 rounded-xl mb-3 mx-auto group-hover:rotate-3 transition-transform">
+                  <s.icon className="w-5 h-5" />
+                </span>
+                <div className="text-xl md:text-2xl font-display font-bold text-gradient-aurora">{s.value}</div>
+                <div className="text-[11px] md:text-xs text-muted-foreground leading-tight mt-1">{s.label}</div>
               </motion.div>
             ))}
           </div>
@@ -250,7 +243,7 @@ export default function LandingPage() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="relative rounded-[2rem] overflow-hidden shadow-float mb-16 aspect-[16/9] md:aspect-[21/9]"
+            className="img-frame-premium mb-16 aspect-[16/9] md:aspect-[21/9] group"
           >
             <img
               src={youthConnection}
@@ -258,12 +251,12 @@ export default function LandingPage() {
               width={1920}
               height={1080}
               loading="lazy"
-              className="w-full h-full object-cover"
+              className="img-cinematic w-full h-full object-cover group-hover:scale-[1.03]"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-transparent to-transparent" />
 
-            <div className="absolute inset-0 flex items-end md:items-center p-8 md:p-16">
+            <div className="absolute inset-0 flex items-end md:items-center p-8 md:p-16 z-10">
               <motion.div
                 className="max-w-lg"
                 initial={{ opacity: 0, y: 30 }}
@@ -271,7 +264,7 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 transition={{ delay: 0.4, duration: 0.8 }}
               >
-                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-primary text-xs font-bold mb-4 uppercase tracking-wider">
+                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-primary text-xs font-bold mb-4 uppercase tracking-wider shadow-warm">
                   <Sparkles className="w-3.5 h-3.5" /> A transformação é real
                 </span>
                 <h2 className="text-3xl md:text-5xl font-display font-bold leading-[1.05] text-foreground drop-shadow-lg">
@@ -286,7 +279,7 @@ export default function LandingPage() {
 
             {/* Floating chip */}
             <motion.div
-              className="absolute top-6 right-6 hidden md:flex items-center gap-2 glass-card px-4 py-2 rounded-full"
+              className="absolute top-6 right-6 hidden md:flex items-center gap-2 glass-card px-4 py-2 rounded-full z-10 shadow-warm"
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -299,10 +292,10 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-2 gap-6">
             {[
-              { icon: "🎭", title: "Conceitos Errôneos", desc: "Descubra por que dinheiro, notas e corpo perfeito NÃO sustentam felicidade.", gradient: "gradient-card-coral" },
-              { icon: "🐛", title: "Vieses Cognitivos", desc: "Entenda como a adaptação hedônica e a comparação social sabotam seu bem-estar.", gradient: "gradient-card-navy" },
-              { icon: "⚡", title: "Rewirements", desc: "6 práticas validadas pela ciência para reprogramar seu cérebro para felicidade.", gradient: "gradient-card-gold" },
-              { icon: "🚀", title: "Hábitos Duráveis", desc: "WOOP, Implementation Intentions e Growth Mindset para mudança permanente.", gradient: "gradient-card-coral" },
+              { icon: "🎭", title: "Conceitos Errôneos", desc: "Descubra por que dinheiro, notas e corpo perfeito NÃO sustentam felicidade." },
+              { icon: "🐛", title: "Vieses Cognitivos", desc: "Entenda como a adaptação hedônica e a comparação social sabotam seu bem-estar." },
+              { icon: "⚡", title: "Rewirements", desc: "6 práticas validadas pela ciência para reprogramar seu cérebro para felicidade." },
+              { icon: "🚀", title: "Hábitos Duráveis", desc: "WOOP, Implementation Intentions e Growth Mindset para mudança permanente." },
             ].map((f, i) => (
               <motion.div
                 key={f.title}
@@ -310,9 +303,11 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className={`p-8 rounded-3xl ${f.gradient} border border-border/50 hover:shadow-float transition-all duration-500 group hover:-translate-y-1`}
+                className="card-premium p-8 rounded-3xl group"
               >
-                <span className="text-4xl mb-4 block group-hover:scale-110 transition-transform inline-block">{f.icon}</span>
+                <span className="icon-tile-premium w-16 h-16 rounded-2xl mb-5 text-3xl group-hover:rotate-6 transition-transform">
+                  {f.icon}
+                </span>
                 <h3 className="font-display font-bold text-xl mb-2 group-hover:text-primary transition-colors">{f.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </motion.div>
@@ -349,7 +344,7 @@ export default function LandingPage() {
               width={1600}
               height={1067}
               loading="lazy"
-              className="absolute inset-0 w-full h-full object-cover"
+              className="img-cinematic absolute inset-0 w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-background/30 via-transparent to-primary/20" />
             <div className="absolute inset-0 lg:hidden bg-gradient-to-b from-transparent to-background/80" />
