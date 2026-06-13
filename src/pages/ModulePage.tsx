@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { modules, quizQuestions, flashcards, evidenceItems, videoLessons } from "@/data/courseData";
 import { moduleContents, simulatorScenarios, debateTopics, poems, coDesignTemplates } from "@/data/moduleContents";
-import { ArrowLeft, Clock, AlertTriangle, CheckCircle2, Info, Lightbulb, ArrowRight, Play, ExternalLink, Zap, X, Sparkles, Trophy, Star, Rocket, Maximize2 } from "lucide-react";
+import { ArrowLeft, Clock, AlertTriangle, CheckCircle2, Info, Lightbulb, ArrowRight, Play, ExternalLink, Zap, X, Sparkles, Trophy, Star, Rocket, Maximize2, Bot, Target, Layers, BarChart3, Gamepad2, Swords, Drama, Blocks, Wind, Compass, NotebookPen, Puzzle, Network, Activity, CalendarDays, FlaskConical, Award, Brain, Dumbbell, TrendingUp } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { AlegriaFAB } from "@/components/AlegriaCTA";
