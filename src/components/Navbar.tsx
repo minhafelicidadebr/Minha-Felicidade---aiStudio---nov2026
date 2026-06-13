@@ -8,7 +8,7 @@ import DarkModeToggle from "@/components/DarkModeToggle";
 
 const links = [
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/alegria", label: "🤖 AlegrIA" },
+  { href: "/alegria", label: "AlegrIA" },
   { href: "/quiz", label: "Quiz" },
   { href: "/flashcards", label: "Flashcards" },
   { href: "/evidence", label: "Evidências" },
