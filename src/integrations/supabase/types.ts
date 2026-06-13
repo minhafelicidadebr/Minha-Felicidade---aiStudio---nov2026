@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      data_access_logs: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          purpose: string
+          resource: string
+          row_count: number | null
+          scope: Json
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          purpose: string
+          resource: string
+          row_count?: number | null
+          scope?: Json
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          purpose?: string
+          resource?: string
+          row_count?: number | null
+          scope?: Json
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           billing_interval: string | null
@@ -352,6 +385,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_learning_progress_overview: { Args: never; Returns: Json }
+      get_my_learning_progress_summary: { Args: never; Returns: Json }
+      get_my_plan: { Args: never; Returns: Json }
+      get_my_profile: { Args: never; Returns: Json }
       get_user_plan: { Args: { _user_id: string }; Returns: Json }
       has_role: {
         Args: {
@@ -364,6 +401,7 @@ export type Database = {
         Args: { _feature: string; _user_id: string }
         Returns: boolean
       }
+      user_has_my_feature: { Args: { _feature: string }; Returns: boolean }
     }
     Enums: {
       app_role: "student" | "teacher" | "manager"
