@@ -63,6 +63,9 @@ for (const file of frontendFiles) {
   if (/rpc\(["'](?:get_user_plan|user_has_feature)["']/.test(text)) {
     fail(`Frontend must not call legacy parameterized entitlement RPCs: ${file}`);
   }
+  if (/from\(["']user_roles["']\)/.test(text)) {
+    fail(`Frontend must not read user_roles directly; use get_my_profile self-scoped RPC: ${file}`);
+  }
   if (
     /from\(["'](?:user_subscriptions|organization_subscriptions)["']\)\s*\.\s*(?:insert|update|upsert|delete)\s*\(/.test(
       text,
@@ -282,6 +285,19 @@ if (!existsSync(adminPage)) {
   const text = readIfExists(adminPage);
   if (/data\.students|students\.map|student\.full_name|student\.email|student\.user_id|download.*student/i.test(text)) {
     fail("AdminPage must not render nominal student records or individual report actions");
+  }
+}
+
+const dashboardPage = "src/pages/DashboardPage.tsx";
+if (!existsSync(dashboardPage)) {
+  fail(`Missing dashboard page: ${dashboardPage}`);
+} else {
+  const text = readIfExists(dashboardPage);
+  if (!text.includes('rpc("get_my_profile"') || text.includes('from("user_roles"')) {
+    fail("DashboardPage must use get_my_profile for role-aware UI and avoid direct user_roles reads");
+  }
+  if (!text.includes("hasAnyRole(roles, [\"teacher\", \"manager\"])")) {
+    fail("DashboardPage must derive admin affordances from the complete role set");
   }
 }
 

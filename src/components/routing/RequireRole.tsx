@@ -1,25 +1,9 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { hasAnyRole, parseProfileRoles, type AppRole, type ProfileRolesPayload } from "@/lib/auth-profile";
 
-type AppRole = "student" | "teacher" | "manager";
 type RoleStatus = "checking" | "allowed" | "denied";
-
-type ProfilePayload = {
-  roles?: AppRole[] | string;
-};
-
-function parseRoles(payload: ProfilePayload | null): AppRole[] {
-  if (!payload?.roles) return [];
-  if (Array.isArray(payload.roles)) return payload.roles;
-
-  try {
-    const parsed = JSON.parse(payload.roles);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
 
 export default function RequireRole({
   allowedRoles,
@@ -43,8 +27,8 @@ export default function RequireRole({
         return;
       }
 
-      const roles = parseRoles(data as ProfilePayload | null);
-      setStatus(roles.some((role) => allowedRoleSet.has(role)) ? "allowed" : "denied");
+      const roles = parseProfileRoles(data as ProfileRolesPayload | null);
+      setStatus(hasAnyRole(roles, Array.from(allowedRoleSet)) ? "allowed" : "denied");
     }
 
     checkRole();

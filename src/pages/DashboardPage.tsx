@@ -5,6 +5,7 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { modules, videoLessons } from "@/data/courseData";
+import { hasAnyRole, parseProfileRoles, type AppRole, type ProfileRolesPayload } from "@/lib/auth-profile";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { BookOpen, Play, Trophy, Flame, ArrowRight, LogOut, Download, Star, BarChart3, Target, Settings } from "lucide-react";
@@ -13,6 +14,9 @@ import { AlegriaHeroCard, AlegriaTag } from "@/components/AlegriaCTA";
 
 type ProgressRecord = Tables<"user_progress">;
 type ProfileRecord = Tables<"profiles">;
+type DashboardProfilePayload = ProfileRolesPayload & {
+  profile?: ProfileRecord | null;
+};
 type ProgressReport = {
   generatedAt: string;
   student: { name: string };
@@ -50,7 +54,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
   const [progress, setProgress] = useState<ProgressRecord[]>([]);
-  const [userRole, setUserRole] = useState<string>("student");
+  const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
   const { toast } = useToast();
@@ -59,12 +63,14 @@ export default function DashboardPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!session) { navigate("/auth"); return; }
       setUser(session.user);
-      const { data: prof } = await supabase.from("profiles").select("*").eq("user_id", session.user.id).single();
-      setProfile(prof);
-      const { data: prog } = await supabase.from("user_progress").select("*").eq("user_id", session.user.id);
+      const [{ data: profilePayload }, { data: prog }] = await Promise.all([
+        supabase.rpc("get_my_profile"),
+        supabase.from("user_progress").select("*").eq("user_id", session.user.id),
+      ]);
+      const profileResult = profilePayload as DashboardProfilePayload | null;
+      setProfile(profileResult?.profile ?? null);
+      setRoles(parseProfileRoles(profileResult));
       setProgress(prog || []);
-      const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", session.user.id);
-      if (roles && roles.length > 0) setUserRole(roles[0].role);
       if (!prog || prog.length === 0) {
         const shown = localStorage.getItem("felicidade_welcome_shown");
         if (!shown) { setShowWelcome(true); localStorage.setItem("felicidade_welcome_shown", "1"); }
@@ -94,6 +100,7 @@ export default function DashboardPage() {
   const levelProgress = (totalXp % 100);
   const earned = ACHIEVEMENTS.filter(a => a.check(progress));
   const getModuleProgress = (moduleId: string) => progress.filter((p) => p.module_id === moduleId && p.completed).length;
+  const canAccessAdmin = hasAnyRole(roles, ["teacher", "manager"]);
 
   const weekData = useMemo(() => {
     const days = getLast7Days();
@@ -194,7 +201,7 @@ export default function DashboardPage() {
               <p className="text-muted-foreground mt-1">Continue sua jornada de bem-estar</p>
             </div>
             <div className="flex items-center gap-2">
-              {(userRole === "teacher" || userRole === "manager") && (
+              {canAccessAdmin && (
                 <button onClick={() => navigate("/admin")} className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-accent text-accent-foreground text-sm font-semibold">
                   <BarChart3 className="w-4 h-4" /> Painel
                 </button>
