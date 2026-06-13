@@ -234,7 +234,7 @@ export default function InlineActivities({ moduleId, backHref, backLabel }: Prop
                   onClick={() => go(t.path)}
                   className="p-3 rounded-2xl glass-card border border-border/30 hover:border-primary/40 hover:shadow-warm transition-all text-left"
                 >
-                  <span className="text-2xl block mb-1">{t.icon}</span>
+                  <span className={`icon-tile-premium w-10 h-10 rounded-xl flex items-center justify-center mb-2 ${t.accent}`}><t.Icon className="w-4 h-4" strokeWidth={1.75} /></span>
                   <p className="font-display font-bold text-sm">{t.title}</p>
                   <p className="text-[10px] text-muted-foreground">{t.desc}</p>
                 </button>
