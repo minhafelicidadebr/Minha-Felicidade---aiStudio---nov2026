@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, CheckCircle2, ChevronRight, RotateCcw, Sparkles, Trophy, X, XCircle, Zap, Layers } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronRight, RotateCcw, Sparkles, Trophy, X, XCircle, Zap, Layers, Bot, Target, Drama, Network, BarChart3, Gamepad2, Swords, Blocks, Wind, Compass, NotebookPen, Puzzle, Activity, CalendarDays, FlaskConical, Award } from "lucide-react";
 import { quizQuestions, flashcards } from "@/data/courseData";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -16,31 +16,31 @@ type Props = {
 };
 
 const SHORTCUTS = [
-  { icon: "🎯", title: "Quiz", path: "/quiz", desc: "Teste o que aprendeu" },
-  { icon: "🃏", title: "Flashcards", path: "/flashcards", desc: "Revisar conceitos" },
-  { icon: "🎭", title: "Poesia", path: "/poetry", desc: "Reflexão criativa" },
-  { icon: "🤖", title: "AlegrIA", path: "/alegria", desc: "Pergunte ao chatbot" },
-  { icon: "🗺️", title: "Mapa Mental", path: "/mindmap", desc: "Visualizar conceitos" },
+  { Icon: Target, title: "Quiz", path: "/quiz", desc: "Teste o que aprendeu", accent: "text-orange-400" },
+  { Icon: Layers, title: "Flashcards", path: "/flashcards", desc: "Revisar conceitos", accent: "text-amber-400" },
+  { Icon: Drama, title: "Poesia", path: "/poetry", desc: "Reflexão criativa", accent: "text-pink-400" },
+  { Icon: Bot, title: "AlegrIA", path: "/alegria", desc: "Pergunte à tutora", accent: "text-violet-400" },
+  { Icon: Network, title: "Mapa Mental", path: "/mindmap", desc: "Visualizar conceitos", accent: "text-sky-400" },
 ];
 
 const ALL_TOOLS = [
-  { icon: "🎯", title: "Quiz", path: "/quiz", desc: "Teste seus conhecimentos" },
-  { icon: "🃏", title: "Flashcards", path: "/flashcards", desc: "Repetição espaçada" },
-  { icon: "📊", title: "Evidências", path: "/evidence", desc: "Base científica" },
-  { icon: "🎮", title: "Simulador", path: "/simulator", desc: "Cenários de decisão" },
-  { icon: "⚔️", title: "Debate", path: "/debate", desc: "Arena de argumentos" },
-  { icon: "🎭", title: "Poesia", path: "/poetry", desc: "Expressão criativa" },
-  { icon: "🏗️", title: "Co-design", path: "/codesign", desc: "Construção coletiva" },
-  { icon: "🧘", title: "Respiração", path: "/breathing", desc: "Técnicas guiadas" },
-  { icon: "🎯", title: "Roda da Vida", path: "/lifewheel", desc: "Avaliação de bem-estar" },
-  { icon: "📝", title: "Gratidão", path: "/gratitude", desc: "Diário de gratidão" },
-  { icon: "🧩", title: "Memória", path: "/memory", desc: "Jogo de memória" },
-  { icon: "🗺️", title: "Mapa Mental", path: "/mindmap", desc: "Mapeamento conceitual" },
-  { icon: "📊", title: "Emoções", path: "/emotions", desc: "Termômetro emocional" },
-  { icon: "🎲", title: "21 Dias", path: "/challenge21", desc: "Micro-hábitos" },
-  { icon: "🔬", title: "Hipóteses", path: "/hypothesis", desc: "Lab científico" },
-  { icon: "🏆", title: "Missões", path: "/missions", desc: "Desafios sociais" },
-  { icon: "🤖", title: "AlegrIA", path: "/alegria", desc: "Tutora socrática" },
+  { Icon: Target, title: "Quiz", path: "/quiz", desc: "Teste seus conhecimentos", accent: "text-orange-400" },
+  { Icon: Layers, title: "Flashcards", path: "/flashcards", desc: "Repetição espaçada", accent: "text-amber-400" },
+  { Icon: BarChart3, title: "Evidências", path: "/evidence", desc: "Base científica", accent: "text-blue-400" },
+  { Icon: Gamepad2, title: "Simulador", path: "/simulator", desc: "Cenários de decisão", accent: "text-emerald-400" },
+  { Icon: Swords, title: "Debate", path: "/debate", desc: "Arena de argumentos", accent: "text-red-400" },
+  { Icon: Drama, title: "Poesia", path: "/poetry", desc: "Expressão criativa", accent: "text-pink-400" },
+  { Icon: Blocks, title: "Co-design", path: "/codesign", desc: "Construção coletiva", accent: "text-indigo-400" },
+  { Icon: Wind, title: "Respiração", path: "/breathing", desc: "Técnicas guiadas", accent: "text-teal-400" },
+  { Icon: Compass, title: "Roda da Vida", path: "/lifewheel", desc: "Avaliação integral", accent: "text-emerald-400" },
+  { Icon: NotebookPen, title: "Gratidão", path: "/gratitude", desc: "Diário guiado", accent: "text-yellow-400" },
+  { Icon: Puzzle, title: "Memória", path: "/memory", desc: "Jogo cognitivo", accent: "text-purple-400" },
+  { Icon: Network, title: "Mapa Mental", path: "/mindmap", desc: "Mapeamento conceitual", accent: "text-sky-400" },
+  { Icon: Activity, title: "Emoções", path: "/emotions", desc: "Termômetro emocional", accent: "text-rose-400" },
+  { Icon: CalendarDays, title: "21 Dias", path: "/challenge21", desc: "Micro-hábitos", accent: "text-lime-400" },
+  { Icon: FlaskConical, title: "Hipóteses", path: "/hypothesis", desc: "Lab científico", accent: "text-cyan-400" },
+  { Icon: Award, title: "Missões", path: "/missions", desc: "Desafios sociais", accent: "text-amber-400" },
+  { Icon: Bot, title: "AlegrIA", path: "/alegria", desc: "Tutora socrática", accent: "text-violet-400" },
 ];
 
 function withCtx(path: string, moduleId: string, backHref: string, backLabel: string) {
@@ -234,7 +234,7 @@ export default function InlineActivities({ moduleId, backHref, backLabel }: Prop
                   onClick={() => go(t.path)}
                   className="p-3 rounded-2xl glass-card border border-border/30 hover:border-primary/40 hover:shadow-warm transition-all text-left"
                 >
-                  <span className="text-2xl block mb-1">{t.icon}</span>
+                  <span className={`icon-tile-premium w-10 h-10 rounded-xl flex items-center justify-center mb-2 ${t.accent}`}><t.Icon className="w-4 h-4" strokeWidth={1.75} /></span>
                   <p className="font-display font-bold text-sm">{t.title}</p>
                   <p className="text-[10px] text-muted-foreground">{t.desc}</p>
                 </button>
@@ -261,7 +261,7 @@ export default function InlineActivities({ moduleId, backHref, backLabel }: Prop
               onClick={() => go(act.path)}
               className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted/50 transition-all text-left group border border-transparent hover:border-border/40"
             >
-              <span className="text-lg group-hover:scale-110 transition-transform">{act.icon}</span>
+              <span className={`w-9 h-9 rounded-lg flex items-center justify-center bg-muted/60 group-hover:scale-105 transition-transform ${act.accent}`}><act.Icon className="w-4 h-4" strokeWidth={1.75} /></span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold leading-tight">{act.title}</p>
                 <p className="text-[11px] text-muted-foreground">{act.desc}</p>

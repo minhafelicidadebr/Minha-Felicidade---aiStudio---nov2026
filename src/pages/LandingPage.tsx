@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Play, BookOpen, Sparkles, Users, Star, TrendingUp, Heart, ArrowRight, ArrowDown, Shield, Zap, GraduationCap } from "lucide-react";
+import { Play, BookOpen, Sparkles, Users, Star, TrendingUp, Heart, ArrowRight, ArrowDown, Shield, Zap, GraduationCap, Drama, Brain, Compass, Rocket } from "lucide-react";
 import heroYouth from "@/assets/hero-youth-2026.jpg";
 import logoIcon from "@/assets/logo-icon.png";
 import logoLightBg from "@/assets/logo-light-bg.png";
@@ -292,10 +292,10 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-2 gap-6">
             {[
-              { icon: "🎭", title: "Conceitos Errôneos", desc: "Descubra por que dinheiro, notas e corpo perfeito NÃO sustentam felicidade." },
-              { icon: "🐛", title: "Vieses Cognitivos", desc: "Entenda como a adaptação hedônica e a comparação social sabotam seu bem-estar." },
-              { icon: "⚡", title: "Rewirements", desc: "6 práticas validadas pela ciência para reprogramar seu cérebro para felicidade." },
-              { icon: "🚀", title: "Hábitos Duráveis", desc: "WOOP, Implementation Intentions e Growth Mindset para mudança permanente." },
+              { Icon: Drama, title: "Conceitos Errôneos", desc: "Descubra por que dinheiro, notas e corpo perfeito NÃO sustentam felicidade.", accent: "text-pink-400" },
+              { Icon: Brain, title: "Vieses Cognitivos", desc: "Entenda como a adaptação hedônica e a comparação social sabotam seu bem-estar.", accent: "text-violet-400" },
+              { Icon: Compass, title: "Rewirements", desc: "6 práticas validadas pela ciência para reprogramar seu cérebro para felicidade.", accent: "text-emerald-400" },
+              { Icon: Rocket, title: "Hábitos Duráveis", desc: "WOOP, Implementation Intentions e Growth Mindset para mudança permanente.", accent: "text-orange-400" },
             ].map((f, i) => (
               <motion.div
                 key={f.title}
@@ -305,8 +305,8 @@ export default function LandingPage() {
                 transition={{ delay: i * 0.1 }}
                 className="card-premium p-8 rounded-3xl group"
               >
-                <span className="icon-tile-premium w-16 h-16 rounded-2xl mb-5 text-3xl group-hover:rotate-6 transition-transform">
-                  {f.icon}
+                <span className={`icon-tile-premium w-16 h-16 rounded-2xl mb-5 flex items-center justify-center group-hover:rotate-6 transition-transform ${f.accent}`}>
+                  <f.Icon className="w-7 h-7" strokeWidth={1.5} />
                 </span>
                 <h3 className="font-display font-bold text-xl mb-2 group-hover:text-primary transition-colors">{f.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
