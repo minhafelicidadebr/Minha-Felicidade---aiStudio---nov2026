@@ -132,7 +132,7 @@ export default function SocialMissionsPage() {
                         <button onClick={() => toggleComplete(mission)}
                           className={`w-full py-3 rounded-2xl font-bold text-sm transition-all ${done ? "bg-muted text-muted-foreground" : "gradient-institute text-primary-foreground shadow-warm hover:shadow-glow"}`}
                         >
-                          {done ? "↩️ Desmarcar" : "✅ Completar Missão"}
+                          {done ? (<span className="inline-flex items-center gap-2 justify-center"><RotateCcw className="w-4 h-4" /> Desmarcar</span>) : (<span className="inline-flex items-center gap-2 justify-center"><Check className="w-4 h-4" /> Completar Missão</span>)}
                         </button>
                       </motion.div>
                     )}
