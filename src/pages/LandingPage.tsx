@@ -169,23 +169,25 @@ export default function LandingPage() {
               Sem cartão de crédito · Cancele quando quiser · Adotado por +120 escolas
             </motion.p>
 
-            {/* Trust badges */}
+            {/* Trust badges — premium chips */}
             <motion.div
-              className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 mb-10"
+              className="flex flex-wrap items-center justify-center gap-2.5 mb-10"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.9 }}
             >
               {trustBadges.map((b) => (
-                <div key={b.label} className="flex items-center gap-1.5 text-foreground/60">
-                  <b.icon className="w-3.5 h-3.5" />
+                <div key={b.label} className="trust-chip text-foreground/75">
+                  <span className="icon-tile-soft w-6 h-6 rounded-md">
+                    <b.icon className="w-3.5 h-3.5" />
+                  </span>
                   <span className="text-xs font-semibold uppercase tracking-wider">{b.label}</span>
                 </div>
               ))}
             </motion.div>
           </motion.div>
 
-          {/* Stats — floating glass tiles */}
+          {/* Stats — premium floating tiles */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 max-w-4xl mx-auto w-full">
             {stats.map((s) => (
               <motion.div
@@ -193,11 +195,13 @@ export default function LandingPage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1 + s.delay, duration: 0.6 }}
-                className="group p-4 md:p-5 rounded-2xl glass-card hover:shadow-float transition-all duration-500 hover:-translate-y-1"
+                className="stat-tile group p-4 md:p-5 rounded-2xl text-center"
               >
-                <s.icon className="w-6 h-6 text-primary mb-2 mx-auto group-hover:scale-110 transition-transform" />
-                <div className="text-xl md:text-2xl font-display font-bold">{s.value}</div>
-                <div className="text-[11px] md:text-xs text-muted-foreground leading-tight">{s.label}</div>
+                <span className="icon-tile-premium w-11 h-11 rounded-xl mb-3 mx-auto group-hover:rotate-3 transition-transform">
+                  <s.icon className="w-5 h-5" />
+                </span>
+                <div className="text-xl md:text-2xl font-display font-bold text-gradient-aurora">{s.value}</div>
+                <div className="text-[11px] md:text-xs text-muted-foreground leading-tight mt-1">{s.label}</div>
               </motion.div>
             ))}
           </div>
