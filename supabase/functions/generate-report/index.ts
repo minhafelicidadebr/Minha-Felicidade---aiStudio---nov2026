@@ -34,6 +34,13 @@ type ReportRequest = {
   userId?: unknown;
 };
 
+function getErrorStatus(error: unknown): number {
+  if (!(error instanceof Error)) return 500;
+  if (error.message === "Missing authorization" || error.message === "Unauthorized") return 401;
+  if (error.message.startsWith("Cross-user reports are disabled")) return 403;
+  return 500;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -141,7 +148,7 @@ serve(async (req) => {
     console.error("generate-report error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: getErrorStatus(e), headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

@@ -271,6 +271,12 @@ if (!existsSync(adminDashboardFunction)) {
   if (/students\s*:|studentRows|full_name|studentEmail|studentUserId|email\s*:/.test(text)) {
     fail("admin-dashboard function must not return or assemble nominal student fields");
   }
+  if (!text.includes("getErrorStatus") || !text.includes('error.message === "Missing authorization"') || !text.includes("return 401")) {
+    fail("admin-dashboard must map missing/invalid authorization to HTTP 401");
+  }
+  if (!text.includes("permissions") || !text.includes("return 403")) {
+    fail("admin-dashboard must map insufficient role permissions to HTTP 403");
+  }
 }
 
 const generateReportFunction = "supabase/functions/generate-report/index.ts";
@@ -280,6 +286,12 @@ if (!existsSync(generateReportFunction)) {
   const text = readIfExists(generateReportFunction);
   if (!text.includes("Cross-user reports are disabled")) {
     fail("generate-report must explicitly reject cross-user individual reports");
+  }
+  if (!text.includes("getErrorStatus") || !text.includes('error.message === "Missing authorization"') || !text.includes("return 401")) {
+    fail("generate-report must map missing/invalid authorization to HTTP 401");
+  }
+  if (!text.includes('error.message.startsWith("Cross-user reports are disabled")') || !text.includes("return 403")) {
+    fail("generate-report must map cross-user report attempts to HTTP 403");
   }
   if (/rpc\(["']has_role["']/.test(text)) {
     fail("generate-report must not use role checks to bypass self-report boundaries");

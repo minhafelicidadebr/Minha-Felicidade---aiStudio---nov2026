@@ -18,6 +18,13 @@ function toNumber(value: unknown, fallback = 0): number {
   return Number.isFinite(numberValue) ? numberValue : fallback;
 }
 
+function getErrorStatus(error: unknown): number {
+  if (!(error instanceof Error)) return 500;
+  if (error.message === "Missing authorization" || error.message === "Unauthorized") return 401;
+  if (error.message.includes("permissions")) return 403;
+  return 500;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -83,7 +90,7 @@ serve(async (req) => {
   } catch (e) {
     console.error("admin-dashboard error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }), {
-      status: e instanceof Error && e.message.includes("permissions") ? 403 : 500,
+      status: getErrorStatus(e),
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
