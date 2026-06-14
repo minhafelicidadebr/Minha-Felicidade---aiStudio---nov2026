@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage_limits: {
+        Row: {
+          first_requested_at: string
+          function_name: string
+          last_requested_at: string
+          request_count: number
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          first_requested_at?: string
+          function_name: string
+          last_requested_at?: string
+          request_count?: number
+          usage_date?: string
+          user_id: string
+        }
+        Update: {
+          first_requested_at?: string
+          function_name?: string
+          last_requested_at?: string
+          request_count?: number
+          usage_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       data_access_logs: {
         Row: {
           action: string
@@ -385,6 +412,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      enforce_ai_usage_limit: {
+        Args: { _function_name: string }
+        Returns: Json
+      }
       get_learning_progress_overview: { Args: never; Returns: Json }
       get_my_learning_progress_summary: { Args: never; Returns: Json }
       get_my_plan: { Args: never; Returns: Json }
