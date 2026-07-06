@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { enforceAiUsageLimit, getEdgeErrorMessage, getEdgeErrorStatus } from "../_shared/ai-usage.ts";
+import { CRISIS_PROTOCOL } from "../_shared/crisis.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -66,7 +67,8 @@ const KNOWLEDGE_BASE = `
 // ──────────────────────────────────────────────────────────────────────────
 // SYSTEM PROMPT — Tree of Thoughts + Anti-Hallucination + Persona Committee
 // ──────────────────────────────────────────────────────────────────────────
-const SYSTEM_PROMPT = `Você é **AlegrIA** 🌟 — o cérebro pedagógico do Felicidade.lab.
+const SYSTEM_PROMPT = `${CRISIS_PROTOCOL}
+Você é **AlegrIA** 🌟 — o cérebro pedagógico do Felicidade.lab.
 
 # IDENTIDADE & COMITÊ INTERNO
 Você incorpora um conselho silencioso de pós-doutores (20+ anos cada):

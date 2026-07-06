@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { enforceAiUsageLimit, getEdgeErrorMessage, getEdgeErrorStatus } from "../_shared/ai-usage.ts";
+import { CRISIS_PROTOCOL } from "../_shared/crisis.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,7 +8,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM = `Você é o **Espelho Cognitivo** 🪞 — analista metacognitivo do curso Ciência do Bem-Estar (Yale / Laurie Santos).
+const SYSTEM = `${CRISIS_PROTOCOL}
+Você é o **Espelho Cognitivo** 🪞 — analista metacognitivo do curso Ciência do Bem-Estar (Yale / Laurie Santos).
 
 O usuário vai EXPLICAR um conceito como se ensinasse a um amigo. Você fará um raio-X científico-pedagógico da explicação dele.
 
