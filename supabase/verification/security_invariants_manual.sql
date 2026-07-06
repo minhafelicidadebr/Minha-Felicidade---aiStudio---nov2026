@@ -146,7 +146,7 @@ WITH checks AS (
       WHERE schemaname = 'public'
         AND tablename = 'data_access_logs'
         AND policyname = 'No client access to data access logs'
-        AND roles = ARRAY['anon', 'authenticated']
+        AND roles::text[] = ARRAY['anon', 'authenticated']
         AND cmd = 'ALL'
         AND qual = 'false'
         AND with_check = 'false'
