@@ -316,28 +316,22 @@ WITH checks AS (
   SELECT
     130,
     'enforce_ai_usage_limit is authenticated-only',
-    NOT EXISTS (
-      SELECT 1
-      FROM information_schema.routine_privileges
-      WHERE routine_schema = 'public'
-        AND routine_name = 'enforce_ai_usage_limit'
-        AND grantee IN ('anon', 'PUBLIC')
-    )
-    AND EXISTS (
-      SELECT 1
-      FROM information_schema.routine_privileges
-      WHERE routine_schema = 'public'
-        AND routine_name = 'enforce_ai_usage_limit'
-        AND grantee = 'authenticated'
+    (
+      SELECT bool_and(
+        NOT has_function_privilege('anon', p.oid, 'EXECUTE')
+        AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
+      )
+      FROM pg_proc p
+      JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname = 'public' AND p.proname = 'enforce_ai_usage_limit'
     ),
-    COALESCE(
-      (
-        SELECT string_agg(grantee, ', ' ORDER BY grantee)
-        FROM information_schema.routine_privileges
-        WHERE routine_schema = 'public'
-          AND routine_name = 'enforce_ai_usage_limit'
-      ),
-      'no EXECUTE grants'
+    (
+      SELECT 'anon_exec=' || has_function_privilege('anon', p.oid, 'EXECUTE')::text
+             || ', authenticated_exec=' || has_function_privilege('authenticated', p.oid, 'EXECUTE')::text
+      FROM pg_proc p
+      JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname = 'public' AND p.proname = 'enforce_ai_usage_limit'
+      LIMIT 1
     )
 
   UNION ALL
