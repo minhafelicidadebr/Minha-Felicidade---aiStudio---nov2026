@@ -63,30 +63,26 @@ WITH checks AS (
     30,
     'Authenticated can execute all safe RPCs',
     (
-      SELECT COUNT(DISTINCT routine_name) = 5
-      FROM information_schema.routine_privileges
-      WHERE routine_schema = 'public'
-        AND routine_name IN (
-          'get_my_profile',
-          'get_my_plan',
-          'user_has_my_feature',
-          'get_my_learning_progress_summary',
-          'get_learning_progress_overview'
+      SELECT COUNT(DISTINCT p.proname) = 5
+      FROM pg_proc p
+      JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname = 'public'
+        AND p.proname IN (
+          'get_my_profile','get_my_plan','user_has_my_feature',
+          'get_my_learning_progress_summary','get_learning_progress_overview'
         )
-        AND grantee = 'authenticated'
+        AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
     ),
     (
-      SELECT COUNT(DISTINCT routine_name)::text || '/5 authenticated grants present'
-      FROM information_schema.routine_privileges
-      WHERE routine_schema = 'public'
-        AND routine_name IN (
-          'get_my_profile',
-          'get_my_plan',
-          'user_has_my_feature',
-          'get_my_learning_progress_summary',
-          'get_learning_progress_overview'
+      SELECT COUNT(DISTINCT p.proname)::text || '/5 authenticated grants present'
+      FROM pg_proc p
+      JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname = 'public'
+        AND p.proname IN (
+          'get_my_profile','get_my_plan','user_has_my_feature',
+          'get_my_learning_progress_summary','get_learning_progress_overview'
         )
-        AND grantee = 'authenticated'
+        AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
     )
 
   UNION ALL
