@@ -1,0 +1,46 @@
+// LGPD art. 14 — tratamento de dados de crianças e adolescentes exige
+// consentimento específico e em destaque de ao menos um responsável legal.
+// Esta plataforma é dirigida a adolescentes: qualquer conta de menor de 18 anos
+// precisa desse consentimento antes de acessar o produto.
+//
+// Escopo desta v1 (decisão declarada, não overclaim): o consentimento é
+// capturado no momento do cadastro, com dados do responsável preenchidos pelo
+// próprio adolescente — mesma forma que a maioria dos apps de consumo faz
+// checkboxes de "meu responsável autoriza". Verificação independente por
+// e-mail ao responsável (link de confirmação) fica para quando o dispatcher
+// de e-mail existir (Onda 3) — não é fingido aqui como já resolvido.
+export const GUARDIAN_CONSENT_POLICY_VERSION = "2026.1";
+
+export const MINOR_AGE_THRESHOLD = 18;
+
+/**
+ * Idade em anos completos numa data de referência (default: agora).
+ * Compara sempre por componentes de calendário UTC — um input type="date"
+ * entrega "YYYY-MM-DD" que o construtor Date() interpreta como meia-noite
+ * UTC; misturar isso com getters locais (getMonth/getDate) causa erro de
+ * um dia em fusos atrás de UTC (ex.: Brasil). UTC nos dois lados evita isso.
+ */
+export function ageInYears(birthDate: string, referenceDate: Date = new Date()): number {
+  const birth = new Date(birthDate);
+  let age = referenceDate.getUTCFullYear() - birth.getUTCFullYear();
+  const monthDiff = referenceDate.getUTCMonth() - birth.getUTCMonth();
+  const dayDiff = referenceDate.getUTCDate() - birth.getUTCDate();
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) age -= 1;
+  return age;
+}
+
+export function isMinor(birthDate: string, referenceDate: Date = new Date()): boolean {
+  return ageInYears(birthDate, referenceDate) < MINOR_AGE_THRESHOLD;
+}
+
+export function isValidPastDate(birthDate: string, referenceDate: Date = new Date()): boolean {
+  const birth = new Date(birthDate);
+  if (Number.isNaN(birth.getTime())) return false;
+  return birth.getTime() < referenceDate.getTime() && ageInYears(birthDate, referenceDate) < 120;
+}
+
+export const GUARDIAN_CONSENT_STATEMENT =
+  "Na qualidade de responsável legal, autorizo o tratamento dos dados pessoais " +
+  "do(a) adolescente para fins de uso educacional da plataforma Ciência do " +
+  "Bem-Estar (Instituto Felicidade Para Todos), nos termos do art. 14 da Lei " +
+  "Geral de Proteção de Dados (Lei 13.709/2018).";

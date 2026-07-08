@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
 import RequireAuth from "@/components/routing/RequireAuth";
 import RequireRole from "@/components/routing/RequireRole";
+import RequireGuardianConsent from "@/components/routing/RequireGuardianConsent";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const ConstellationPage = lazy(() => import("./pages/ConstellationPage"));
 const CognitiveMirrorPage = lazy(() => import("./pages/CognitiveMirrorPage"));
 const FutureSelfPage = lazy(() => import("./pages/FutureSelfPage"));
 const SignatureStrengthsPage = lazy(() => import("./pages/SignatureStrengthsPage"));
+const GuardianConsentPage = lazy(() => import("./pages/GuardianConsentPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const RouteFallback = () => (
@@ -91,17 +93,27 @@ const App = () => (
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/auth" element={<AuthPage />} />
+            <Route
+              path="/consentimento-responsavel"
+              element={
+                <RequireAuth>
+                  <GuardianConsentPage />
+                </RequireAuth>
+              }
+            />
             {privateRoutes.map((route) => (
               <Route
                 key={route.path}
                 path={route.path}
                 element={
                   <RequireAuth>
-                    {route.roles ? (
-                      <RequireRole allowedRoles={route.roles}>{route.element}</RequireRole>
-                    ) : (
-                      route.element
-                    )}
+                    <RequireGuardianConsent>
+                      {route.roles ? (
+                        <RequireRole allowedRoles={route.roles}>{route.element}</RequireRole>
+                      ) : (
+                        route.element
+                      )}
+                    </RequireGuardianConsent>
                   </RequireAuth>
                 }
               />
