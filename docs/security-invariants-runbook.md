@@ -95,10 +95,10 @@ edge functions.
 ### Teste em sandbox (pendente de credenciais)
 
 Requer `MERCADO_PAGO_ACCESS_TOKEN` de teste (`TEST-...`) configurado no
-ambiente — não é verificável só com `npm run quality`. Roteiro em
-`.kiro/specs/onda-1-monetizacao/tasks.md` (Task 10): checkout individual
-mensal/anual, checkout escolar, pagamento aprovado e recusado no simulador do
-MP, e reenvio da mesma notificação de webhook (deve ser idempotente).
+ambiente — não é verificável só com `npm run quality`. Roteiro passo-a-passo
+(secrets, deploy, cenários e queries de verificação) em
+`docs/mercadopago-sandbox-runbook.md`; resumo dos cenários na Task 10 de
+`.kiro/specs/onda-1-monetizacao/tasks.md`.
 
 ## Quality Gate
 
