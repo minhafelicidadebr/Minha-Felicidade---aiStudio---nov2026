@@ -11,7 +11,7 @@ existentes devem continuar verdes — não deixe a árvore quebrada entre tarefa
   - Adicionar a migration na lista de `docs/security-invariants-runbook.md`.
   - _Requirements: 6.1, 6.3_
 
-- [ ] 2. Migration: RPC `activate_subscription_from_intent`
+- [x] 2. Migration: RPC `activate_subscription_from_intent`
   - Implementar exatamente a lógica descrita em `design.md` (lock FOR UPDATE,
     idempotência por `mp_payment_id`, branch individual/escolar/pré-cadastro,
     log em `data_access_logs`).
