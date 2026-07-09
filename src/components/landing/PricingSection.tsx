@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Check, Sparkles, Crown, Rocket, ArrowRight, Building2, Users, Zap, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { startIndividualCheckout } from "@/lib/checkout";
+import { toast } from "@/hooks/use-toast";
 
 type SubscriptionPlan = {
   id: string;
@@ -77,6 +79,26 @@ export default function PricingSection() {
     return `R$ ${Math.round(cents / 100)}`;
   };
 
+  const handleIndividualCta = async (p: SubscriptionPlan) => {
+    if (p.price_monthly === 0) {
+      navigate("/auth");
+      return;
+    }
+    if (p.slug === "advanced") {
+      window.location.href = "mailto:contato@felicidadeparatodos.org?subject=Plano%20Avancado";
+      return;
+    }
+    try {
+      await startIndividualCheckout(p.slug, annual ? "yearly" : "monthly");
+    } catch (e) {
+      toast({
+        title: "Não foi possível iniciar a assinatura",
+        description: e instanceof Error ? e.message : "Tente novamente em instantes.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <section className="py-24 relative" id="planos">
       <div className="absolute inset-0 gradient-mesh opacity-15" />
@@ -144,11 +166,10 @@ export default function PricingSection() {
               return (
                 <motion.div
                   key={p.id}
-                  className={`relative p-8 rounded-3xl border transition-all duration-500 ${
-                    isHighlight
-                      ? `${meta.gradient} border-primary/30 shadow-float scale-[1.03]`
-                      : `${meta.gradient} border-border hover:shadow-warm hover:-translate-y-1`
-                  }`}
+                  className={`relative p-8 rounded-3xl border transition-all duration-500 ${isHighlight
+                    ? `${meta.gradient} border-primary/30 shadow-float scale-[1.03]`
+                    : `${meta.gradient} border-border hover:shadow-warm hover:-translate-y-1`
+                    }`}
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -185,12 +206,11 @@ export default function PricingSection() {
                     ))}
                   </ul>
                   <button
-                    onClick={() => navigate("/auth")}
-                    className={`w-full py-3.5 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
-                      isHighlight
-                        ? "gradient-institute text-primary-foreground shadow-warm hover:shadow-glow hover:scale-[1.02]"
-                        : "bg-muted hover:bg-muted/80 text-foreground hover:shadow-warm"
-                    }`}
+                    onClick={() => handleIndividualCta(p)}
+                    className={`w-full py-3.5 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${isHighlight
+                      ? "gradient-institute text-primary-foreground shadow-warm hover:shadow-glow hover:scale-[1.02]"
+                      : "bg-muted hover:bg-muted/80 text-foreground hover:shadow-warm"
+                      }`}
                   >
                     {p.price_monthly === 0 ? "Começar Grátis" : p.slug === "advanced" ? "Contato Comercial" : "Assinar Agora"}
                     <ArrowRight className="w-4 h-4" />

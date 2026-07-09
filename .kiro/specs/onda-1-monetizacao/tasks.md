@@ -48,7 +48,7 @@ existentes devem continuar verdes — não deixe a árvore quebrada entre tarefa
     não sejam de pagamento.
   - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-- [ ] 6. Cliente: `src/lib/checkout.ts`
+- [x] 6. Cliente: `src/lib/checkout.ts`
   - `startIndividualCheckout(planSlug, billingInterval)`: se não houver
     sessão, redireciona para `/auth` preservando a intenção; senão invoca a
     edge function e navega para `checkout_url`.
@@ -56,7 +56,7 @@ existentes devem continuar verdes — não deixe a árvore quebrada entre tarefa
     (sem exigir sessão).
   - _Requirements: 1.1, 1.2, 2.1, 2.3_
 
-- [ ] 7. Conectar UI existente ao checkout
+- [x] 7. Conectar UI existente ao checkout
   - `PricingSection.tsx` e `SubscriptionPage.tsx`: botão "Assinar Agora"
     chama `startIndividualCheckout` com o plano/intervalo selecionado em vez
     de só navegar.
@@ -64,7 +64,7 @@ existentes devem continuar verdes — não deixe a árvore quebrada entre tarefa
     com os valores atuais da calculadora.
   - _Requirements: 1.1, 2.1_
 
-- [ ] 8. Páginas de retorno
+- [x] 8. Páginas de retorno
   - `src/pages/SubscriptionSuccessPage.tsx` (rota `/assinatura/sucesso`) e
     `SubscriptionPendingPage.tsx` (rota `/assinatura/pendente`, cobre também
     `failure`): nunca afirmam "ativado" só pelo parâmetro de URL — chamam
