@@ -4,7 +4,7 @@ Convenção: trabalhe em uma branch nova (`feat/onda-1-monetizacao`), nunca
 direto na `main`. Ao final de cada tarefa, o código deve compilar e os testes
 existentes devem continuar verdes — não deixe a árvore quebrada entre tarefas.
 
-- [ ] 1. Migration: tabela `purchase_intents`
+- [x] 1. Migration: tabela `purchase_intents`
   - Criar `supabase/migrations/<timestamp>_purchase_intents.sql` com o schema
     do `design.md` (RLS ativado, sem policy de cliente, `REVOKE ALL FROM
     anon, authenticated`, índice único parcial em `mp_payment_id`).

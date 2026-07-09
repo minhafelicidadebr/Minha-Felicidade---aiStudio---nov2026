@@ -9,6 +9,8 @@ The Supabase hardening path is versioned as migrations. Apply them in timestamp 
 3. `supabase/migrations/20260613170000_rpc_execute_grants_hardening.sql`
 4. `supabase/migrations/20260613173000_function_default_privileges_hardening.sql`
 5. `supabase/migrations/20260613190000_ai_usage_rate_limits.sql`
+6. `supabase/migrations/20260706194000_guardian_consent_ledger.sql`
+7. `supabase/migrations/20260708120000_purchase_intents.sql`
 
 The `20260613144818...` migration was generated remotely after the first foundation migration. It is mostly idempotent duplication. The later `20260613170000...` migration is still required because it removes explicit `anon`/`authenticated` EXECUTE grants that are not removed by revoking from `PUBLIC`.
 
