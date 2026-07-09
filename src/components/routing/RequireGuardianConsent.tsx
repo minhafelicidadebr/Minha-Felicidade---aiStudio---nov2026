@@ -31,7 +31,7 @@ export default function RequireGuardianConsent({ children }: { children: ReactNo
         return;
       }
 
-      const payload = data as ConsentPayload | null;
+      const payload = data as unknown as ConsentPayload | null;
       const blocked = Boolean(payload?.requires_consent) && !payload?.granted;
       setStatus(blocked ? "blocked" : "clear");
     }
