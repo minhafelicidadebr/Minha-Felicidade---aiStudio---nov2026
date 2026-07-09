@@ -83,11 +83,13 @@ existentes devem continuar verdes — não deixe a árvore quebrada entre tarefa
     `requirements.md`.
   - _Requirements: (documentação — sem requirement numérico)_
 
-- [ ] 10. Gate final
-  - Rodar `npm run quality` completo.
-  - Testar manualmente em sandbox (`MERCADO_PAGO_ACCESS_TOKEN` do tipo
-    `TEST-...`): checkout individual mensal, checkout individual anual,
-    checkout escolar, um pagamento aprovado e um recusado no simulador do MP,
-    reenviar a mesma notificação de webhook duas vezes e confirmar que a
-    assinatura não duplica (Requirement 3.3).
+- [ ] 10. Gate final _(parcial — automação ✓, sandbox pendente)_
+  - [x] Rodar `npm run quality` completo — PASSOU (audit 0 vuln, lint,
+    typecheck, 20 testes, build, security gate).
+  - [ ] PENDENTE (humano + credenciais): testar em sandbox
+    (`MERCADO_PAGO_ACCESS_TOKEN` `TEST-...`): checkout individual mensal,
+    individual anual, escolar, um pagamento aprovado e um recusado no
+    simulador do MP, e reenviar a mesma notificação de webhook duas vezes
+    confirmando que a assinatura não duplica (Requirement 3.3). Depende de
+    deploy das edge functions e dos secrets configurados no painel.
   - _Requirements: todas_
