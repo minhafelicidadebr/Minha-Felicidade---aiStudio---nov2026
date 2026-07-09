@@ -8,6 +8,7 @@ import logoIcon from "@/assets/logo-icon.png";
 import logoLightBg from "@/assets/logo-light-bg.png";
 import heroYouthBg from "@/assets/hero-youth-bg.jpg";
 import { getSafeRedirectPath } from "@/lib/redirect";
+import { translateAuthError } from "@/lib/auth-errors";
 import {
   GUARDIAN_CONSENT_POLICY_VERSION,
   GUARDIAN_CONSENT_STATEMENT,
@@ -93,8 +94,8 @@ export default function AuthPage() {
         await completeSignup();
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Erro desconhecido";
-      toast({ title: "Erro", description: message, variant: "destructive" });
+      const raw = err instanceof Error ? err.message : "Erro desconhecido";
+      toast({ title: "Erro", description: translateAuthError(raw), variant: "destructive" });
     } finally {
       setLoading(false);
     }
