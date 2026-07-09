@@ -7,22 +7,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-
-// Pricing tiers (R$/aluno/mês)
-const tier = (n: number) => {
-  if (n <= 50) return 19;
-  if (n <= 200) return 14;
-  if (n <= 500) return 10;
-  if (n <= 2000) return 7;
-  return 0; // sob consulta
-};
-
-const networkDiscount = (s: number) => {
-  if (s >= 10) return 0.25;
-  if (s >= 4) return 0.18;
-  if (s >= 2) return 0.10;
-  return 0;
-};
+import { calculateSchoolPricing } from "@/lib/school-pricing";
+import { startEscolarCheckout } from "@/lib/checkout";
 
 export default function SchoolCalculator() {
   const [students, setStudents] = useState(150);
@@ -30,30 +16,64 @@ export default function SchoolCalculator() {
   const [annual, setAnnual] = useState(true);
   const [isPublic, setIsPublic] = useState(false);
 
-  // Demo form
+  // Form: serve tanto para "Agendar Apresentação" (lead) quanto para
+  // "Contratar agora" (checkout Mercado Pago), controlado por formMode.
   const [showForm, setShowForm] = useState(false);
+  const [formMode, setFormMode] = useState<"demo" | "checkout">("demo");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", organization: "", city: "", preferredDate: "", message: "" });
 
+  const openForm = (mode: "demo" | "checkout") => {
+    setFormMode(mode);
+    setShowForm(true);
+  };
+
   const calc = useMemo(() => {
-    const perStudent = tier(students);
-    const customQuote = perStudent === 0;
-    const netDisc = networkDiscount(schools);
-    const annualDisc = annual ? 0.20 : 0;
-    const publicDisc = isPublic ? 0.30 : 0;
-    const totalDisc = Math.min(0.75, netDisc + annualDisc + publicDisc);
-    const finalPerStudent = perStudent * (1 - totalDisc);
-    const monthlyTotal = finalPerStudent * students;
-    const yearlyTotal = monthlyTotal * 12;
-    const managersFree = Math.max(1, Math.floor(students / 50));
-    return { perStudent, finalPerStudent, monthlyTotal, yearlyTotal, totalDisc, customQuote, managersFree, netDisc, annualDisc, publicDisc };
+    const r = calculateSchoolPricing({ students, schools, annual, isPublicOrNgo: isPublic });
+    return {
+      perStudent: r.perStudentBrl,
+      finalPerStudent: r.finalPerStudentBrl,
+      monthlyTotal: r.monthlyTotalBrl,
+      yearlyTotal: r.yearlyTotalBrl,
+      totalDisc: r.totalDiscount,
+      customQuote: r.customQuote,
+      managersFree: r.managersFree,
+      netDisc: r.networkDiscount,
+      annualDisc: r.annualDiscount,
+      publicDisc: r.publicDiscount,
+      monthlyTotalCents: r.monthlyTotalCents,
+    };
   }, [students, schools, annual, isPublic]);
 
   const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (formMode === "checkout") {
+      setSubmitting(true);
+      try {
+        await startEscolarCheckout({
+          seats_students: students,
+          seats_schools: schools,
+          billing_interval: annual ? "yearly" : "monthly",
+          contact_email: form.email,
+          contact_name: form.name,
+          is_public_ngo: isPublic,
+        });
+        // startEscolarCheckout redireciona para o Mercado Pago em caso de sucesso.
+      } catch (err) {
+        setSubmitting(false);
+        toast({
+          title: "Não foi possível iniciar a contratação",
+          description: err instanceof Error ? err.message : "Tente novamente em instantes.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
     setSubmitting(true);
     const { error } = await supabase.from("leads").insert({
       name: form.name,
@@ -63,7 +83,7 @@ export default function SchoolCalculator() {
       segment: "school_b2b",
       estimated_students: students,
       schools_count: schools,
-      calculated_price_cents: Math.round(calc.monthlyTotal * 100),
+      calculated_price_cents: calc.monthlyTotalCents,
       billing_interval: annual ? "yearly" : "monthly",
       is_public_ngo: isPublic,
       message: form.message,
@@ -187,9 +207,18 @@ export default function SchoolCalculator() {
               </>
             )}
 
+            {!calc.customQuote && (
+              <button
+                onClick={() => openForm("checkout")}
+                className="mt-6 w-full py-3.5 rounded-2xl bg-primary-foreground text-primary font-bold text-sm hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 shadow-lg"
+              >
+                <Sparkles className="w-4 h-4" /> Contratar agora
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
             <button
-              onClick={() => setShowForm(true)}
-              className="mt-6 w-full py-3.5 rounded-2xl bg-primary-foreground text-primary font-bold text-sm hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 shadow-lg"
+              onClick={() => openForm("demo")}
+              className={`${calc.customQuote ? "mt-6" : "mt-3"} w-full py-3.5 rounded-2xl bg-primary-foreground/15 text-primary-foreground font-bold text-sm hover:bg-primary-foreground/25 transition-colors flex items-center justify-center gap-2 border border-primary-foreground/20`}
             >
               <Calendar className="w-4 h-4" /> Agendar Apresentação
               <ArrowRight className="w-4 h-4" />
@@ -216,12 +245,15 @@ export default function SchoolCalculator() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="flex items-center gap-3 mb-2">
-                  <Calendar className="w-5 h-5 text-primary" />
-                  <h3 className="font-display font-bold text-xl">Agendar apresentação personalizada</h3>
+                  {formMode === "checkout" ? <Sparkles className="w-5 h-5 text-primary" /> : <Calendar className="w-5 h-5 text-primary" />}
+                  <h3 className="font-display font-bold text-xl">
+                    {formMode === "checkout" ? "Contratar Plano Escolar" : "Agendar apresentação personalizada"}
+                  </h3>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Receba uma proposta formal para <strong>{students} alunos</strong> em <strong>{schools} escola{schools > 1 ? "s" : ""}</strong>
-                  {!calc.customQuote && <> — estimativa de <strong>{fmt(annual ? calc.yearlyTotal : calc.monthlyTotal)}/{annual ? "ano" : "mês"}</strong></>}.
+                  {formMode === "checkout" ? "Contratação para" : "Receba uma proposta formal para"} <strong>{students} alunos</strong> em <strong>{schools} escola{schools > 1 ? "s" : ""}</strong>
+                  {!calc.customQuote && <> — <strong>{fmt(annual ? calc.yearlyTotal : calc.monthlyTotal)}/{annual ? "ano" : "mês"}</strong></>}.
+                  {formMode === "checkout" && " Você será levado ao pagamento seguro do Mercado Pago."}
                 </p>
                 <div className="grid md:grid-cols-2 gap-3">
                   <Input placeholder="Seu nome completo *" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
@@ -238,7 +270,11 @@ export default function SchoolCalculator() {
                 />
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button type="submit" disabled={submitting} className="flex-1 py-3 rounded-2xl gradient-institute text-primary-foreground font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60">
-                    {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Enviando...</> : <>Enviar solicitação <ArrowRight className="w-4 h-4" /></>}
+                    {submitting ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" /> {formMode === "checkout" ? "Redirecionando..." : "Enviando..."}</>
+                    ) : (
+                      <>{formMode === "checkout" ? "Ir para pagamento" : "Enviar solicitação"} <ArrowRight className="w-4 h-4" /></>
+                    )}
                   </button>
                   <button type="button" onClick={() => setShowForm(false)} className="px-6 py-3 rounded-2xl bg-muted hover:bg-muted/70 font-semibold text-sm">
                     Cancelar

@@ -40,6 +40,8 @@ const CognitiveMirrorPage = lazy(() => import("./pages/CognitiveMirrorPage"));
 const FutureSelfPage = lazy(() => import("./pages/FutureSelfPage"));
 const SignatureStrengthsPage = lazy(() => import("./pages/SignatureStrengthsPage"));
 const GuardianConsentPage = lazy(() => import("./pages/GuardianConsentPage"));
+const SubscriptionSuccessPage = lazy(() => import("./pages/SubscriptionSuccessPage"));
+const SubscriptionPendingPage = lazy(() => import("./pages/SubscriptionPendingPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const RouteFallback = () => (
@@ -98,6 +100,25 @@ const App = () => (
               element={
                 <RequireAuth>
                   <GuardianConsentPage />
+                </RequireAuth>
+              }
+            />
+            {/* Retorno do checkout: atrás de RequireAuth, mas fora do gate de
+                consentimento — quem acabou de pagar não deve ser bloqueado
+                aqui. A ativação real é confirmada via get_my_plan/webhook. */}
+            <Route
+              path="/assinatura/sucesso"
+              element={
+                <RequireAuth>
+                  <SubscriptionSuccessPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/assinatura/pendente"
+              element={
+                <RequireAuth>
+                  <SubscriptionPendingPage />
                 </RequireAuth>
               }
             />

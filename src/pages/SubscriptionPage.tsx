@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { Crown, CreditCard, Calendar, Users, ArrowLeft, CheckCircle2, AlertCircle, Sparkles, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
+import { consumePendingCheckout, startIndividualCheckout } from "@/lib/checkout";
+import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -36,6 +38,35 @@ export default function SubscriptionPage() {
     };
     fetchPlans();
   }, []);
+
+  // Retoma um checkout iniciado antes do login (Requirement 1.2).
+  useEffect(() => {
+    const pending = consumePendingCheckout();
+    if (!pending) return;
+    startIndividualCheckout(pending.planSlug, pending.billingInterval).catch((e) => {
+      toast({
+        title: "Não foi possível retomar o checkout",
+        description: e instanceof Error ? e.message : "Tente novamente.",
+        variant: "destructive",
+      });
+    });
+  }, []);
+
+  const handleUpgrade = async (slug: string) => {
+    if (slug === "advanced") {
+      window.location.href = "mailto:contato@felicidadeparatodos.org?subject=Plano%20Avancado";
+      return;
+    }
+    try {
+      await startIndividualCheckout(slug, "monthly");
+    } catch (e) {
+      toast({
+        title: "Não foi possível iniciar a assinatura",
+        description: e instanceof Error ? e.message : "Tente novamente em instantes.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const formatPrice = (cents: number) => {
     if (cents === 0) return "Grátis";
@@ -159,12 +190,11 @@ export default function SubscriptionPage() {
                     {p.price_yearly > 0 && `Ou ${formatPrice(Math.round(p.price_yearly / 12))}/mês no plano anual`}
                   </div>
                   <button
-                    onClick={() => navigate("/#planos")}
-                    className={`w-full py-3 rounded-2xl font-bold text-sm transition-all ${
-                      p.slug === "intermediate"
-                        ? "gradient-institute text-primary-foreground shadow-warm hover:shadow-glow"
-                        : "bg-muted hover:bg-muted/80"
-                    }`}
+                    onClick={() => handleUpgrade(p.slug)}
+                    className={`w-full py-3 rounded-2xl font-bold text-sm transition-all ${p.slug === "intermediate"
+                      ? "gradient-institute text-primary-foreground shadow-warm hover:shadow-glow"
+                      : "bg-muted hover:bg-muted/80"
+                      }`}
                   >
                     {p.slug === "advanced" ? "Contato Comercial" : "Assinar Agora"}
                   </button>

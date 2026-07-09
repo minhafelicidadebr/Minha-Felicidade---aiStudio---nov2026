@@ -4,14 +4,14 @@ Convenção: trabalhe em uma branch nova (`feat/onda-1-monetizacao`), nunca
 direto na `main`. Ao final de cada tarefa, o código deve compilar e os testes
 existentes devem continuar verdes — não deixe a árvore quebrada entre tarefas.
 
-- [ ] 1. Migration: tabela `purchase_intents`
+- [x] 1. Migration: tabela `purchase_intents`
   - Criar `supabase/migrations/<timestamp>_purchase_intents.sql` com o schema
     do `design.md` (RLS ativado, sem policy de cliente, `REVOKE ALL FROM
     anon, authenticated`, índice único parcial em `mp_payment_id`).
   - Adicionar a migration na lista de `docs/security-invariants-runbook.md`.
   - _Requirements: 6.1, 6.3_
 
-- [ ] 2. Migration: RPC `activate_subscription_from_intent`
+- [x] 2. Migration: RPC `activate_subscription_from_intent`
   - Implementar exatamente a lógica descrita em `design.md` (lock FOR UPDATE,
     idempotência por `mp_payment_id`, branch individual/escolar/pré-cadastro,
     log em `data_access_logs`).
@@ -20,7 +20,7 @@ existentes devem continuar verdes — não deixe a árvore quebrada entre tarefa
     (`has_function_privilege`) no final do arquivo.
   - _Requirements: 1.3, 2.2, 3.3, 3.4, 6.1, 6.3_
 
-- [ ] 3. Função pura de precificação escolar
+- [x] 3. Função pura de precificação escolar
   - Ler `src/components/landing/SchoolCalculator.tsx` e `.lovable/plan.md`
     §1.4 antes de escrever qualquer número.
   - Implementar a tabela de faixas + descontos (volume/rede/anual/ONG) como
@@ -28,7 +28,7 @@ existentes devem continuar verdes — não deixe a árvore quebrada entre tarefa
     combinação de desconto.
   - _Requirements: 2.1_
 
-- [ ] 4. Edge function `mp-create-preference`
+- [x] 4. Edge function `mp-create-preference`
   - Fluxo individual: exige JWT, resolve `user_id` do token, valida
     `plan_slug` contra `subscription_plans` ativo, preço lido do banco.
   - Fluxo escolar: aceita chamada sem JWT com `contact_email`/`contact_name`,
@@ -39,7 +39,7 @@ existentes devem continuar verdes — não deixe a árvore quebrada entre tarefa
     produto irmão descrito no `design.md`).
   - _Requirements: 1.1, 1.2, 2.1, 2.3, 4.1_
 
-- [ ] 5. Edge function `mp-webhook`
+- [x] 5. Edge function `mp-webhook`
   - Verificação HMAC (`x-signature`/`x-request-id` contra
     `MERCADO_PAGO_WEBHOOK_SECRET`); 401 se ausente/inválida, sem escrever
     nada no banco antes de validar.
@@ -48,7 +48,7 @@ existentes devem continuar verdes — não deixe a árvore quebrada entre tarefa
     não sejam de pagamento.
   - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-- [ ] 6. Cliente: `src/lib/checkout.ts`
+- [x] 6. Cliente: `src/lib/checkout.ts`
   - `startIndividualCheckout(planSlug, billingInterval)`: se não houver
     sessão, redireciona para `/auth` preservando a intenção; senão invoca a
     edge function e navega para `checkout_url`.
@@ -56,7 +56,7 @@ existentes devem continuar verdes — não deixe a árvore quebrada entre tarefa
     (sem exigir sessão).
   - _Requirements: 1.1, 1.2, 2.1, 2.3_
 
-- [ ] 7. Conectar UI existente ao checkout
+- [x] 7. Conectar UI existente ao checkout
   - `PricingSection.tsx` e `SubscriptionPage.tsx`: botão "Assinar Agora"
     chama `startIndividualCheckout` com o plano/intervalo selecionado em vez
     de só navegar.
@@ -64,7 +64,7 @@ existentes devem continuar verdes — não deixe a árvore quebrada entre tarefa
     com os valores atuais da calculadora.
   - _Requirements: 1.1, 2.1_
 
-- [ ] 8. Páginas de retorno
+- [x] 8. Páginas de retorno
   - `src/pages/SubscriptionSuccessPage.tsx` (rota `/assinatura/sucesso`) e
     `SubscriptionPendingPage.tsx` (rota `/assinatura/pendente`, cobre também
     `failure`): nunca afirmam "ativado" só pelo parâmetro de URL — chamam
@@ -74,7 +74,7 @@ existentes devem continuar verdes — não deixe a árvore quebrada entre tarefa
     demais rotas privadas).
   - _Requirements: 5.1, 5.2_
 
-- [ ] 9. Documentação e secrets
+- [x] 9. Documentação e secrets
   - Anotar em `docs/security-invariants-runbook.md` os dois secrets novos
     (`MERCADO_PAGO_ACCESS_TOKEN`, `MERCADO_PAGO_WEBHOOK_SECRET`) e o passo
     de configurá-los no painel do Supabase/Lovable Cloud (nunca commitados).
@@ -83,11 +83,13 @@ existentes devem continuar verdes — não deixe a árvore quebrada entre tarefa
     `requirements.md`.
   - _Requirements: (documentação — sem requirement numérico)_
 
-- [ ] 10. Gate final
-  - Rodar `npm run quality` completo.
-  - Testar manualmente em sandbox (`MERCADO_PAGO_ACCESS_TOKEN` do tipo
-    `TEST-...`): checkout individual mensal, checkout individual anual,
-    checkout escolar, um pagamento aprovado e um recusado no simulador do MP,
-    reenviar a mesma notificação de webhook duas vezes e confirmar que a
-    assinatura não duplica (Requirement 3.3).
+- [ ] 10. Gate final _(parcial — automação ✓, sandbox pendente)_
+  - [x] Rodar `npm run quality` completo — PASSOU (audit 0 vuln, lint,
+    typecheck, 20 testes, build, security gate).
+  - [ ] PENDENTE (humano + credenciais): testar em sandbox
+    (`MERCADO_PAGO_ACCESS_TOKEN` `TEST-...`): checkout individual mensal,
+    individual anual, escolar, um pagamento aprovado e um recusado no
+    simulador do MP, e reenviar a mesma notificação de webhook duas vezes
+    confirmando que a assinatura não duplica (Requirement 3.3). Depende de
+    deploy das edge functions e dos secrets configurados no painel.
   - _Requirements: todas_
