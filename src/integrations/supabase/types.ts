@@ -74,6 +74,39 @@ export type Database = {
         }
         Relationships: []
       }
+      guardian_consent_events: {
+        Row: {
+          created_at: string
+          decision: string
+          guardian_email: string
+          guardian_name: string
+          id: string
+          occurred_at: string
+          policy_version: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decision?: string
+          guardian_email: string
+          guardian_name: string
+          id?: string
+          occurred_at?: string
+          policy_version: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decision?: string
+          guardian_email?: string
+          guardian_name?: string
+          id?: string
+          occurred_at?: string
+          policy_version?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           billing_interval: string | null
@@ -222,6 +255,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          birth_date: string | null
           created_at: string
           full_name: string
           id: string
@@ -230,6 +264,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          birth_date?: string | null
           created_at?: string
           full_name?: string
           id?: string
@@ -238,6 +273,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          birth_date?: string | null
           created_at?: string
           full_name?: string
           id?: string
@@ -417,16 +453,29 @@ export type Database = {
         Returns: Json
       }
       get_learning_progress_overview: { Args: never; Returns: Json }
+      get_my_guardian_consent_status: { Args: never; Returns: Json }
       get_my_learning_progress_summary: { Args: never; Returns: Json }
       get_my_plan: { Args: never; Returns: Json }
       get_my_profile: { Args: never; Returns: Json }
       get_user_plan: { Args: { _user_id: string }; Returns: Json }
+      has_my_role: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      record_guardian_consent: {
+        Args: {
+          _guardian_email: string
+          _guardian_name: string
+          _policy_version: string
+        }
+        Returns: Json
       }
       user_has_feature: {
         Args: { _feature: string; _user_id: string }
