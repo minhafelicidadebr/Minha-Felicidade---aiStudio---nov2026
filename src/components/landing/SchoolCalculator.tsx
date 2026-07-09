@@ -7,22 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-
-// Pricing tiers (R$/aluno/mês)
-const tier = (n: number) => {
-  if (n <= 50) return 19;
-  if (n <= 200) return 14;
-  if (n <= 500) return 10;
-  if (n <= 2000) return 7;
-  return 0; // sob consulta
-};
-
-const networkDiscount = (s: number) => {
-  if (s >= 10) return 0.25;
-  if (s >= 4) return 0.18;
-  if (s >= 2) return 0.10;
-  return 0;
-};
+import { calculateSchoolPricing } from "@/lib/school-pricing";
 
 export default function SchoolCalculator() {
   const [students, setStudents] = useState(150);
@@ -37,17 +22,20 @@ export default function SchoolCalculator() {
   const [form, setForm] = useState({ name: "", email: "", organization: "", city: "", preferredDate: "", message: "" });
 
   const calc = useMemo(() => {
-    const perStudent = tier(students);
-    const customQuote = perStudent === 0;
-    const netDisc = networkDiscount(schools);
-    const annualDisc = annual ? 0.20 : 0;
-    const publicDisc = isPublic ? 0.30 : 0;
-    const totalDisc = Math.min(0.75, netDisc + annualDisc + publicDisc);
-    const finalPerStudent = perStudent * (1 - totalDisc);
-    const monthlyTotal = finalPerStudent * students;
-    const yearlyTotal = monthlyTotal * 12;
-    const managersFree = Math.max(1, Math.floor(students / 50));
-    return { perStudent, finalPerStudent, monthlyTotal, yearlyTotal, totalDisc, customQuote, managersFree, netDisc, annualDisc, publicDisc };
+    const r = calculateSchoolPricing({ students, schools, annual, isPublicOrNgo: isPublic });
+    return {
+      perStudent: r.perStudentBrl,
+      finalPerStudent: r.finalPerStudentBrl,
+      monthlyTotal: r.monthlyTotalBrl,
+      yearlyTotal: r.yearlyTotalBrl,
+      totalDisc: r.totalDiscount,
+      customQuote: r.customQuote,
+      managersFree: r.managersFree,
+      netDisc: r.networkDiscount,
+      annualDisc: r.annualDiscount,
+      publicDisc: r.publicDiscount,
+      monthlyTotalCents: r.monthlyTotalCents,
+    };
   }, [students, schools, annual, isPublic]);
 
   const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
@@ -63,7 +51,7 @@ export default function SchoolCalculator() {
       segment: "school_b2b",
       estimated_students: students,
       schools_count: schools,
-      calculated_price_cents: Math.round(calc.monthlyTotal * 100),
+      calculated_price_cents: calc.monthlyTotalCents,
       billing_interval: annual ? "yearly" : "monthly",
       is_public_ngo: isPublic,
       message: form.message,

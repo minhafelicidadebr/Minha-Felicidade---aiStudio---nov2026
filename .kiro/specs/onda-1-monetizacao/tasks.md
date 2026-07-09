@@ -20,7 +20,7 @@ existentes devem continuar verdes — não deixe a árvore quebrada entre tarefa
     (`has_function_privilege`) no final do arquivo.
   - _Requirements: 1.3, 2.2, 3.3, 3.4, 6.1, 6.3_
 
-- [ ] 3. Função pura de precificação escolar
+- [x] 3. Função pura de precificação escolar
   - Ler `src/components/landing/SchoolCalculator.tsx` e `.lovable/plan.md`
     §1.4 antes de escrever qualquer número.
   - Implementar a tabela de faixas + descontos (volume/rede/anual/ONG) como
