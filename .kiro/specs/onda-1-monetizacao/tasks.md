@@ -74,7 +74,7 @@ existentes devem continuar verdes — não deixe a árvore quebrada entre tarefa
     demais rotas privadas).
   - _Requirements: 5.1, 5.2_
 
-- [ ] 9. Documentação e secrets
+- [x] 9. Documentação e secrets
   - Anotar em `docs/security-invariants-runbook.md` os dois secrets novos
     (`MERCADO_PAGO_ACCESS_TOKEN`, `MERCADO_PAGO_WEBHOOK_SECRET`) e o passo
     de configurá-los no painel do Supabase/Lovable Cloud (nunca commitados).
