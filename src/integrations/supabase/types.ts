@@ -421,6 +421,10 @@ export type Database = {
       get_my_plan: { Args: never; Returns: Json }
       get_my_profile: { Args: never; Returns: Json }
       get_user_plan: { Args: { _user_id: string }; Returns: Json }
+      has_my_role: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
