@@ -28,7 +28,7 @@ existentes devem continuar verdes — não deixe a árvore quebrada entre tarefa
     combinação de desconto.
   - _Requirements: 2.1_
 
-- [ ] 4. Edge function `mp-create-preference`
+- [x] 4. Edge function `mp-create-preference`
   - Fluxo individual: exige JWT, resolve `user_id` do token, valida
     `plan_slug` contra `subscription_plans` ativo, preço lido do banco.
   - Fluxo escolar: aceita chamada sem JWT com `contact_email`/`contact_name`,
@@ -39,7 +39,7 @@ existentes devem continuar verdes — não deixe a árvore quebrada entre tarefa
     produto irmão descrito no `design.md`).
   - _Requirements: 1.1, 1.2, 2.1, 2.3, 4.1_
 
-- [ ] 5. Edge function `mp-webhook`
+- [x] 5. Edge function `mp-webhook`
   - Verificação HMAC (`x-signature`/`x-request-id` contra
     `MERCADO_PAGO_WEBHOOK_SECRET`); 401 se ausente/inválida, sem escrever
     nada no banco antes de validar.

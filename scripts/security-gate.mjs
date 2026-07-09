@@ -47,10 +47,67 @@ const sourceFiles = [...walkFiles("src"), ...walkFiles("supabase/functions")].fi
   /\.(ts|tsx|js|mjs)$/.test(file),
 );
 
+// Service role key is forbidden in runtime source EXCEPT in the single
+// privileged Mercado Pago module. Payment webhooks are, by definition,
+// unauthenticated callers that must write billing state; the privilege is
+// only safe because that same module colocates the webhook HMAC verification
+// (see the assertions below). Any new file needing the service role must be
+// added here explicitly and justified — never widened silently.
+const SERVICE_ROLE_ALLOWLIST = new Set(["supabase/functions/_shared/mercadopago.ts"]);
+
 for (const file of sourceFiles) {
   const text = readFileSync(file, "utf8");
+  const normalized = file.replace(/\\/g, "/");
   if (/SUPABASE_SERVICE_ROLE_KEY|SERVICE_ROLE_KEY/.test(text)) {
-    fail(`Service role key reference found in runtime source: ${file}`);
+    if (!SERVICE_ROLE_ALLOWLIST.has(normalized)) {
+      fail(`Service role key reference found outside the payment allow-list: ${file}`);
+    }
+  }
+}
+
+// The single privileged module must colocate the HMAC verification that
+// justifies its service-role access — privilege and its protection stay tied.
+const mpSharedModule = "supabase/functions/_shared/mercadopago.ts";
+if (existsSync(mpSharedModule)) {
+  const text = readIfExists(mpSharedModule);
+  const usesServiceRole = /SUPABASE_SERVICE_ROLE_KEY/.test(text);
+  if (usesServiceRole && !text.includes("verifyWebhookSignature")) {
+    fail("Mercado Pago module uses the service role key but does not colocate webhook HMAC verification");
+  }
+  if (usesServiceRole && !text.includes('hash: "SHA-256"')) {
+    fail("Mercado Pago module must verify webhook signatures via HMAC-SHA256");
+  }
+}
+
+// The webhook must verify the signature and reject invalid ones before it
+// ever activates billing state through the RPC.
+const mpWebhookFunction = "supabase/functions/mp-webhook/index.ts";
+if (existsSync(mpWebhookFunction)) {
+  const text = readIfExists(mpWebhookFunction);
+  if (!text.includes("verifyWebhookSignature")) {
+    fail("mp-webhook must verify the HMAC signature before processing");
+  }
+  if (!/return jsonResponse\(\{ error: "invalid signature" \}, 401\)/.test(text)) {
+    fail("mp-webhook must reject invalid signatures with HTTP 401 and no DB write");
+  }
+  if (!text.includes('rpc("activate_subscription_from_intent"')) {
+    fail("mp-webhook must activate subscriptions only through activate_subscription_from_intent");
+  }
+  if (!text.includes("MERCADO_PAGO_WEBHOOK_SECRET")) {
+    fail("mp-webhook must read the configured MERCADO_PAGO_WEBHOOK_SECRET");
+  }
+}
+
+// mp-create-preference must never trust a client-provided price: it resolves
+// the amount server-side (plan lookup for individual, pricing fn for escolar).
+const mpPreferenceFunction = "supabase/functions/mp-create-preference/index.ts";
+if (existsSync(mpPreferenceFunction)) {
+  const text = readIfExists(mpPreferenceFunction);
+  if (!text.includes('from("subscription_plans")') || !text.includes("calculateSchoolPricing")) {
+    fail("mp-create-preference must derive price from subscription_plans / calculateSchoolPricing, never the client");
+  }
+  if (/amount_brl_cents\s*:\s*body\./.test(text)) {
+    fail("mp-create-preference must not accept the charge amount from the request body");
   }
 }
 
