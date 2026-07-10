@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
+import AiSafetyNotice from "@/components/AiSafetyNotice";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -234,6 +235,9 @@ export default function SignatureStrengthsPage() {
               Descubra suas 5 forças mais vivas — e receba uma carta científica do seu "eu mais forte",
               com práticas de 7 dias e os limites que cada virtude esconde.
             </p>
+            <div className="mt-4">
+              <AiSafetyNotice />
+            </div>
           </div>
           <BrainPulse />
         </div>

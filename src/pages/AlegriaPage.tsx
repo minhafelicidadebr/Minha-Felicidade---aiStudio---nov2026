@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { Send, Sparkles, BookOpen, Lightbulb, Heart, Brain, Loader2, Zap, Users, MessageCircle, RotateCcw } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import AiSafetyNotice from "@/components/AiSafetyNotice";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { modules } from "@/data/courseData";
@@ -194,6 +195,10 @@ export default function AlegriaPage() {
             <RotateCcw className="w-4 h-4" />
           </button>
         </motion.div>
+
+        <div className="px-2 mb-3">
+          <AiSafetyNotice />
+        </div>
 
         {/* Module tag */}
         {mod && (
