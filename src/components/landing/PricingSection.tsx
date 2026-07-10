@@ -5,6 +5,7 @@ import { Check, Sparkles, Crown, Rocket, ArrowRight, Building2, Users, Zap, type
 import { supabase } from "@/integrations/supabase/client";
 import { startIndividualCheckout } from "@/lib/checkout";
 import { toast } from "@/hooks/use-toast";
+import { planFeatureLabels } from "@/lib/plan-features";
 
 type SubscriptionPlan = {
   id: string;
@@ -19,45 +20,6 @@ const planMeta: Record<string, { icon: LucideIcon; gradient: string }> = {
   free: { icon: Sparkles, gradient: "bg-card" },
   intermediate: { icon: Crown, gradient: "gradient-card-gold" },
   advanced: { icon: Rocket, gradient: "bg-card" },
-};
-
-const featureLabels: Record<string, string[]> = {
-  free: [
-    "5 módulos completos",
-    "32 vídeos com legendas",
-    "Quiz adaptativo (nível 1)",
-    "Flashcards básicos",
-    "AlegrIA (5 perguntas/dia)",
-    "Dashboard de progresso",
-    "Respiração Consciente",
-    "Roda da Vida",
-    "Diário de Gratidão",
-    "Jogo da Memória",
-  ],
-  intermediate: [
-    "Tudo do plano Gratuito",
-    "Quiz adaptativo (3 níveis)",
-    "AlegrIA ilimitada",
-    "Simulador de decisões",
-    "Arena de debate",
-    "Poesia pedagógica",
-    "Mapa Mental interativo",
-    "Desafio 21 Dias",
-    "Lab de Hipóteses",
-    "Missões Sociais",
-    "Relatório PDF",
-    "Certificado digital",
-  ],
-  advanced: [
-    "Tudo do Intermediário",
-    "Estúdio de co-design",
-    "Evidence Explorer",
-    "Painel de gestor",
-    "Dados agregados de turma",
-    "Export de relatórios",
-    "Suporte prioritário",
-    "API de integração",
-  ],
 };
 
 export default function PricingSection() {
@@ -196,7 +158,7 @@ export default function PricingSection() {
                     </span>
                   </div>
                   <ul className="space-y-3 mb-8">
-                    {(featureLabels[p.slug] || []).map((f: string) => (
+                    {planFeatureLabels(p.slug).map((f: string) => (
                       <li key={f} className="flex items-start gap-2.5 text-sm">
                         <div className="w-5 h-5 rounded-full bg-success/10 flex items-center justify-center shrink-0 mt-0.5">
                           <Check className="w-3 h-3 text-success" />

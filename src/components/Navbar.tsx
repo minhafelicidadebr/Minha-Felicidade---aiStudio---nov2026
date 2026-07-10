@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Trophy } from "lucide-react";
+import { Menu, X, Trophy, Crown, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { useSubscription } from "@/hooks/useSubscription";
 import logoIcon from "@/assets/logo-icon.png";
 import DarkModeToggle from "@/components/DarkModeToggle";
 
@@ -23,6 +24,7 @@ export default function Navbar() {
   const [totalXp, setTotalXp] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const { plan, isPremium } = useSubscription();
 
   useEffect(() => {
     const fetchXp = async () => {
@@ -43,9 +45,8 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "glass border-b border-border/30 shadow-warm/5" : "bg-background/60 backdrop-blur-md border-b border-border/20"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "glass border-b border-border/30 shadow-warm/5" : "bg-background/60 backdrop-blur-md border-b border-border/20"
+        }`}
       role="navigation"
       aria-label="Navegação principal"
     >
@@ -60,11 +61,10 @@ export default function Navbar() {
             <Link
               key={l.href}
               to={l.href}
-              className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                location.pathname === l.href
-                  ? "bg-primary/10 text-primary shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              }`}
+              className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${location.pathname === l.href
+                ? "bg-primary/10 text-primary shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                }`}
               aria-current={location.pathname === l.href ? "page" : undefined}
             >
               {l.label}
@@ -73,6 +73,23 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
+          {isPremium ? (
+            <Link
+              to="/subscription"
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/15 text-secondary text-xs font-bold hover:bg-secondary/25 transition-colors"
+              title="Sua assinatura"
+            >
+              <Crown className="w-3.5 h-3.5" /> {plan.plan_name}
+            </Link>
+          ) : (
+            <Link
+              to="/subscription"
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full gradient-institute text-primary-foreground text-xs font-bold hover:shadow-glow transition-all"
+              title="Ver planos e assinar"
+            >
+              <Sparkles className="w-3.5 h-3.5" /> Assinar
+            </Link>
+          )}
           <DarkModeToggle />
           {totalXp > 0 && (
             <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full glass text-foreground">
@@ -100,14 +117,22 @@ export default function Navbar() {
                 <Link
                   key={l.href}
                   to={l.href}
-                  className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                    location.pathname === l.href ? "bg-primary/10 text-primary" : "hover:bg-muted/50"
-                  }`}
+                  className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${location.pathname === l.href ? "bg-primary/10 text-primary" : "hover:bg-muted/50"
+                    }`}
                   onClick={() => setOpen(false)}
                 >
                   {l.label}
                 </Link>
               ))}
+              <Link
+                to="/subscription"
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${location.pathname === "/subscription" ? "bg-primary/10 text-primary" : "hover:bg-muted/50"
+                  }`}
+                onClick={() => setOpen(false)}
+              >
+                {isPremium ? <Crown className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                {isPremium ? `Meu plano · ${plan.plan_name}` : "Planos e assinatura"}
+              </Link>
             </div>
           </motion.div>
         )}

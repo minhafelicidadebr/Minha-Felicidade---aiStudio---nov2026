@@ -5,6 +5,7 @@ import { Crown, CreditCard, Calendar, Users, ArrowLeft, CheckCircle2, AlertCircl
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 import { consumePendingCheckout, startIndividualCheckout } from "@/lib/checkout";
+import { planFeatureLabels } from "@/lib/plan-features";
 import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -189,6 +190,14 @@ export default function SubscriptionPage() {
                   <div className="text-xs text-muted-foreground mb-4">
                     {p.price_yearly > 0 && `Ou ${formatPrice(Math.round(p.price_yearly / 12))}/mês no plano anual`}
                   </div>
+                  <ul className="space-y-1.5 mb-5">
+                    {planFeatureLabels(p.slug).slice(0, 6).map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0 mt-0.5" />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
                   <button
                     onClick={() => handleUpgrade(p.slug)}
                     className={`w-full py-3 rounded-2xl font-bold text-sm transition-all ${p.slug === "intermediate"

@@ -8,8 +8,9 @@ import { modules, videoLessons } from "@/data/courseData";
 import { hasAnyRole, parseProfileRoles, type AppRole, type ProfileRolesPayload } from "@/lib/auth-profile";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { BookOpen, Play, Trophy, Flame, ArrowRight, LogOut, Download, Star, BarChart3, Target, Settings } from "lucide-react";
+import { BookOpen, Play, Trophy, Flame, ArrowRight, LogOut, Download, Star, BarChart3, Target, Settings, Crown, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useSubscription } from "@/hooks/useSubscription";
 import { AlegriaHeroCard, AlegriaTag } from "@/components/AlegriaCTA";
 
 type ProgressRecord = Tables<"user_progress">;
@@ -58,6 +59,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
   const { toast } = useToast();
+  const { plan, isPremium } = useSubscription();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -222,6 +224,58 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Plano do usuário — afirma o plano (premium) ou convida a assinar (grátis) */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-5 rounded-2xl glass-card flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between"
+          >
+            {isPremium ? (
+              <>
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl gradient-institute flex items-center justify-center shrink-0">
+                    <Crown className="w-5 h-5 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Seu plano</p>
+                    <p className="font-display font-bold">Plano {plan.plan_name} ativo ✨</p>
+                    {plan.current_period_end && (
+                      <p className="text-xs text-muted-foreground">
+                        Renova em {new Date(plan.current_period_end).toLocaleDateString("pt-BR")}
+                        {plan.source === "organization" && plan.org_name ? ` • via ${plan.org_name}` : ""}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => navigate("/subscription")}
+                  className="px-4 py-2.5 rounded-xl bg-muted hover:bg-muted/80 text-sm font-semibold transition-colors whitespace-nowrap"
+                >
+                  Gerenciar assinatura
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Plano Gratuito</p>
+                    <p className="font-display font-bold">Desbloqueie tudo com o Premium</p>
+                    <p className="text-xs text-muted-foreground">AlegrIA ilimitada, simulador, certificado e mais</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => navigate("/subscription")}
+                  className="px-4 py-2.5 rounded-xl gradient-institute text-primary-foreground text-sm font-bold shadow-warm hover:shadow-glow transition-all whitespace-nowrap flex items-center justify-center gap-2"
+                >
+                  <Crown className="w-4 h-4" /> Ver planos
+                </button>
+              </>
+            )}
+          </motion.div>
+
           {/* AlegrIA — cérebro do ecossistema */}
           <AlegriaHeroCard />
 
@@ -369,9 +423,9 @@ export default function DashboardPage() {
               { icon: "🎭", title: "Poesia", path: "/poetry" },
               { icon: "🏗️", title: "Co-design", path: "/codesign" },
               { icon: "✨", title: "Constelação", path: "/constellation" },
-             { icon: "🪞", title: "Espelho", path: "/mirror" },
-             { icon: "⏳", title: "Eu Futuro", path: "/future-self" },
-             { icon: "👑", title: "Forças VIA", path: "/strengths" },
+              { icon: "🪞", title: "Espelho", path: "/mirror" },
+              { icon: "⏳", title: "Eu Futuro", path: "/future-self" },
+              { icon: "👑", title: "Forças VIA", path: "/strengths" },
             ].map((d) => (
               <motion.button
                 key={d.title}
