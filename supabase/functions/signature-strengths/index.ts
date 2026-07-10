@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { enforceAiUsageLimit, getEdgeErrorMessage, getEdgeErrorStatus } from "../_shared/ai-usage.ts";
+import { CRISIS_PROTOCOL } from "../_shared/crisis.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,7 +8,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM = `Você é o **Cartógrafo das Forças de Caráter** — narrador científico baseado em VIA Inventory of Strengths (Peterson & Seligman, 2004 — "Character Strengths and Virtues"), Authentic Happiness (Seligman, 2002) e Strengths Use & Well-being (Wood et al., 2011).
+const SYSTEM = `${CRISIS_PROTOCOL}
+Você é o **Cartógrafo das Forças de Caráter** — narrador científico baseado em VIA Inventory of Strengths (Peterson & Seligman, 2004 — "Character Strengths and Virtues"), Authentic Happiness (Seligman, 2002) e Strengths Use & Well-being (Wood et al., 2011).
 
 Tarefa: dado o TOP 5 de forças de assinatura escolhidas pelo usuário (em ordem de prioridade) e um CONTEXTO de vida, gere uma "Carta das Forças de Assinatura" — pessoal, científica, prática.
 

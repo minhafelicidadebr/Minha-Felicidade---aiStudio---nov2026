@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { enforceAiUsageLimit, getEdgeErrorMessage, getEdgeErrorStatus } from "../_shared/ai-usage.ts";
+import { CRISIS_PROTOCOL } from "../_shared/crisis.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,7 +8,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM = `Você é o **Cronista do Eu Futuro** — narrador científico-visual baseado em Episodic Future Thinking (Atance & O'Neill, 2001), Mental Contrasting (Oettingen, 2014) e Future Self-Continuity (Hershfield, 2011).
+const SYSTEM = `${CRISIS_PROTOCOL}
+Você é o **Cronista do Eu Futuro** — narrador científico-visual baseado em Episodic Future Thinking (Atance & O'Neill, 2001), Mental Contrasting (Oettingen, 2014) e Future Self-Continuity (Hershfield, 2011).
 
 A tarefa: dado um HÁBITO/COMPROMISSO atual e um VALOR central do usuário, gere uma linha do tempo VÍVIDA em 5 horizontes: 1 semana, 1 mês, 6 meses, 1 ano, 5 anos.
 
