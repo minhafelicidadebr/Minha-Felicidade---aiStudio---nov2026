@@ -65,12 +65,23 @@ Disparo: agendada (Job do Lovable) e/ou chamada pelo webhook após ativar.
 assinatura do `auth.uid()`, registra em `data_access_logs`, enfileira
 `subscription_canceled`. `REVOKE EXECUTE FROM PUBLIC, anon; GRANT ... authenticated`.
 
+### RPC `get_my_payment_history` (nova)
+`SECURITY DEFINER`, self-scoped: retorna os pagamentos do `auth.uid()` a partir
+de `purchase_intents` (join com `subscription_plans` para nome do plano),
+expondo só os campos necessários (data, plano, valor, intervalo, status,
+identificador de referência). `REVOKE EXECUTE FROM PUBLIC, anon; GRANT ...
+authenticated`. É a ÚNICA forma do cliente ler pagamentos (a tabela permanece
+service_role-only).
+
 ### Função pura `_shared/email-templates.ts`
 Por `kind` gera `{ subject, html }` em PT, sem overclaim. Testável isoladamente.
 
 ### UI
 - Página de assinatura: botão "Cancelar renovação" (premium) → confirma → chama
   a RPC → mostra "ativa até <data>, não renova". Nunca escreve direto na tabela.
+- Página de assinatura: seção **"Faturas e pagamentos"** que chama
+  `get_my_payment_history` e lista os pagamentos (data, plano, valor, status),
+  com estado vazio claro quando não houver nenhum.
 - Dashboard: banner de feature discovery para novos premium (marca visto em
   `localStorage`), com CTA ao primeiro recurso premium.
 
@@ -121,6 +132,11 @@ A RPC de cancelamento só altera a assinatura do `auth.uid()` — nunca a de ter
 A outbox e toda mudança de estado de assinatura só são escritas por service_role
 ou RPC `SECURITY DEFINER`, nunca pelo cliente.
 **Validates: Requirements 6.1**
+
+### Property 5: Self-scope do histórico de pagamentos
+`get_my_payment_history` retorna apenas pagamentos do `auth.uid()`; o cliente
+nunca lê `purchase_intents` diretamente.
+**Validates: Requirements 7.2**
 
 ## Error Handling
 

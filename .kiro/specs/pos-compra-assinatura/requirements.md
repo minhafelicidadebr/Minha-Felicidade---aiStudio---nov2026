@@ -114,7 +114,27 @@ introduzir riscos nem promessas falsas.
 3. THE cópia dos e-mails NÃO SHALL prometer conformidade legal nem cobrança
    recorrente automática (v1 é cobrança única por ciclo — doutrina §1).
 
-### Requirement 7: Escopo e alinhamento (fora de escopo declarado)
+### Requirement 7: Histórico de faturas e pagamentos
+
+**User Story:** Como assinante, quero ver meu histórico de pagamentos dentro do
+app, para acompanhar o que paguei, quando e com que status, sem depender do
+suporte ou do painel do provedor.
+
+#### Acceptance Criteria
+
+1. THE página de assinatura SHALL exibir uma seção "Faturas e pagamentos" que
+   lista os pagamentos do próprio usuário (data, plano, valor, intervalo,
+   status).
+2. THE leitura SHALL ocorrer via RPC `SECURITY DEFINER` self-scoped, que retorna
+   apenas os pagamentos do `auth.uid()` — o cliente NUNCA SHALL ler
+   `purchase_intents` diretamente (a tabela é service_role-only por design).
+3. THE lista SHALL expor somente os campos necessários (data, plano, valor,
+   intervalo, status e um identificador de referência do pagamento), sem dados
+   de terceiros nem campos internos desnecessários.
+4. IF o usuário não tiver pagamentos THEN o sistema SHALL exibir um estado vazio
+   claro ("nenhum pagamento ainda").
+
+### Requirement 8: Escopo e alinhamento (fora de escopo declarado)
 
 **User Story:** Como founder, quero que esta onda tenha escopo enxuto e alinhado
 ao roadmap, para não inflar entregas nem antecipar o que ainda não tem demanda.

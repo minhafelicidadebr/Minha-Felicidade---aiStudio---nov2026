@@ -13,10 +13,10 @@ posterior desacoplado por outbox.
 {
   "waves": [
     { "wave": 1, "tasks": [1], "description": "Fundação: tabela notification_outbox" },
-    { "wave": 2, "tasks": [2, 3, 7], "description": "Enfileirar boas-vindas, templates, feature discovery" },
+    { "wave": 2, "tasks": [2, 3, 7, 8], "description": "Enfileirar boas-vindas, templates, feature discovery, histórico de pagamentos" },
     { "wave": 3, "tasks": [4, 5, 6], "description": "Envio (process-notifications), ciclo de vida diário, cancelamento" },
-    { "wave": 4, "tasks": [8], "description": "Agendamento, secrets e documentação" },
-    { "wave": 5, "tasks": [9], "description": "Gate final e testes de ponta a ponta" }
+    { "wave": 4, "tasks": [9], "description": "Agendamento, secrets e documentação" },
+    { "wave": 5, "tasks": [10], "description": "Gate final e testes de ponta a ponta" }
   ]
 }
 ```
@@ -64,22 +64,35 @@ posterior desacoplado por outbox.
     com CTA ao primeiro recurso premium.
   - _Requirements: 5.1_
 
-- [ ] 8. Agendamento + secrets + docs
+- [ ] 8. Histórico de faturas e pagamentos (RPC + UI)
+  - Migration: RPC `get_my_payment_history` (`SECURITY DEFINER`, self-scoped)
+    que lê os pagamentos do `auth.uid()` de `purchase_intents` (join com
+    `subscription_plans`), expondo só os campos necessários. `REVOKE EXECUTE
+    FROM PUBLIC, anon; GRANT ... authenticated`.
+  - UI: seção "Faturas e pagamentos" na página de assinatura (data, plano,
+    valor, status), com estado vazio claro.
+  - _Requirements: 7.1, 7.2, 7.3, 7.4_
+
+- [ ] 9. Agendamento + secrets + docs
   - Configurar o disparo diário (cron/Job do Lovable) da `subscription-lifecycle`
     e do `process-notifications`.
   - Documentar `RESEND_API_KEY` no runbook (server-only, nunca commitado).
   - _Requirements: 6.2_
 
-- [ ] 9. Gate final
+- [ ] 10. Gate final
   - `npm run quality` completo.
   - Testes manuais: compra → e-mail de boas-vindas chega 1x (reenviar webhook
     não duplica); cancelar → mantém acesso até fim do ciclo, não renova;
-    simular expiração → rebaixa para gratuito.
+    simular expiração → rebaixa para gratuito; histórico lista os pagamentos do
+    próprio usuário.
   - _Requirements: todas_
 
 ## Notes
 
 - Reaproveita infra Resend (Onda 3) e entitlements `features`/`limits` (Parte C).
 - Alimenta eventos de funil da Onda 2 (`upgrade`, `renewal`, `churn`).
+- "Faturas e pagamentos" nesta onda é **histórico** (dados já existentes). Método
+  de pagamento editável, renovação automática e Nota Fiscal dependem de billing
+  recorrente — trilha estratégica separada ("Billing Maduro"), fora daqui.
 - Fora de escopo: recorrência automática, reembolso self-service, notas fiscais,
   SSO multi-app.
