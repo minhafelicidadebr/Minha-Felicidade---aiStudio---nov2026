@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { ageInYears, isMinor, isValidPastDate } from "./guardian-consent";
+import {
+  GUARDIAN_CONSENT_POLICY_VERSION,
+  GUARDIAN_CONSENT_STATEMENT,
+  ageInYears,
+  isMinor,
+  isValidPastDate,
+} from "./guardian-consent";
 
 const REF = new Date("2026-07-06T12:00:00.000Z");
 
@@ -23,5 +29,14 @@ describe("isValidPastDate", () => {
     expect(isValidPastDate("2030-01-01", REF)).toBe(false);
     expect(isValidPastDate("1850-01-01", REF)).toBe(false);
     expect(isValidPastDate("2010-01-01", REF)).toBe(true);
+  });
+});
+
+describe("GUARDIAN_CONSENT_STATEMENT", () => {
+  it("política 2026.2 dá transparência sobre processamento por IA de terceiros", () => {
+    expect(GUARDIAN_CONSENT_POLICY_VERSION).toBe("2026.2");
+    expect(GUARDIAN_CONSENT_STATEMENT).toContain("inteligência artificial");
+    expect(GUARDIAN_CONSENT_STATEMENT).toContain("provedores de IA");
+    expect(GUARDIAN_CONSENT_STATEMENT).toContain("Lei 13.709/2018");
   });
 });

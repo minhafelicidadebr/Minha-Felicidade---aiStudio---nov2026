@@ -9,7 +9,15 @@
 // checkboxes de "meu responsável autoriza". Verificação independente por
 // e-mail ao responsável (link de confirmação) fica para quando o dispatcher
 // de e-mail existir (Onda 3) — não é fingido aqui como já resolvido.
-export const GUARDIAN_CONSENT_POLICY_VERSION = "2026.1";
+//
+// Histórico de versões da política:
+// - 2026.1: termo original (uso educacional, art. 14 LGPD).
+// - 2026.2: acrescenta transparência sobre o processamento das mensagens dos
+//   recursos de IA por provedores terceiros. Consentimentos 2026.1 já
+//   registrados permanecem válidos (o ledger é INSERT-only e o guard aceita
+//   qualquer evento registrado); forçar re-consentimento em mudança material
+//   de política é decisão futura, declarada aqui, não implementada.
+export const GUARDIAN_CONSENT_POLICY_VERSION = "2026.2";
 
 export const MINOR_AGE_THRESHOLD = 18;
 
@@ -43,4 +51,7 @@ export const GUARDIAN_CONSENT_STATEMENT =
   "Na qualidade de responsável legal, autorizo o tratamento dos dados pessoais " +
   "do(a) adolescente para fins de uso educacional da plataforma Ciência do " +
   "Bem-Estar (Instituto Felicidade Para Todos), nos termos do art. 14 da Lei " +
-  "Geral de Proteção de Dados (Lei 13.709/2018).";
+  "Geral de Proteção de Dados (Lei 13.709/2018). Estou ciente de que as " +
+  "mensagens enviadas aos recursos de tutoria por inteligência artificial são " +
+  "processadas por provedores de IA contratados pela plataforma, com a " +
+  "finalidade de gerar as respostas educacionais.";

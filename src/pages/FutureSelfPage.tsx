@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Send, Sparkles, Hourglass, Mail, Target, Wand2, Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import AiSafetyNotice from "@/components/AiSafetyNotice";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { NeuralBackground, useXPBurst, AchievementToast, EncouragementBubble, ConfettiCelebration } from "@/components/learning/LearningFX";
@@ -141,6 +142,10 @@ export default function FutureSelfPage() {
             Visualize cientificamente quem você se torna em 1 semana, 1 mês, 6 meses, 1 ano e 5 anos.
             Cada cena é gerada com rigor e imagens vívidas para ativar seu córtex pré-frontal.
           </p>
+
+          <div className="mt-4 flex justify-center">
+            <AiSafetyNotice />
+          </div>
 
           {/* Mini CTAs */}
           <div className="flex flex-wrap items-center justify-center gap-2 mt-5">

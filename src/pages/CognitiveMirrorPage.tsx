@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Mic, Sparkles, Target, AlertTriangle, Lightbulb, Brain, Zap, RefreshCw, CheckCircle2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import AiSafetyNotice from "@/components/AiSafetyNotice";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -171,6 +172,10 @@ export default function CognitiveMirrorPage() {
             Ensine um conceito como se fosse para um amigo. A IA fará o raio-X da sua compreensão —
             lacunas, vieses, profundidade, e como um mestre explicaria.
           </p>
+
+          <div className="mt-4 flex justify-center">
+            <AiSafetyNotice />
+          </div>
 
           {/* Mini CTAs — instructional design pop-outs */}
           <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
