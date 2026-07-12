@@ -23,7 +23,7 @@ posterior desacoplado por outbox.
 
 ## Tasks
 
-- [ ] 1. Migration: tabela `notification_outbox`
+- [x] 1. Migration: tabela `notification_outbox`
   - Schema do `design.md` (RLS on, sem policy de cliente, `REVOKE ALL FROM
     PUBLIC, anon, authenticated`, `GRANT ALL TO service_role`, `dedupe_key UNIQUE`).
   - Adicionar ao `docs/security-invariants-runbook.md`.
