@@ -1,12 +1,14 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { GUARDIAN_CONSENT_POLICY_VERSION } from "@/lib/guardian-consent";
 
 type ConsentStatus = "checking" | "clear" | "blocked";
 
 interface ConsentPayload {
   requires_consent: boolean;
   granted: boolean;
+  policy_version?: string;
 }
 
 /**
@@ -32,7 +34,16 @@ export default function RequireGuardianConsent({ children }: { children: ReactNo
       }
 
       const payload = data as unknown as ConsentPayload | null;
-      const blocked = Boolean(payload?.requires_consent) && !payload?.granted;
+      const requires = Boolean(payload?.requires_consent);
+      const granted = Boolean(payload?.granted);
+      // Re-consentimento em mudança material de política (LGPD art. 14):
+      // um consentimento concedido para uma versão ANTERIOR à atual não é
+      // suficiente — o responsável precisa reautorizar sob o termo vigente.
+      const outdated =
+        granted &&
+        payload?.policy_version != null &&
+        payload.policy_version !== GUARDIAN_CONSENT_POLICY_VERSION;
+      const blocked = requires && (!granted || outdated);
       setStatus(blocked ? "blocked" : "clear");
     }
 

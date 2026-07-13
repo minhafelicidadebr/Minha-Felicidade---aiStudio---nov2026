@@ -53,7 +53,9 @@ export default function GuardianConsentPage() {
           </div>
           <p className="text-xs text-muted-foreground mt-1 mb-6">
             Como você tem menos de 18 anos, a lei (LGPD, art. 14) exige a autorização de um pai, mãe ou
-            responsável legal antes de continuar usando a plataforma.
+            responsável legal antes de continuar usando a plataforma. Se nossa política de dados foi
+            atualizada desde a última autorização, pedimos que o responsável confirme novamente sob o
+            termo vigente.
           </p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
