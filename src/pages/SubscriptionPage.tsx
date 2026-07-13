@@ -42,6 +42,8 @@ export default function SubscriptionPage() {
   const { plan, loading, isPremium, refetch } = useSubscription();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
+  const [canceling, setCanceling] = useState(false);
+  const [canceled, setCanceled] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -96,6 +98,29 @@ export default function SubscriptionPage() {
         description: e instanceof Error ? e.message : "Tente novamente em instantes.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!window.confirm("Cancelar a renovação da sua assinatura? Você mantém o acesso até o fim do ciclo atual e não haverá nova cobrança.")) return;
+    setCanceling(true);
+    try {
+      // RPC nova (ainda não nos tipos gerados até o Lovable aplicar a migration).
+      const { error } = await supabase.rpc("request_subscription_cancellation" as never);
+      if (error) throw error;
+      setCanceled(true);
+      toast({
+        title: "Renovação cancelada",
+        description: "Você mantém o acesso até o fim do ciclo atual. Não haverá nova cobrança.",
+      });
+    } catch (e) {
+      toast({
+        title: "Não foi possível cancelar",
+        description: e instanceof Error ? e.message : "Tente novamente ou fale com o suporte.",
+        variant: "destructive",
+      });
+    } finally {
+      setCanceling(false);
     }
   };
 
@@ -255,15 +280,35 @@ export default function SubscriptionPage() {
               <AlertCircle className="w-5 h-5 text-muted-foreground" />
               Gerenciar Assinatura
             </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Para alterar, cancelar ou atualizar o método de pagamento da sua assinatura, entre em contato com nosso suporte.
-            </p>
-            <a
-              href="mailto:contato@felicidadeparatodos.org"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-muted hover:bg-muted/80 text-sm font-medium transition-colors"
-            >
-              Contatar Suporte
-            </a>
+            {canceled ? (
+              <p className="text-sm text-muted-foreground">
+                Renovação cancelada. Você mantém o acesso até{" "}
+                {plan.current_period_end ? new Date(plan.current_period_end).toLocaleDateString("pt-BR") : "o fim do ciclo atual"}
+                {" "}e não haverá nova cobrança.
+              </p>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Você pode cancelar a renovação a qualquer momento — o acesso continua até o fim do ciclo atual,
+                  sem nova cobrança. Para reembolso ou troca de método de pagamento, fale com o suporte.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={handleCancel}
+                    disabled={canceling}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-muted hover:bg-muted/80 text-sm font-medium transition-colors disabled:opacity-60"
+                  >
+                    {canceling ? "Cancelando..." : "Cancelar renovação"}
+                  </button>
+                  <a
+                    href="mailto:contato@felicidadeparatodos.org"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-muted hover:bg-muted/80 text-sm font-medium transition-colors"
+                  >
+                    Contatar Suporte
+                  </a>
+                </div>
+              </>
+            )}
           </motion.div>
         )}
 

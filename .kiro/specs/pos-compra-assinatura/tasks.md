@@ -52,7 +52,7 @@ posterior desacoplado por outbox.
     `subscription_expired`.
   - _Requirements: 2.1, 2.2, 3.2_
 
-- [ ] 6. RPC `request_subscription_cancellation` + UI
+- [x] 6. RPC `request_subscription_cancellation` + UI
   - RPC self-scoped (`SECURITY DEFINER`): `cancel_at_period_end=true` só da
     assinatura do `auth.uid()`; log em `data_access_logs`; enfileira
     `subscription_canceled`. REVOKE de PUBLIC/anon, GRANT authenticated.
