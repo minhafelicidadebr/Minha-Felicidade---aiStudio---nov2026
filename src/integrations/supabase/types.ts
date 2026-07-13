@@ -158,6 +158,48 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_outbox: {
+        Row: {
+          attempts: number
+          created_at: string
+          dedupe_key: string
+          id: string
+          kind: string
+          last_error: string | null
+          payload: Json
+          recipient_email: string
+          sent_at: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          dedupe_key: string
+          id?: string
+          kind: string
+          last_error?: string | null
+          payload?: Json
+          recipient_email: string
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          dedupe_key?: string
+          id?: string
+          kind?: string
+          last_error?: string | null
+          payload?: Json
+          recipient_email?: string
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -279,6 +321,63 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      purchase_intents: {
+        Row: {
+          amount_brl_cents: number
+          billing_interval: string
+          contact_email: string | null
+          contact_name: string | null
+          created_at: string
+          external_reference: string
+          id: string
+          kind: string
+          mp_payment_id: string | null
+          mp_preference_id: string | null
+          plan_slug: string
+          seats_schools: number | null
+          seats_students: number | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_brl_cents: number
+          billing_interval: string
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string
+          external_reference?: string
+          id?: string
+          kind: string
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          plan_slug: string
+          seats_schools?: number | null
+          seats_students?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_brl_cents?: number
+          billing_interval?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string
+          external_reference?: string
+          id?: string
+          kind?: string
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          plan_slug?: string
+          seats_schools?: number | null
+          seats_students?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -448,6 +547,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_subscription_from_intent: {
+        Args: {
+          p_external_reference: string
+          p_mp_payment_id: string
+          p_mp_status: string
+        }
+        Returns: Json
+      }
       enforce_ai_usage_limit: {
         Args: { _function_name: string }
         Returns: Json
@@ -455,6 +562,19 @@ export type Database = {
       get_learning_progress_overview: { Args: never; Returns: Json }
       get_my_guardian_consent_status: { Args: never; Returns: Json }
       get_my_learning_progress_summary: { Args: never; Returns: Json }
+      get_my_payment_history: {
+        Args: never
+        Returns: {
+          amount_brl_cents: number
+          billing_interval: string
+          created_at: string
+          kind: string
+          payment_ref: string
+          plan_name: string
+          plan_slug: string
+          status: string
+        }[]
+      }
       get_my_plan: { Args: never; Returns: Json }
       get_my_profile: { Args: never; Returns: Json }
       get_user_plan: { Args: { _user_id: string }; Returns: Json }
@@ -475,6 +595,11 @@ export type Database = {
           _guardian_name: string
           _policy_version: string
         }
+        Returns: Json
+      }
+      request_subscription_cancellation: { Args: never; Returns: Json }
+      run_subscription_lifecycle: {
+        Args: { _reminder_days?: number }
         Returns: Json
       }
       user_has_feature: {
