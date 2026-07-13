@@ -41,12 +41,12 @@ posterior desacoplado por outbox.
     overclaim). Testes cobrindo cada tipo.
   - _Requirements: 1.2, 6.3_
 
-- [ ] 4. Edge function `process-notifications`
+- [x] 4. Edge function `process-notifications`
   - Lê outbox pendente (lote), envia via Resend (`RESEND_API_KEY`), marca
     sent/failed + attempts. Idempotente e não-bloqueante.
   - _Requirements: 1.1, 1.3, 3.1_
 
-- [ ] 5. Edge/Job `subscription-lifecycle` (diário)
+- [x] 5. Edge/Job `subscription-lifecycle` (diário)
   - Enfileira `renewal_reminder` (N dias antes, 1x/ciclo) e expira assinaturas
     vencidas (`status='expired'` via RPC service role) + enfileira
     `subscription_expired`.
@@ -73,7 +73,7 @@ posterior desacoplado por outbox.
     valor, status), com estado vazio claro.
   - _Requirements: 7.1, 7.2, 7.3, 7.4_
 
-- [ ] 9. Agendamento + secrets + docs
+- [x] 9. Agendamento + secrets + docs
   - Configurar o disparo diário (cron/Job do Lovable) da `subscription-lifecycle`
     e do `process-notifications`.
   - Documentar `RESEND_API_KEY` no runbook (server-only, nunca commitado).

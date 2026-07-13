@@ -16,6 +16,7 @@ The Supabase hardening path is versioned as migrations. Apply them in timestamp 
 10. `supabase/migrations/20260710130000_get_my_payment_history.sql`
 11. `supabase/migrations/20260710140000_request_subscription_cancellation.sql`
 12. `supabase/migrations/20260710150000_activation_enqueue_welcome.sql`
+13. `supabase/migrations/20260710160000_subscription_lifecycle.sql`
 
 The `20260613144818...` migration was generated remotely after the first foundation migration. It is mostly idempotent duplication. The later `20260613170000...` migration is still required because it removes explicit `anon`/`authenticated` EXECUTE grants that are not removed by revoking from `PUBLIC`.
 
@@ -103,6 +104,43 @@ ambiente — não é verificável só com `npm run quality`. Roteiro passo-a-pas
 (secrets, deploy, cenários e queries de verificação) em
 `docs/mercadopago-sandbox-runbook.md`; resumo dos cenários na Task 10 de
 `.kiro/specs/onda-1-monetizacao/tasks.md`.
+
+## Onda 1.5 — Pós-compra, E-mail Transacional & Gestão de Assinatura
+
+### Secrets novos (configurar no painel — NUNCA commitar)
+
+- `RESEND_API_KEY` — chave do provedor de e-mail (Resend), usada só pela edge
+  function `process-notifications`.
+- `RESEND_FROM_EMAIL` — remetente verificado (ex.: `Felicidade.lab <nao-responda@dominio>`).
+  Opcional; há um default.
+- `NOTIFICATIONS_TRIGGER_SECRET` — segredo que autoriza o acionamento das
+  functions worker (`process-notifications`, `subscription-lifecycle`). Elas
+  rejeitam (401 "Forbidden") sem o header `x-trigger-secret` correto.
+- `RENEWAL_REMINDER_DAYS` — dias de antecedência do lembrete (default 3). Opcional.
+
+### Agendamento (cron)
+
+Configurar no Lovable/Supabase dois disparos agendados, enviando o header
+`x-trigger-secret: <NOTIFICATIONS_TRIGGER_SECRET>`:
+- `subscription-lifecycle` — 1x/dia (lembretes de renovação + expiração).
+- `process-notifications` — frequente (ex.: a cada 5–15 min) para esvaziar a
+  fila `notification_outbox`.
+
+### Invariantes (pós-compra)
+
+- `notification_outbox` é service_role-only; idempotência por `dedupe_key UNIQUE`.
+- A ativação apenas ENFILEIRA o e-mail de boas-vindas (não envia) — falha de
+  e-mail nunca reverte a ativação.
+- Cancelamento self-service via RPC `request_subscription_cancellation`
+  (`SECURITY DEFINER`, self-scoped, só a assinatura do `auth.uid()`).
+- Histórico via RPC `get_my_payment_history` (`SECURITY DEFINER`, self-scoped);
+  o cliente nunca lê `purchase_intents` direto.
+- **Allow-list de service role ampliado** (mudança de invariante, auditável):
+  além de `_shared/mercadopago.ts` (amarrado a HMAC), agora
+  `_shared/service-client.ts` está no allow-list — amarrado ao guard
+  `assertTriggerSecret` (o gate exige a colocação). As functions worker
+  `process-notifications` e `subscription-lifecycle` são obrigadas pelo gate a
+  chamar `assertTriggerSecret` (não são públicas).
 
 ## Quality Gate
 
