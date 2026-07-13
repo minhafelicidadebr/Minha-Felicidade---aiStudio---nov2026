@@ -29,14 +29,14 @@ posterior desacoplado por outbox.
   - Adicionar ao `docs/security-invariants-runbook.md`.
   - _Requirements: 1.4, 6.1_
 
-- [ ] 2. Migration: enfileirar boas-vindas na ativação
+- [x] 2. Migration: enfileirar boas-vindas na ativação
   - Alterar `activate_subscription_from_intent` para inserir
     `subscription_welcome` na outbox (dedupe `welcome:<mp_payment_id>`,
     `ON CONFLICT DO NOTHING`), resolvendo e-mail (auth.users p/ individual,
     contact_email p/ escolar). Preservar SECURITY DEFINER + REVOKE/GRANT.
   - _Requirements: 1.1, 1.4_
 
-- [ ] 3. Função pura de templates de e-mail
+- [x] 3. Função pura de templates de e-mail
   - `_shared/email-templates.ts`: por `kind`, gera assunto + corpo (PT, sem
     overclaim). Testes cobrindo cada tipo.
   - _Requirements: 1.2, 6.3_
