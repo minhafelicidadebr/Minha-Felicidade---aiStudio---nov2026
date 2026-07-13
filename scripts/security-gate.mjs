@@ -53,7 +53,13 @@ const sourceFiles = [...walkFiles("src"), ...walkFiles("supabase/functions")].fi
 // only safe because that same module colocates the webhook HMAC verification
 // (see the assertions below). Any new file needing the service role must be
 // added here explicitly and justified — never widened silently.
-const SERVICE_ROLE_ALLOWLIST = new Set(["supabase/functions/_shared/mercadopago.ts"]);
+const SERVICE_ROLE_ALLOWLIST = new Set([
+  // Módulo do webhook de pagamento: privilégio amarrado à verificação HMAC.
+  "supabase/functions/_shared/mercadopago.ts",
+  // Módulo dos workers internos (process-notifications, subscription-lifecycle):
+  // privilégio amarrado ao guard de trigger-secret (assertTriggerSecret).
+  "supabase/functions/_shared/service-client.ts",
+]);
 
 for (const file of sourceFiles) {
   const text = readFileSync(file, "utf8");
@@ -108,6 +114,30 @@ if (existsSync(mpPreferenceFunction)) {
   }
   if (/amount_brl_cents\s*:\s*body\./.test(text)) {
     fail("mp-create-preference must not accept the charge amount from the request body");
+  }
+}
+
+// Workers internos: o módulo de service client dos workers deve colocar junto o
+// guard de trigger-secret que justifica o privilégio (privilégio ↔ proteção).
+const svcClientModule = "supabase/functions/_shared/service-client.ts";
+if (existsSync(svcClientModule)) {
+  const text = readIfExists(svcClientModule);
+  if (/SUPABASE_SERVICE_ROLE_KEY/.test(text) && !text.includes("assertTriggerSecret")) {
+    fail("service-client module uses the service role key but does not colocate the trigger-secret guard");
+  }
+}
+
+// As functions worker (fila de e-mail e ciclo de vida) não podem ser públicas:
+// precisam exigir o trigger-secret antes de qualquer ação privilegiada.
+for (const workerFn of [
+  "supabase/functions/process-notifications/index.ts",
+  "supabase/functions/subscription-lifecycle/index.ts",
+]) {
+  if (existsSync(workerFn)) {
+    const text = readIfExists(workerFn);
+    if (!text.includes("assertTriggerSecret")) {
+      fail(`Internal worker must guard invocation with assertTriggerSecret: ${workerFn}`);
+    }
   }
 }
 
