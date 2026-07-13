@@ -59,12 +59,12 @@ posterior desacoplado por outbox.
   - Botão "Cancelar renovação" na página de assinatura (premium) com confirmação.
   - _Requirements: 4.2, 4.3_
 
-- [ ] 7. Feature discovery no dashboard
+- [x] 7. Feature discovery no dashboard
   - Banner "recém-desbloqueado" para novos premium (marca visto em localStorage),
     com CTA ao primeiro recurso premium.
   - _Requirements: 5.1_
 
-- [ ] 8. Histórico de faturas e pagamentos (RPC + UI)
+- [x] 8. Histórico de faturas e pagamentos (RPC + UI)
   - Migration: RPC `get_my_payment_history` (`SECURITY DEFINER`, self-scoped)
     que lê os pagamentos do `auth.uid()` de `purchase_intents` (join com
     `subscription_plans`), expondo só os campos necessários. `REVOKE EXECUTE

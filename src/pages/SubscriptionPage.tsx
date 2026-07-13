@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Crown, CreditCard, Calendar, Users, ArrowLeft, CheckCircle2, AlertCircle, Sparkles, Shield } from "lucide-react";
+import { Crown, CreditCard, Calendar, Users, ArrowLeft, CheckCircle2, AlertCircle, Sparkles, Shield, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 import { consumePendingCheckout, startIndividualCheckout } from "@/lib/checkout";
@@ -19,10 +19,29 @@ type SubscriptionPlan = {
   price_yearly: number;
 };
 
+type PaymentRow = {
+  created_at: string;
+  kind: string;
+  plan_slug: string;
+  plan_name: string | null;
+  billing_interval: string;
+  amount_brl_cents: number;
+  status: string;
+  payment_ref: string | null;
+};
+
+const PAYMENT_STATUS_LABEL: Record<string, string> = {
+  approved: "Aprovado",
+  pending: "Pendente",
+  rejected: "Recusado",
+  expired: "Expirado",
+};
+
 export default function SubscriptionPage() {
   const navigate = useNavigate();
   const { plan, loading, isPremium, refetch } = useSubscription();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [payments, setPayments] = useState<PaymentRow[]>([]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -38,6 +57,17 @@ export default function SubscriptionPage() {
       if (data) setPlans(data);
     };
     fetchPlans();
+  }, []);
+
+  // Histórico de pagamentos do próprio usuário (RPC self-scoped).
+  // Cast: get_my_payment_history ainda não está nos tipos gerados pelo Lovable
+  // (os tipos são regenerados quando a migration é aplicada no Lovable Cloud).
+  useEffect(() => {
+    const fetchPayments = async () => {
+      const { data, error } = await supabase.rpc("get_my_payment_history" as never);
+      if (!error && data) setPayments(data as unknown as PaymentRow[]);
+    };
+    fetchPayments();
   }, []);
 
   // Retoma um checkout iniciado antes do login (Requirement 1.2).
@@ -236,6 +266,51 @@ export default function SubscriptionPage() {
             </a>
           </motion.div>
         )}
+
+        {/* Faturas e pagamentos (histórico do próprio usuário) */}
+        <motion.div
+          className="mt-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <h3 className="text-xl font-display font-bold mb-6 flex items-center gap-2">
+            <Receipt className="w-5 h-5 text-primary" />
+            Faturas e pagamentos
+          </h3>
+          {payments.length === 0 ? (
+            <div className="rounded-2xl border border-border p-6 text-sm text-muted-foreground text-center">
+              Nenhum pagamento ainda. Quando você assinar um plano, seus pagamentos aparecem aqui.
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-border divide-y divide-border overflow-hidden">
+              {payments.map((p, i) => {
+                const statusColor =
+                  p.status === "approved" ? "text-success"
+                    : p.status === "rejected" ? "text-destructive"
+                      : "text-muted-foreground";
+                return (
+                  <div key={`${p.payment_ref ?? "ref"}-${i}`} className="flex items-center justify-between gap-4 p-4">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm truncate">
+                        {p.plan_name ?? p.plan_slug}{p.kind === "escolar" ? " · Escolar" : ""}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(p.created_at).toLocaleDateString("pt-BR")} · {p.billing_interval === "yearly" ? "Anual" : "Mensal"}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="font-bold text-sm">{formatPrice(p.amount_brl_cents)}</p>
+                      <span className={`text-xs font-semibold ${statusColor}`}>
+                        {PAYMENT_STATUS_LABEL[p.status] ?? p.status}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </motion.div>
       </div>
       <Footer />
     </div>

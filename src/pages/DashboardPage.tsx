@@ -58,8 +58,22 @@ export default function DashboardPage() {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [showPremiumTour, setShowPremiumTour] = useState(false);
   const { toast } = useToast();
   const { plan, isPremium } = useSubscription();
+
+  // Feature discovery: destaca uma vez os recursos recém-desbloqueados a quem
+  // virou premium, levando ao valor que acabou de pagar (Requirement 5.1).
+  useEffect(() => {
+    if (isPremium && !localStorage.getItem("felicidade_premium_tour_seen")) {
+      setShowPremiumTour(true);
+    }
+  }, [isPremium]);
+
+  const dismissPremiumTour = () => {
+    localStorage.setItem("felicidade_premium_tour_seen", "1");
+    setShowPremiumTour(false);
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -275,6 +289,39 @@ export default function DashboardPage() {
               </>
             )}
           </motion.div>
+
+          {/* Feature discovery — celebra e guia o novo assinante premium */}
+          {showPremiumTour && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-5 rounded-2xl border border-secondary/30 bg-secondary/5 flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between"
+            >
+              <div className="flex items-start gap-3">
+                <span className="text-2xl" aria-hidden="true">🎉</span>
+                <div>
+                  <p className="font-display font-bold">Bem-vindo(a) ao plano {plan.plan_name}!</p>
+                  <p className="text-sm text-muted-foreground">
+                    Você desbloqueou AlegrIA ilimitada, simulador de decisões, arena de debate, certificado digital e mais.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <button
+                  onClick={() => { dismissPremiumTour(); navigate("/alegria"); }}
+                  className="px-4 py-2.5 rounded-xl gradient-institute text-primary-foreground text-sm font-bold shadow-warm hover:shadow-glow transition-all whitespace-nowrap"
+                >
+                  Explorar AlegrIA
+                </button>
+                <button
+                  onClick={dismissPremiumTour}
+                  className="px-4 py-2.5 rounded-xl bg-muted hover:bg-muted/80 text-sm font-semibold transition-colors"
+                >
+                  Depois
+                </button>
+              </div>
+            </motion.div>
+          )}
 
           {/* AlegrIA — cérebro do ecossistema */}
           <AlegriaHeroCard />

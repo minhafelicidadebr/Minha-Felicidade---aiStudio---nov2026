@@ -13,6 +13,7 @@ The Supabase hardening path is versioned as migrations. Apply them in timestamp 
 7. `supabase/migrations/20260708120000_purchase_intents.sql`
 8. `supabase/migrations/20260708120500_activate_subscription_from_intent.sql`
 9. `supabase/migrations/20260710120000_notification_outbox.sql`
+10. `supabase/migrations/20260710130000_get_my_payment_history.sql`
 
 The `20260613144818...` migration was generated remotely after the first foundation migration. It is mostly idempotent duplication. The later `20260613170000...` migration is still required because it removes explicit `anon`/`authenticated` EXECUTE grants that are not removed by revoking from `PUBLIC`.
 
