@@ -32,7 +32,7 @@ type PaymentRow = {
 
 const PAYMENT_STATUS_LABEL: Record<string, string> = {
   approved: "Aprovado",
-  pending: "Pendente",
+  pending: "Aguardando pagamento",
   rejected: "Recusado",
   expired: "Expirado",
 };
