@@ -79,7 +79,13 @@ posterior desacoplado por outbox.
   - Documentar `RESEND_API_KEY` no runbook (server-only, nunca commitado).
   - _Requirements: 6.2_
 
-- [ ] 10. Gate final
+- [ ] 10. Gate final _(parcial — automação ✓, deploy/sandbox pendente)_
+  - [x] `npm run quality` completo — PASSOU (0 vuln, lint, typecheck, 26 testes, build, security gate).
+  - [ ] PENDENTE (humano): configurar secrets (RESEND_API_KEY, NOTIFICATIONS_TRIGGER_SECRET),
+    deployar `process-notifications` + `subscription-lifecycle`, agendar os crons,
+    e validar: compra → e-mail de boas-vindas 1x (reenvio de webhook não duplica);
+    cancelar → mantém acesso até fim do ciclo; expiração simulada → rebaixa p/ gratuito;
+    histórico lista os pagamentos do usuário.
   - `npm run quality` completo.
   - Testes manuais: compra → e-mail de boas-vindas chega 1x (reenviar webhook
     não duplica); cancelar → mantém acesso até fim do ciclo, não renova;
