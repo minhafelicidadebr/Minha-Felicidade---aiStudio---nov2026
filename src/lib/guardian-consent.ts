@@ -55,3 +55,60 @@ export const GUARDIAN_CONSENT_STATEMENT =
   "mensagens enviadas aos recursos de tutoria por inteligência artificial são " +
   "processadas por provedores de IA contratados pela plataforma, com a " +
   "finalidade de gerar as respostas educacionais.";
+
+// --- Gate de rota (fail-closed) --------------------------------------------
+// Decisão pura e testável usada por <RequireGuardianConsent>. Regra central de
+// segurança juvenil: acesso privado só é liberado ("clear") diante de uma
+// resposta EXPLÍCITA, bem-formada e confiável da RPC. Qualquer incerteza —
+// erro/timeout/sessão inválida, payload indeterminado, ou idade que não pode
+// ser estabelecida (data de nascimento ausente) — falha FECHADA. Nunca
+// reutilizar "clear" como default em caminho de erro.
+
+export type ConsentGateDecision = "clear" | "blocked" | "error_locked";
+
+export interface GuardianConsentPayload {
+  requires_consent?: boolean;
+  granted?: boolean;
+  policy_version?: string | null;
+  reason?: string | null;
+}
+
+export interface ConsentGateInput {
+  /** A RPC retornou erro (inclui sessão inválida/expirada → 28000). */
+  error: boolean;
+  /** Payload de dados da RPC (pode vir null/indeterminado). */
+  payload: unknown;
+  /** Versão de política vigente para comparar re-consentimento. */
+  currentPolicyVersion: string;
+}
+
+export function decideGuardianConsentGate({
+  error,
+  payload,
+  currentPolicyVersion,
+}: ConsentGateInput): ConsentGateDecision {
+  // 1. Erro da RPC / sessão inválida / promessa rejeitada / timeout: não dá
+  //    para confiar na resposta → bloqueio de verificação.
+  if (error) return "error_locked";
+
+  // 2. Payload ausente ou malformado: decisão indeterminada → fail-closed.
+  if (payload == null || typeof payload !== "object") return "error_locked";
+  const p = payload as GuardianConsentPayload;
+  if (typeof p.requires_consent !== "boolean") return "error_locked";
+
+  // 3. Idade desconhecida (data de nascimento ausente): não é possível
+  //    estabelecer com segurança se é menor ou adulto → fail-closed, em vez
+  //    de tratar como adulto liberado.
+  if (p.reason === "unknown_birth_date") return "error_locked";
+
+  // 4. Consentimento não exigido (adulto com data de nascimento conhecida).
+  if (!p.requires_consent) return "clear";
+
+  // 5. Consentimento exigido: precisa estar concedido E sob a política vigente.
+  const granted = p.granted === true;
+  const outdated =
+    granted && p.policy_version != null && p.policy_version !== currentPolicyVersion;
+  if (!granted || outdated) return "blocked";
+
+  return "clear";
+}

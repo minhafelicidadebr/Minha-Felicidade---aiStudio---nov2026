@@ -3,6 +3,7 @@ import {
   GUARDIAN_CONSENT_POLICY_VERSION,
   GUARDIAN_CONSENT_STATEMENT,
   ageInYears,
+  decideGuardianConsentGate,
   isMinor,
   isValidPastDate,
 } from "./guardian-consent";
@@ -38,5 +39,108 @@ describe("GUARDIAN_CONSENT_STATEMENT", () => {
     expect(GUARDIAN_CONSENT_STATEMENT).toContain("inteligência artificial");
     expect(GUARDIAN_CONSENT_STATEMENT).toContain("provedores de IA");
     expect(GUARDIAN_CONSENT_STATEMENT).toContain("Lei 13.709/2018");
+  });
+});
+
+describe("decideGuardianConsentGate (fail-closed)", () => {
+  const V = GUARDIAN_CONSENT_POLICY_VERSION;
+
+  it("bloqueia (error_locked) quando a RPC retorna erro", () => {
+    expect(
+      decideGuardianConsentGate({ error: true, payload: null, currentPolicyVersion: V }),
+    ).toBe("error_locked");
+  });
+
+  it("bloqueia (error_locked) quando o erro carrega um payload qualquer (sessão inválida)", () => {
+    // Mesmo que venha algum dado, um erro nunca pode liberar acesso.
+    expect(
+      decideGuardianConsentGate({
+        error: true,
+        payload: { requires_consent: false },
+        currentPolicyVersion: V,
+      }),
+    ).toBe("error_locked");
+  });
+
+  it("bloqueia (error_locked) quando o payload é null/indeterminado", () => {
+    expect(
+      decideGuardianConsentGate({ error: false, payload: null, currentPolicyVersion: V }),
+    ).toBe("error_locked");
+    expect(
+      decideGuardianConsentGate({ error: false, payload: undefined, currentPolicyVersion: V }),
+    ).toBe("error_locked");
+    expect(
+      decideGuardianConsentGate({ error: false, payload: "weird", currentPolicyVersion: V }),
+    ).toBe("error_locked");
+  });
+
+  it("bloqueia (error_locked) quando falta o campo requires_consent (malformado)", () => {
+    expect(
+      decideGuardianConsentGate({
+        error: false,
+        payload: { granted: true, policy_version: V },
+        currentPolicyVersion: V,
+      }),
+    ).toBe("error_locked");
+  });
+
+  it("bloqueia (error_locked) quando a data de nascimento é ausente/indeterminada", () => {
+    expect(
+      decideGuardianConsentGate({
+        error: false,
+        payload: { requires_consent: false, reason: "unknown_birth_date", granted: false },
+        currentPolicyVersion: V,
+      }),
+    ).toBe("error_locked");
+  });
+
+  it("libera (clear) usuário adulto com data de nascimento conhecida", () => {
+    expect(
+      decideGuardianConsentGate({
+        error: false,
+        payload: { requires_consent: false, reason: "adult", granted: false },
+        currentPolicyVersion: V,
+      }),
+    ).toBe("clear");
+  });
+
+  it("redireciona (blocked) menor sem consentimento registrado", () => {
+    expect(
+      decideGuardianConsentGate({
+        error: false,
+        payload: { requires_consent: true, reason: "minor_pending", granted: false },
+        currentPolicyVersion: V,
+      }),
+    ).toBe("blocked");
+  });
+
+  it("libera (clear) menor com consentimento válido na política vigente", () => {
+    expect(
+      decideGuardianConsentGate({
+        error: false,
+        payload: {
+          requires_consent: true,
+          reason: "minor_consented",
+          granted: true,
+          policy_version: V,
+        },
+        currentPolicyVersion: V,
+      }),
+    ).toBe("clear");
+  });
+
+  it("redireciona (blocked) menor com consentimento de política ANTERIOR (re-consentimento)", () => {
+    expect(
+      decideGuardianConsentGate({
+        error: false,
+        payload: {
+          requires_consent: true,
+          reason: "minor_consented",
+          granted: true,
+          policy_version: "2026.1",
+        },
+        currentPolicyVersion: V,
+      }),
+    ).toBe("blocked");
   });
 });

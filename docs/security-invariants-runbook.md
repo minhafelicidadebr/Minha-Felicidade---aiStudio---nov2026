@@ -45,6 +45,32 @@ When Lovable or local Docker is unavailable, use the Supabase Dashboard SQL Edit
 - AI Edge Functions require a valid user JWT and call `enforce_ai_usage_limit()` before the AI gateway.
 - `ai_usage_limits` is RLS-locked, has no direct client grants, and is mutated only through the authenticated quota RPC.
 
+### Guardian consent route gate is fail-closed (LGPD art. 14)
+
+`RequireGuardianConsent` (`src/components/routing/RequireGuardianConsent.tsx`) is
+a client-side safety net over private routes. Its release decision is delegated
+to the pure function `decideGuardianConsentGate`
+(`src/lib/guardian-consent.ts`), which only returns `clear` for an explicit,
+well-formed, trustworthy `get_my_guardian_consent_status` response. Any
+uncertainty fails closed and never renders private content:
+
+- RPC error, invalid/expired session, timeout, or rejected promise → `error_locked`.
+- Null/malformed payload (missing `requires_consent`) → `error_locked`.
+- Age indeterminate (`reason = unknown_birth_date`) → `error_locked` (age cannot
+  be established, so the user is not treated as a released adult).
+- Minor without consent, or consent under a superseded `policy_version` → `blocked`
+  (redirect to `/consentimento-responsavel`).
+- Adult with a known birth date, or minor consented under the current policy → `clear`.
+
+`error_locked` shows an accessible, non-alarmist recovery screen (retry + safe
+exit to `/`, focused heading, no private content beneath). This gate is
+defense-in-depth on top of RLS; it does not change any RPC, migration, or grant.
+Known follow-up (out of scope of this fix): legacy accounts created before
+`birth_date` capture return `unknown_birth_date` and are now blocked — a
+birth-date backfill or an explicit adult-attestation path is needed so legitimate
+adult/staff legacy accounts are not stuck. Tracked as a residual risk, not fixed
+here.
+
 ## Onda 1 — Monetização (Mercado Pago)
 
 ### Secrets (configurar no painel do Supabase/Lovable Cloud — NUNCA commitar)
