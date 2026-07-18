@@ -7,6 +7,7 @@ import {
 } from "../_shared/mercadopago.ts";
 import { requireAuthContext } from "../_shared/auth.ts";
 import { calculateSchoolPricing } from "../_shared/school-pricing.ts";
+import { assertCheckoutRateLimit, CheckoutRateLimitError } from "../_shared/checkout-rate-limit.ts";
 
 // mp-create-preference (Onda 1)
 // Resolve preço/plano NO SERVIDOR (nunca do cliente), cria uma purchase_intent
@@ -139,6 +140,10 @@ serve(async (req) => {
             throw new ValidationError("kind deve ser 'individual' ou 'escolar'");
         }
 
+        // Rate limit antes de criar a intent (fluxo escolar é público sem JWT).
+        // Chaveado por user_id (individual) ou contact_email (escolar).
+        await assertCheckoutRateLimit(service, { userId, contactEmail });
+
         // Cria a intent (service role — cliente não tem acesso a purchase_intents).
         const { data: intent, error: intentError } = await service
             .from("purchase_intents")
@@ -184,6 +189,9 @@ serve(async (req) => {
         console.error("mp-create-preference error:", e);
         if (e instanceof Error && e.message === "Authentication required") {
             return jsonResponse({ error: "Autenticação necessária para assinar o plano individual" }, 401);
+        }
+        if (e instanceof CheckoutRateLimitError) {
+            return jsonResponse({ error: e.message }, e.status);
         }
         if (e instanceof ValidationError) {
             return jsonResponse({ error: e.message }, e.status);

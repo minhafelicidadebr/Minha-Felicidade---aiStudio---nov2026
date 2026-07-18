@@ -129,6 +129,14 @@ edge functions.
 - Preço nunca vem do cliente: individual lê `subscription_plans` no servidor;
   escolar recalcula com `calculateSchoolPricing` (tabela espelhada 1:1 entre
   `src/lib/school-pricing.ts` e `supabase/functions/_shared/school-pricing.ts`).
+- Rate limiting: `mp-create-preference` (pública no fluxo escolar sem JWT) chama
+  `assertCheckoutRateLimit` (`_shared/checkout-rate-limit.ts`) antes de criar a
+  intent — conta intents recentes do mesmo requisitante (user_id/contact_email)
+  numa janela curta e responde 429 ao exceder. O `security-gate.mjs` exige essa
+  chamada. É fail-open (erro do contador não bloqueia) e mitiga RUÍDO, não risco
+  financeiro (preço sempre resolvido no servidor). Limitação honesta: um abusador
+  variando `contact_email` contorna a chave de e-mail — endurecimento por IP/
+  captcha fica como follow-up.
 
 ### Escopo da v1 (honestidade, não overclaim)
 

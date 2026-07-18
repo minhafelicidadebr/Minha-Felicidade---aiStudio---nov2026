@@ -115,6 +115,11 @@ if (existsSync(mpPreferenceFunction)) {
   if (/amount_brl_cents\s*:\s*body\./.test(text)) {
     fail("mp-create-preference must not accept the charge amount from the request body");
   }
+  // Fluxo escolar é público (sem JWT): precisa de rate limiting antes de criar
+  // a intent, para não virar uma porta de spam de preferências.
+  if (!text.includes("assertCheckoutRateLimit")) {
+    fail("mp-create-preference must rate-limit intent creation via assertCheckoutRateLimit");
+  }
 }
 
 // Workers internos: o módulo de service client dos workers deve colocar junto o
