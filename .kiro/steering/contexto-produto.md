@@ -26,9 +26,15 @@ React 18 + Vite + TypeScript + npm (não bun, não yarn) + shadcn/ui + Tailwind 
   ordem. Client-side: `useSubscription()` (`src/hooks/useSubscription.ts`) e
   `<FeatureGate feature="...">` (`src/components/FeatureGate.tsx`).
 - **Já removidas** (migration de 2026-06-13): policies de `INSERT`/`UPDATE` de
-  `authenticated` em `user_subscriptions`/`organization_subscriptions`. Ou
-  seja: **hoje nenhum caminho no código ativa uma assinatura de verdade** —
-  é exatamente essa lacuna que a Onda 1 fecha.
+  `authenticated` em `user_subscriptions`/`organization_subscriptions`. A ÚNICA
+  escritora do estado de assinatura é a RPC `activate_subscription_from_intent`
+  (`SECURITY DEFINER`, service_role), chamada pela `mp-webhook`.
+
+> Atualização (2026-07): a Onda 1 **já foi entregue e mergeada**. O checkout
+> real via Mercado Pago existe (`src/lib/checkout.ts` → `mp-create-preference`
+> → `mp-webhook`). As descrições abaixo de "o botão só navega para /auth" são
+> **históricas** (estado pré-Onda-1) — hoje os botões iniciam o checkout de
+> verdade. Mantidas apenas como contexto de origem.
 
 ## Onde o preço/plano já aparece na UI (não recriar, só conectar)
 

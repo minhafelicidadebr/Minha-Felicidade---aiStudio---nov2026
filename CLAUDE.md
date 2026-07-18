@@ -2,7 +2,18 @@
 
 > Documento de orientação para quem assume este repositório (Claude Code ou humano).
 > Escrito após a entrega da **Onda 1 (Monetização)** e dos ganhos rápidos de
-> pós-compra. Leia isto ANTES de codar. Última atualização: commit `ccb5668`.
+> pós-compra. Leia isto ANTES de codar.
+
+> ⚠️ **Correção de procedência (2026-07-18).** Partes deste documento foram
+> herdadas de um repositório/projeto irmão (`app-curso-yale-vscode`, Supabase
+> `fzglidwuqlnteceicwfd`) e **não** descrevem este repositório. Valores
+> **verificados para ESTE repo**:
+> - Repositório: `minhafelicidadebr/yale-minhafelicidade-julho`.
+> - Supabase project ref (de `supabase/config.toml`): **`ctjwyybmlwhynherikqy`**.
+> - App publicado (de `index.html`): `curso-felicidade-adolescentes-yale.lovable.app`.
+> - As afirmações de "validado em produção" da §6 referem-se ao projeto irmão
+>   `fzglidwuqlnteceicwfd` e **não foram verificadas para `ctjwyybmlwhynherikqy`**.
+>   Trate a produção deste projeto como **não confirmada** até validar no painel.
 
 ---
 
@@ -12,20 +23,21 @@ Edtech de bem-estar emocional para **adolescentes brasileiros**, adaptando o
 curso "The Science of Well-Being" (Yale, Laurie Santos) + PERMA-V. Instituto
 Felicidade para Todos. B2C (aluno individual) + B2B (escolas).
 
-Repo: `minhafelicidadebr/app-curso-yale-vscode` · branch principal: `main`.
+Repo: `minhafelicidadebr/yale-minhafelicidade-julho` · branch principal: `main`.
 
 ## 2. Stack & comandos
 
 - **Front:** React 18 + Vite + TypeScript + **npm** (não bun/yarn) + shadcn/ui +
   Tailwind 3. Testes: **Vitest**.
-- **Back:** Supabase gerenciado pelo **Lovable Cloud** (project_id
-  `fzglidwuqlnteceicwfd`) + **Deno edge functions** (`supabase/functions/`).
+- **Back:** Supabase gerenciado pelo **Lovable Cloud** (project ref
+  `ctjwyybmlwhynherikqy`, conforme `supabase/config.toml`) + **Deno edge
+  functions** (`supabase/functions/`).
 - **Gate de qualidade (definição de "pronto"):**
   ```bash
   npm run quality
   # = audit:security && lint && typecheck && test && build && security:gate
   ```
-  Está **verde** hoje (20 testes). Nunca use `--no-verify`, nunca comente teste
+  Está **verde** hoje (48 testes). Nunca use `--no-verify`, nunca comente teste
   que passou a falhar. `security:gate` = `scripts/security-gate.mjs` (checagens
   de invariante customizadas — leia antes de mexer em auth/billing/roles).
 
@@ -96,7 +108,11 @@ Peças-chave:
 - Modelo v1 = **cobrança única por ciclo** (renovação = novo checkout). NÃO é
   recorrência automática.
 
-## 6. Estado atual em PRODUÇÃO (verificado)
+## 6. Estado em produção (⚠️ do projeto irmão — ver nota de procedência no topo)
+
+> Os itens abaixo foram verificados no projeto irmão `fzglidwuqlnteceicwfd`
+> (`app-curso-yale-vscode`), NÃO no projeto deste repo (`ctjwyybmlwhynherikqy`).
+> Reconfirme no painel antes de assumir que valem aqui.
 
 - ✅ **Ciclo de pagamento completo funciona em produção** — validado com um Pix
   real que ativou uma assinatura Intermediário (`status=active`, renovação +1 mês).
@@ -112,13 +128,20 @@ Peças-chave:
 
 ## 7. Histórico do que foi feito
 
-- **Onda 0 (parcial):** consentimento parental LGPD art. 14
+- **Onda 0:** consentimento parental LGPD art. 14
   (`guardian_consent_events`, `record_guardian_consent`,
   `get_my_guardian_consent_status`, `RequireGuardianConsent`) — **na main**.
-  ⚠️ **Protocolo de crise da IA NÃO está na main** — vive na branch
-  `feat/onda0-protocolo-crise` (`_shared/crisis.ts` + injeção nas 4 funções de
-  IA), **nunca mergeada**. Decidir merge/segurança antes de considerar a Onda 0
-  completa.
+  ✅ **Protocolo de crise da IA JÁ está na main** — `_shared/crisis.ts` +
+  injeção nas 4 funções de IA foram mergeados (PR #1 `feat/onda0-protocolo-crise`,
+  commit `f144d53`), junto com os disclaimers/transparência de IA. A informação
+  anterior ("não está na main") estava desatualizada.
+- **Correções de consentimento (2026-07):** o gate `RequireGuardianConsent`
+  passou a ser **fail-closed** (PR #1 deste repo, `fix(consent): fail closed…`,
+  commit `f68ee89`) e ganhou um caminho self-service para contas legadas sem
+  `birth_date` (PR #2, `fix(consent): unblock legacy accounts…`, commit
+  `8dbf59a`, migration `20260718120000_set_my_birth_date.sql`). ⚠️ Essa
+  migration **ainda precisa ser aplicada** no Supabase `ctjwyybmlwhynherikqy`
+  (SQL editor) + `NOTIFY pgrst, 'reload schema';` para o desbloqueio funcionar.
 - **Onda 1 (Monetização):** completa, mergeada (PR #2), em produção. Runbook de
   teste em `docs/mercadopago-sandbox-runbook.md`.
 - **Ganhos rápidos de pós-compra:** CTA de plano no `Navbar`, card de plano no
@@ -133,7 +156,10 @@ Peças-chave:
    e-mail transacional (Resend, via outbox idempotente), lembrete de renovação,
    dunning/expiração, cancelamento self-service, feature discovery, **histórico
    "Faturas e pagamentos"** (RPC `get_my_payment_history` self-scoped).
-3. **Onda 0 crisis protocol:** revisar e mergear `feat/onda0-protocolo-crise`.
+3. **Aplicar a migration de consentimento legado** `20260718120000_set_my_birth_date.sql`
+   no Supabase `ctjwyybmlwhynherikqy` + `NOTIFY pgrst, 'reload schema';` e validar o
+   fluxo `/completar-cadastro` (o protocolo de crise da Onda 0 já foi mergeado —
+   não é mais pendência).
 4. **Gap escolar pré-cadastro (Req 2.3 da Onda 1):** associação organização↔conta
    após o gestor se cadastrar NÃO está implementada; intent fica `approved` com
    `user_id` nulo para reconciliação manual.
@@ -150,6 +176,11 @@ Peças-chave:
   pendente de credenciais). 
 - `pos-compra-assinatura/` — Onda 1.5 (pronta para execução; formato validado:
   requirements/design/tasks com dependency graph em JSON).
+- `onda-2-instrumentacao/` — Onda 2 (funil de conversão): spec completa,
+  implementação ainda **não iniciada** (0% de código).
+- `consentimento-conta-legada/` — follow-up do fail-closed: desbloqueio
+  self-service de contas legadas sem `birth_date`. **Implementada e mergeada**
+  (PR #2 / `8dbf59a`); falta só aplicar a migration no Supabase.
 
 Steering sempre incluído: `.kiro/steering/doutrina-fable5.md` (doutrina de
 segurança/ética) e `.kiro/steering/contexto-produto.md` (schema de assinaturas,
