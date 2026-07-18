@@ -54,6 +54,16 @@ serve(async (req) => {
     const { data: overview, error: overviewError } = await supabaseUser.rpc("get_learning_progress_overview");
     if (overviewError) throw overviewError;
 
+    // Funil de conversão (Onda 2). Best-effort: se a RPC ainda não existir
+    // (migration não aplicada) ou falhar, o dashboard não quebra — funnel = null.
+    let funnel: unknown = null;
+    try {
+      const { data: funnelData, error: funnelError } = await supabaseUser.rpc("get_funnel_overview", { _days: 30 });
+      if (!funnelError) funnel = funnelData;
+    } catch (_e) {
+      funnel = null;
+    }
+
     const aggregate = toRecord(overview);
     const global = toRecord(aggregate.global);
     const moduleItems = Array.isArray(aggregate.module_engagement) ? aggregate.module_engagement : [];
@@ -82,6 +92,7 @@ serve(async (req) => {
         },
         moduleEngagement: moduleStats,
         activityDistribution: toRecord(aggregate.activity_distribution),
+        funnel,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

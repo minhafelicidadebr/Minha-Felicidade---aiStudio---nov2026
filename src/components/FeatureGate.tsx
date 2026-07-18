@@ -1,8 +1,9 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Lock, Crown, ArrowRight } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
+import { trackEvent } from "@/lib/analytics";
 
 interface FeatureGateProps {
   feature: string;
@@ -13,6 +14,14 @@ interface FeatureGateProps {
 export default function FeatureGate({ feature, children, fallback }: FeatureGateProps) {
   const { hasFeature, loading } = useSubscription();
   const navigate = useNavigate();
+
+  const blocked = !loading && !hasFeature(feature);
+
+  // Funil: registra o bloqueio por falta de plano (best-effort, uma vez por
+  // montagem do gate bloqueado). Sem PII — só o nome do recurso.
+  useEffect(() => {
+    if (blocked) void trackEvent("paywall_hit", { feature });
+  }, [blocked, feature]);
 
   if (loading) return <>{children}</>;
 

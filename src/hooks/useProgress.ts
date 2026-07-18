@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { trackEvent } from "@/lib/analytics";
 
 const XP_MAP: Record<string, number> = {
   video: 10,
@@ -63,6 +64,20 @@ export function useProgress() {
             title: `+${xp} XP! ✨`,
             description: `Atividade completada com sucesso!`,
           });
+        }
+
+        // Instrumentação do funil (best-effort, sem PII).
+        if (completed) {
+          void trackEvent("lesson_completed", { module_id: moduleId, activity_type: activityType });
+          // `activation` = PRIMEIRA atividade concluída da conta.
+          void (async () => {
+            const { count } = await supabase
+              .from("user_progress")
+              .select("id", { count: "exact", head: true })
+              .eq("user_id", session.user.id)
+              .eq("completed", true);
+            if (count === 1) void trackEvent("activation", { module_id: moduleId });
+          })();
         }
 
         return result;

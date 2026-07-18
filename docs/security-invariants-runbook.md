@@ -19,6 +19,9 @@ The Supabase hardening path is versioned as migrations. Apply them in timestamp 
 13. `supabase/migrations/20260710160000_subscription_lifecycle.sql`
 14. `supabase/migrations/20260713140000_payment_history_filter.sql`
 15. `supabase/migrations/20260718120000_set_my_birth_date.sql` — self-scoped, single-fill RPC to let legacy accounts (NULL `birth_date`) supply their birth date once, unblocking the fail-closed consent gate without reopening fail-open.
+16. `supabase/migrations/20260718130000_landing_events.sql` — write-only funnel events table (client can INSERT only; no SELECT/UPDATE/DELETE).
+17. `supabase/migrations/20260718131000_get_funnel_overview.sql` — aggregate funnel RPC (`SECURITY DEFINER`, teacher/manager only, audited).
+18. `supabase/migrations/20260718132000_upgrade_event_on_activation.sql` — reproduces `activate_subscription_from_intent` adding a server-side `upgrade` funnel event.
 
 The `20260613144818...` migration was generated remotely after the first foundation migration. It is mostly idempotent duplication. The later `20260613170000...` migration is still required because it removes explicit `anon`/`authenticated` EXECUTE grants that are not removed by revoking from `PUBLIC`.
 
@@ -182,6 +185,26 @@ Configurar no Lovable/Supabase dois disparos agendados, enviando o header
   `assertTriggerSecret` (o gate exige a colocação). As functions worker
   `process-notifications` e `subscription-lifecycle` são obrigadas pelo gate a
   chamar `assertTriggerSecret` (não são públicas).
+
+## Onda 2 — Instrumentação (funil de conversão)
+
+- `landing_events` é **write-only para o cliente**: policy de `INSERT` para
+  `anon`/`authenticated`, `REVOKE SELECT/UPDATE/DELETE`. Nenhuma leitura direta
+  pelo cliente. Sem PII: só `kind` (lista fechada via CHECK), `session_id`
+  anônimo, `user_id` opcional e `metadata` jsonb limitado. A allowlist de chaves
+  por `kind` é reforçada no cliente (`src/lib/analytics.ts`,
+  `sanitizeEventMetadata`, testada).
+- Leitura agregada só via `get_funnel_overview(integer)` — `SECURITY DEFINER`,
+  `search_path=public`, valida `has_my_role('teacher'|'manager')` internamente
+  (lança `insufficient_permissions`/42501 caso contrário), conta sessões
+  distintas por `kind`, registra acesso em `data_access_logs`. `REVOKE EXECUTE
+  FROM PUBLIC, anon, authenticated` + `GRANT ... TO authenticated`.
+- N mínimo (k-anon) aplicado na UI (`AdminPage`): etapas abaixo de `min_sample`
+  (5) mostram "amostra insuficiente" em vez do número.
+- O evento `upgrade` é emitido **no servidor** (`activate_subscription_from_intent`),
+  nunca pelo cliente — a idempotência da ativação garante no máximo um evento.
+- `admin-dashboard` inclui `funnel` na resposta (best-effort: se a RPC/tabela
+  ainda não existirem, retorna `null` e o painel não quebra).
 
 ## Quality Gate
 

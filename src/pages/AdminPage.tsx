@@ -19,7 +19,24 @@ interface AdminData {
   };
   moduleEngagement: { moduleId: string; totalActivities: number; totalXp: number; uniqueStudents: number }[];
   activityDistribution: Record<string, number>;
+  funnel: FunnelOverview | null;
 }
+
+interface FunnelOverview {
+  counts: Record<string, number>;
+  min_sample: number;
+  days: number;
+}
+
+// Etapas do funil na ordem de conversão.
+const FUNNEL_STEPS: { kind: string; label: string }[] = [
+  { kind: "signup", label: "Cadastro" },
+  { kind: "activation", label: "Ativação" },
+  { kind: "lesson_completed", label: "Aula concluída" },
+  { kind: "paywall_hit", label: "Paywall" },
+  { kind: "checkout_started", label: "Checkout" },
+  { kind: "upgrade", label: "Upgrade" },
+];
 
 const ACTIVITY_LABELS: Record<string, string> = {
   video: "Videos",
@@ -175,6 +192,44 @@ export default function AdminPage() {
               );
             })}
           </div>
+
+          {data.funnel && (
+            <>
+              <h2 className="text-2xl font-display font-bold mb-1">Funil de conversao</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Sessoes distintas por etapa nos ultimos {data.funnel.days} dias. Etapas com menos de{" "}
+                {data.funnel.min_sample} sessoes aparecem como "amostra insuficiente".
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
+                {FUNNEL_STEPS.map((step) => {
+                  const raw = data.funnel!.counts[step.kind] ?? 0;
+                  const enough = raw >= data.funnel!.min_sample;
+                  return (
+                    <div key={step.kind} className="p-4 rounded-2xl bg-card border border-border text-center">
+                      <div className="text-xs font-medium text-muted-foreground mb-1">{step.label}</div>
+                      <div className="text-2xl font-display font-bold">
+                        {enough ? raw : <span className="text-base text-muted-foreground">amostra insuf.</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex flex-wrap gap-2 mb-10">
+                {FUNNEL_STEPS.slice(1).map((step, i) => {
+                  const prev = data.funnel!.counts[FUNNEL_STEPS[i].kind] ?? 0;
+                  const curr = data.funnel!.counts[step.kind] ?? 0;
+                  const bothEnough = prev >= data.funnel!.min_sample && curr >= data.funnel!.min_sample;
+                  const rate = bothEnough && prev > 0 ? Math.round((curr / prev) * 100) : null;
+                  return (
+                    <span key={step.kind} className="text-xs px-3 py-1.5 rounded-full bg-muted text-muted-foreground">
+                      {FUNNEL_STEPS[i].label} → {step.label}:{" "}
+                      <strong className="text-foreground">{rate === null ? "—" : `${rate}%`}</strong>
+                    </span>
+                  );
+                })}
+              </div>
+            </>
+          )}
 
           <h2 className="text-2xl font-display font-bold mb-4">Distribuicao por atividade</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">

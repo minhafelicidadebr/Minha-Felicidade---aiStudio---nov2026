@@ -9,6 +9,7 @@ import logoLightBg from "@/assets/logo-light-bg.png";
 import heroYouthBg from "@/assets/hero-youth-bg.jpg";
 import { getSafeRedirectPath } from "@/lib/redirect";
 import { translateAuthError } from "@/lib/auth-errors";
+import { trackEvent } from "@/lib/analytics";
 import {
   GUARDIAN_CONSENT_POLICY_VERSION,
   GUARDIAN_CONSENT_STATEMENT,
@@ -64,6 +65,7 @@ export default function AuthPage() {
       if (consentError) throw consentError;
     }
 
+    void trackEvent("signup"); // funil (best-effort, sem PII)
     toast({ title: "Conta criada! 🎉", description: "Bem-vindo(a) à Ciência do Bem-Estar!" });
     navigate(redirectPath, { replace: true });
   };

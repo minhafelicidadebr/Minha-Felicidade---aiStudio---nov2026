@@ -14,6 +14,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      // Manual stub (migration 20260718130000_landing_events): platform-
+      // generated file; table type added by hand until types are regenerated.
+      landing_events: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          metadata: Json
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          metadata?: Json
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          metadata?: Json
+          session_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       ai_usage_limits: {
         Row: {
           first_requested_at: string

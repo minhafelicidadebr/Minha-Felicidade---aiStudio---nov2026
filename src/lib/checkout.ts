@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { trackEvent } from "@/lib/analytics";
 
 // Cliente de checkout (Onda 1). Invoca a edge function mp-create-preference e
 // redireciona para o Checkout Pro do Mercado Pago. O preço/plano é sempre
@@ -35,6 +36,8 @@ export async function startIndividualCheckout(
     planSlug: string,
     billingInterval: BillingInterval,
 ): Promise<void> {
+    void trackEvent("checkout_started", { kind: "individual", plan_slug: planSlug, billing_interval: billingInterval });
+
     const {
         data: { session },
     } = await supabase.auth.getSession();
@@ -60,6 +63,8 @@ export async function startIndividualCheckout(
 
 /** Inicia o checkout escolar/B2B. Não exige sessão (gestor pode ser pré-cadastro). */
 export async function startEscolarCheckout(payload: EscolarCheckoutPayload): Promise<void> {
+    void trackEvent("checkout_started", { kind: "escolar", billing_interval: payload.billing_interval });
+
     const { data, error } = await supabase.functions.invoke<PreferenceResponse>("mp-create-preference", {
         body: { kind: "escolar", ...payload },
     });
