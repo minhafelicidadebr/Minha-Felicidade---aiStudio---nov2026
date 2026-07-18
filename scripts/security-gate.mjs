@@ -162,6 +162,29 @@ for (const file of frontendFiles) {
   }
 }
 
+// The Supabase browser client must reject a SECRET key in the frontend and
+// require the public env — a secret key in the bundle would bypass RLS.
+const supabaseKeyGuard = "src/lib/supabase-key.ts";
+if (!existsSync(supabaseKeyGuard)) {
+  fail(`Missing Supabase key guard: ${supabaseKeyGuard}`);
+} else {
+  const text = readIfExists(supabaseKeyGuard);
+  if (!text.includes("assertPublicSupabaseKey") || !text.includes("sb_secret_")) {
+    fail("supabase-key guard must reject secret keys (sb_secret_) in the frontend");
+  }
+}
+if (!existsSync("src/lib/supabase-key.test.ts")) {
+  fail("Missing Supabase key guard unit tests: src/lib/supabase-key.test.ts");
+}
+
+const supabaseClient = "src/integrations/supabase/client.ts";
+if (existsSync(supabaseClient)) {
+  const text = readIfExists(supabaseClient);
+  if (!text.includes("assertPublicSupabaseKey")) {
+    fail("Supabase browser client must validate the key via assertPublicSupabaseKey (reject sb_secret_)");
+  }
+}
+
 const requireAuthComponent = "src/components/routing/RequireAuth.tsx";
 if (!existsSync(requireAuthComponent)) {
   fail(`Missing route auth guard: ${requireAuthComponent}`);
