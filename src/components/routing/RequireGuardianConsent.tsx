@@ -100,6 +100,17 @@ export default function RequireGuardianConsent({ children }: { children: ReactNo
     );
   }
 
+  if (status === "needs_birth_date") {
+    // Conta legada sem data de nascimento: rota de captura resolve o bloqueio
+    // (fail-closed com saída), preservando o destino original.
+    return (
+      <Navigate
+        to={`/completar-cadastro?redirect=${encodeURIComponent(location.pathname + location.search)}`}
+        replace
+      />
+    );
+  }
+
   if (status === "error_locked") {
     // Fail-closed: nenhuma parte de {children} é renderizada aqui.
     return (

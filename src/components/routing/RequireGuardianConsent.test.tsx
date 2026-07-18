@@ -14,6 +14,7 @@ const mockRpc = supabase.rpc as unknown as ReturnType<typeof vi.fn>;
 
 const PRIVATE_CONTENT = "CONTEUDO PRIVADO PROTEGIDO";
 const CONSENT_PAGE = "PAGINA DE CONSENTIMENTO";
+const BIRTHDATE_PAGE = "PAGINA COMPLETAR CADASTRO";
 const ERROR_TITLE = "Não conseguimos verificar sua autorização";
 
 function renderGuard() {
@@ -29,6 +30,7 @@ function renderGuard() {
                     }
                 />
                 <Route path="/consentimento-responsavel" element={<div>{CONSENT_PAGE}</div>} />
+                <Route path="/completar-cadastro" element={<div>{BIRTHDATE_PAGE}</div>} />
                 <Route path="/" element={<div>LANDING</div>} />
             </Routes>
         </MemoryRouter>,
@@ -57,14 +59,14 @@ describe("RequireGuardianConsent (fail-closed)", () => {
         expect(screen.queryByText(PRIVATE_CONTENT)).not.toBeInTheDocument();
     });
 
-    it("cai em fail-closed quando a data de nascimento é indeterminada", async () => {
+    it("redireciona conta legada (sem data) para /completar-cadastro", async () => {
         mockRpc.mockResolvedValue({
             data: { requires_consent: false, reason: "unknown_birth_date", granted: false },
             error: null,
         });
         renderGuard();
 
-        expect(await screen.findByText(ERROR_TITLE)).toBeInTheDocument();
+        expect(await screen.findByText(BIRTHDATE_PAGE)).toBeInTheDocument();
         expect(screen.queryByText(PRIVATE_CONTENT)).not.toBeInTheDocument();
     });
 

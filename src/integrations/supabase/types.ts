@@ -602,6 +602,13 @@ export type Database = {
         Args: { _reminder_days?: number }
         Returns: Json
       }
+      // Manual stub (migration 20260718120000_set_my_birth_date): this file
+      // is platform-generated; the signature was added by hand so typecheck
+      // recognizes the RPC until the types are regenerated.
+      set_my_birth_date: {
+        Args: { _birth_date: string }
+        Returns: Json
+      }
       user_has_feature: {
         Args: { _feature: string; _user_id: string }
         Returns: boolean

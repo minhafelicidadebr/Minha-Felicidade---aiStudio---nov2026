@@ -18,6 +18,7 @@ The Supabase hardening path is versioned as migrations. Apply them in timestamp 
 12. `supabase/migrations/20260710150000_activation_enqueue_welcome.sql`
 13. `supabase/migrations/20260710160000_subscription_lifecycle.sql`
 14. `supabase/migrations/20260713140000_payment_history_filter.sql`
+15. `supabase/migrations/20260718120000_set_my_birth_date.sql` — self-scoped, single-fill RPC to let legacy accounts (NULL `birth_date`) supply their birth date once, unblocking the fail-closed consent gate without reopening fail-open.
 
 The `20260613144818...` migration was generated remotely after the first foundation migration. It is mostly idempotent duplication. The later `20260613170000...` migration is still required because it removes explicit `anon`/`authenticated` EXECUTE grants that are not removed by revoking from `PUBLIC`.
 
@@ -64,12 +65,25 @@ uncertainty fails closed and never renders private content:
 
 `error_locked` shows an accessible, non-alarmist recovery screen (retry + safe
 exit to `/`, focused heading, no private content beneath). This gate is
-defense-in-depth on top of RLS; it does not change any RPC, migration, or grant.
-Known follow-up (out of scope of this fix): legacy accounts created before
-`birth_date` capture return `unknown_birth_date` and are now blocked — a
-birth-date backfill or an explicit adult-attestation path is needed so legitimate
-adult/staff legacy accounts are not stuck. Tracked as a residual risk, not fixed
-here.
+defense-in-depth on top of RLS.
+
+Legacy accounts created before `birth_date` capture return `reason =
+unknown_birth_date`. The decision maps this identifiable, resolvable case to a
+distinct state `needs_birth_date` (not the terminal `error_locked`), and the
+guard redirects it to `/completar-cadastro`, where the user supplies their birth
+date once through the self-scoped RPC `set_my_birth_date`. The guard then
+re-evaluates via `get_my_guardian_consent_status` (adult → clear; minor →
+`/consentimento-responsavel`). Genuine uncertainty (RPC error, timeout, rejected
+promise, malformed payload) still fails closed to `error_locked`.
+
+`set_my_birth_date` (migration `20260718120000_set_my_birth_date.sql`):
+`SECURITY DEFINER`, `search_path=public`, self-scoped (`auth.uid()` only),
+single-fill (writes only when `profiles.birth_date` is NULL — never overwrites,
+so it cannot be used to bypass the gate), server-side plausibility validation,
+audited in `data_access_logs`. `REVOKE EXECUTE FROM PUBLIC, anon` +
+`GRANT EXECUTE TO authenticated`. It does not touch `guardian_consent_events`
+(still INSERT-only). Out of scope: editing an already-set birth date, strong age
+assurance, bulk admin backfill.
 
 ## Onda 1 — Monetização (Mercado Pago)
 

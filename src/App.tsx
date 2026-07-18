@@ -40,6 +40,7 @@ const CognitiveMirrorPage = lazy(() => import("./pages/CognitiveMirrorPage"));
 const FutureSelfPage = lazy(() => import("./pages/FutureSelfPage"));
 const SignatureStrengthsPage = lazy(() => import("./pages/SignatureStrengthsPage"));
 const GuardianConsentPage = lazy(() => import("./pages/GuardianConsentPage"));
+const BirthDateCompletionPage = lazy(() => import("./pages/BirthDateCompletionPage"));
 const SubscriptionSuccessPage = lazy(() => import("./pages/SubscriptionSuccessPage"));
 const SubscriptionPendingPage = lazy(() => import("./pages/SubscriptionPendingPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -100,6 +101,17 @@ const App = () => (
               element={
                 <RequireAuth>
                   <GuardianConsentPage />
+                </RequireAuth>
+              }
+            />
+            {/* Captura de data de nascimento para contas legadas (sem birth_date).
+                Atrás de RequireAuth, mas FORA do gate de consentimento — senão o
+                próprio needs_birth_date redirecionaria de volta em loop. */}
+            <Route
+              path="/completar-cadastro"
+              element={
+                <RequireAuth>
+                  <BirthDateCompletionPage />
                 </RequireAuth>
               }
             />

@@ -84,14 +84,14 @@ describe("decideGuardianConsentGate (fail-closed)", () => {
     ).toBe("error_locked");
   });
 
-  it("bloqueia (error_locked) quando a data de nascimento é ausente/indeterminada", () => {
+  it("pede a data (needs_birth_date) quando a data de nascimento é ausente mas a resposta é confiável", () => {
     expect(
       decideGuardianConsentGate({
         error: false,
         payload: { requires_consent: false, reason: "unknown_birth_date", granted: false },
         currentPolicyVersion: V,
       }),
-    ).toBe("error_locked");
+    ).toBe("needs_birth_date");
   });
 
   it("libera (clear) usuário adulto com data de nascimento conhecida", () => {

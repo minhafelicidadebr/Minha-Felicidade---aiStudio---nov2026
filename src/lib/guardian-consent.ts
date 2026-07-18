@@ -64,7 +64,7 @@ export const GUARDIAN_CONSENT_STATEMENT =
 // ser estabelecida (data de nascimento ausente) — falha FECHADA. Nunca
 // reutilizar "clear" como default em caminho de erro.
 
-export type ConsentGateDecision = "clear" | "blocked" | "error_locked";
+export type ConsentGateDecision = "clear" | "blocked" | "needs_birth_date" | "error_locked";
 
 export interface GuardianConsentPayload {
   requires_consent?: boolean;
@@ -96,10 +96,11 @@ export function decideGuardianConsentGate({
   const p = payload as GuardianConsentPayload;
   if (typeof p.requires_consent !== "boolean") return "error_locked";
 
-  // 3. Idade desconhecida (data de nascimento ausente): não é possível
-  //    estabelecer com segurança se é menor ou adulto → fail-closed, em vez
-  //    de tratar como adulto liberado.
-  if (p.reason === "unknown_birth_date") return "error_locked";
+  // 3. Idade desconhecida (data de nascimento ausente): caso identificável e
+  //    resolvível. Não é possível estabelecer se é menor ou adulto, então não
+  //    liberamos acesso — mas, diferente de um erro/timeout, há um caminho de
+  //    ação: pedir a data (rota /completar-cadastro). Fail-closed com saída.
+  if (p.reason === "unknown_birth_date") return "needs_birth_date";
 
   // 4. Consentimento não exigido (adulto com data de nascimento conhecida).
   if (!p.requires_consent) return "clear";
