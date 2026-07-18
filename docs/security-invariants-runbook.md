@@ -218,6 +218,25 @@ Configurar no Lovable/Supabase dois disparos agendados, enviando o header
   (`RESEND_API_KEY`, pendente): sem ele, o e-mail fica enfileirado (degradação
   graciosa), mas o código de associação pode ser usado assim que entregue.
 
+### Truth & Evidence Registry (claims públicos auditáveis)
+
+- Claims regulados (métricas de efeito, prova social, depoimentos, badges de
+  conformidade, licença/afiliação) vivem em `src/content/claims-registry.ts`
+  (`ClaimEntry[]`). `src/lib/claims.ts` expõe `validateRegistry` (puro),
+  `getClaim` e `getApprovedClaim` — que só trata como aprovado um claim
+  `status='approved'` com `source.url|document` e `expiresAt` futuro.
+- **Enforcement**: um teste Vitest valida o registro real (`validateRegistry(CLAIMS)`
+  = zero erros) e roda no `npm run quality` — um claim aprovado sem prova quebra
+  o gate. `security-gate.mjs` exige a presença dos arquivos do registro.
+- Fase 1 (esta): inventário dos claims da landing entra como `draft`/`rejected`
+  (nenhum `approved`), então nenhum número não comprovado é exibido como fato.
+  A landing foi limpa: badge "WCAG 2.2" removido (sem auditoria), "Baseado em
+  Yale" → "Inspirado em Yale" (sem endosso), métricas fabricadas ("58%", "87%",
+  "23%", "3.401 alunos", "47 instituições") removidas/qualificadas, depoimentos
+  rotulados "exemplos ilustrativos".
+- Aprovar um claim = trabalho humano de curadoria: mudar `status` para `approved`
+  e preencher `source` (+ `expiresAt`). Follow-up: scanner de JSX, CMS governado.
+
 ## Onda 2 — Instrumentação (funil de conversão)
 
 - `landing_events` é **write-only para o cliente**: policy de `INSERT` para

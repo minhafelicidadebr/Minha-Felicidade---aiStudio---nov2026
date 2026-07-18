@@ -27,7 +27,7 @@ const MOODS: Mood[] = [
     module: "Módulo 4 — Hackeando o Cérebro", moduleHref: "/auth",
     plan: "Plano Aluno (R$ 29/mês)",
     practice: { title: "Box Breathing 4-4-4-4", duration: "90 segundos", steps: ["Inspire pelo nariz contando 4", "Segure o ar contando 4", "Expire pela boca contando 4", "Pausa de 4 e repita 4x"] },
-    social: "1.247 pessoas começaram aqui essa semana",
+    social: "Uma prática simples para começar agora",
   },
   {
     id: "overwhelmed", emoji: "🌪️", label: "Sobrecarregado(a)", color: "from-orange-500/30 to-red-500/20",
@@ -37,7 +37,7 @@ const MOODS: Mood[] = [
     module: "Módulo 5 — Virando o Jogo (WOOP)", moduleHref: "/auth",
     plan: "Plano Aluno (R$ 29/mês)",
     practice: { title: "WOOP em 60s", duration: "1 minuto", steps: ["Wish: qual seu desejo?", "Outcome: melhor resultado possível", "Obstacle: o que te impede?", "Plan: se-X-então-Y"] },
-    social: "892 pessoas escolheram esse caminho hoje",
+    social: "Um caminho para quando tudo pesa",
   },
   {
     id: "curious", emoji: "🔍", label: "Curioso(a)", color: "from-violet-500/30 to-purple-500/20",
@@ -47,7 +47,7 @@ const MOODS: Mood[] = [
     module: "Módulo 1 — As Grandes Mentiras", moduleHref: "/auth",
     plan: "Demo grátis 14 dias",
     practice: { title: "Savoring de 30 segundos", duration: "30 segundos", steps: ["Pause agora", "Identifique 1 coisa boa do seu dia", "Reviva mentalmente em 3 detalhes sensoriais", "Sorria — literalmente"] },
-    social: "3.401 alunos ativos neste módulo",
+    social: "Comece pela pergunta mais antiga da humanidade",
   },
   {
     id: "transition", emoji: "🌱", label: "Em transição", color: "from-emerald-500/30 to-teal-500/20",
@@ -57,7 +57,7 @@ const MOODS: Mood[] = [
     module: "Módulo 5 — Hábitos Duráveis", moduleHref: "/auth",
     plan: "Plano Aluno (R$ 29/mês)",
     practice: { title: "Seu 1º se-então", duration: "60 segundos", steps: ["Escolha 1 hábito ancorado", "Formato: 'Se [gatilho], então [ação]'", "Ex: 'Se eu escovar os dentes, então 3 respirações conscientes'", "Repita por 7 dias"] },
-    social: "574 jornadas iniciadas esta semana",
+    social: "Uma identidade nova, um hábito pequeno por vez",
   },
   {
     id: "lonely", emoji: "🤝", label: "Sozinho(a)", color: "from-pink-500/30 to-rose-500/20",
@@ -67,17 +67,17 @@ const MOODS: Mood[] = [
     module: "Módulo 3 — Rewirements de Conexão", moduleHref: "/auth",
     plan: "Plano Aluno (R$ 29/mês)",
     practice: { title: "Mensagem de Gratidão", duration: "2 minutos", steps: ["Pense em 1 pessoa importante", "Mande 1 áudio/mensagem agora", "Diga 1 coisa específica que ela faz que importa", "Observe sua emoção depois"] },
-    social: "2.108 conexões iniciadas com essa prática",
+    social: "Conexão é o nutriente nº 1 da felicidade — e é treinável",
   },
   {
     id: "school", emoji: "🏫", label: "Sou escola/educador", color: "from-amber-500/30 to-yellow-500/20",
-    headline: "Sua rede pode reduzir ansiedade adolescente em até 87%.",
+    headline: "Leve ciência do bem-estar, baseada em evidência, para a sua rede escolar.",
     evidence: "Programas estruturados de Educação Positiva mostram efeitos sustentados em 18 meses (Seligman et al., 2009).",
     cite: "Seligman et al. (2009) · Oxford Review of Education",
     module: "Plano Institucional · Dashboard Wellness Manager", moduleHref: "#planos",
     plan: "Plano Escola (B2B · até 70% off)",
-    practice: { title: "Diagnóstico Express", duration: "5 minutos", steps: ["Calcule alunos × R$ 29", "Veja desconto B2B até 70%", "Receba ROI estimado em ansiedade reduzida", "Agende demo com gestor pedagógico"] },
-    social: "47 instituições em onboarding este mês",
+    practice: { title: "Diagnóstico Express", duration: "5 minutos", steps: ["Calcule alunos × R$ 29", "Veja desconto B2B até 70%", "Receba uma proposta sob medida", "Agende demo com gestor pedagógico"] },
+    social: "Plano institucional com painel de gestão",
   },
 ];
 
@@ -137,11 +137,10 @@ export default function MoodCheckIn() {
               whileHover={{ y: -4 }}
               whileTap={{ scale: 0.96 }}
               onClick={() => handleSelect(m)}
-              className={`relative p-5 rounded-2xl glass-card border transition-all hover:shadow-float group ${
-                selected?.id === m.id
-                  ? "border-primary shadow-glow scale-[1.02]"
-                  : "border-border/40 hover:border-primary/40"
-              }`}
+              className={`relative p-5 rounded-2xl glass-card border transition-all hover:shadow-float group ${selected?.id === m.id
+                ? "border-primary shadow-glow scale-[1.02]"
+                : "border-border/40 hover:border-primary/40"
+                }`}
               aria-pressed={selected?.id === m.id}
             >
               <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${m.color} opacity-0 group-hover:opacity-100 transition-opacity`} />
@@ -226,11 +225,10 @@ export default function MoodCheckIn() {
                   </ol>
                   <button
                     onClick={() => setCommitted(true)}
-                    className={`w-full text-xs font-bold px-3 py-2 rounded-xl transition-all border ${
-                      committed
-                        ? "bg-success/15 text-success border-success/40"
-                        : "bg-background/60 hover:bg-background border-border/40 hover:border-primary/40"
-                    }`}
+                    className={`w-full text-xs font-bold px-3 py-2 rounded-xl transition-all border ${committed
+                      ? "bg-success/15 text-success border-success/40"
+                      : "bg-background/60 hover:bg-background border-border/40 hover:border-primary/40"
+                      }`}
                   >
                     {committed ? "✓ Compromisso registrado — você acabou de praticar ciência" : "Me comprometo a tentar agora"}
                   </button>

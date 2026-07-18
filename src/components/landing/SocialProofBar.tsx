@@ -1,10 +1,13 @@
 import { motion } from "framer-motion";
-import { Shield, Award, BookOpen, Globe, Zap } from "lucide-react";
+import { Shield, Award, Globe, Zap } from "lucide-react";
 
+// Badges de prova (Truth & Evidence Registry): sem badge de conformidade
+// (ex.: WCAG) até haver auditoria com escopo/nível/data; "Yale" descrito como
+// inspiração curricular, não endosso/afiliação. Ver src/content/claims-registry.ts
+// (ids badge.wcag_2_2 = rejected, license.baseado_em_yale = draft).
 const badges = [
-  { icon: Shield, label: "Fontes Verificáveis" },
-  { icon: Award, label: "Baseado em Yale" },
-  { icon: BookOpen, label: "WCAG 2.2" },
+  { icon: Shield, label: "Fontes Citadas" },
+  { icon: Award, label: "Inspirado em Yale" },
   { icon: Zap, label: "IA Socrática" },
   { icon: Globe, label: "100% em Português" },
 ];

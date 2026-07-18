@@ -8,7 +8,7 @@ const tools = [
   {
     id: "breathing", icon: "🧘", name: "Respiração Consciente", route: "/breathing",
     desc: "3 técnicas com animação de círculo respiratório",
-    science: "Ma et al. (2017) — reduz cortisol em 23%",
+    science: "Ma et al. (2017) — respiração e regulação do estresse",
     xp: "+5/ciclo", color: "from-blue-500/15 to-indigo-500/15",
     preview: "Timer respiratório com partículas orbitais, fases animadas e tracking de ciclos",
     category: "corpo",
@@ -24,7 +24,7 @@ const tools = [
   {
     id: "gratitude", icon: "📝", name: "Diário de Gratidão", route: "/gratitude",
     desc: "Journaling com prompts, mood e streaks",
-    science: "Emmons & McCullough (2003) — +25% bem-estar",
+    science: "Emmons & McCullough (2003) — gratidão e bem-estar",
     xp: "+10 XP", color: "from-pink-500/15 to-rose-500/15",
     preview: "Prompts diários de IA, tracker de humor com emojis e sistema de streaks gamificado",
     category: "reflexao",
@@ -136,11 +136,10 @@ export default function InteractiveToolsShowcase() {
             <button
               key={cat.id}
               onClick={() => setFilter(cat.id)}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-                filter === cat.id
-                  ? "gradient-institute text-primary-foreground shadow-warm"
-                  : "glass-card hover:shadow-warm text-muted-foreground hover:text-foreground"
-              }`}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${filter === cat.id
+                ? "gradient-institute text-primary-foreground shadow-warm"
+                : "glass-card hover:shadow-warm text-muted-foreground hover:text-foreground"
+                }`}
             >
               {cat.label}
             </button>

@@ -190,6 +190,19 @@ if (existsSync(supabaseClient)) {
   }
 }
 
+// Truth & Evidence Registry: o registro de claims e seu validador/testes devem
+// existir. A integridade do conteúdo (nenhum claim aprovado sem prova) é
+// verificada pelo teste Vitest do registro real, que roda no `npm run quality`.
+for (const claimsFile of [
+  "src/lib/claims.ts",
+  "src/content/claims-registry.ts",
+  "src/lib/claims.test.ts",
+]) {
+  if (!existsSync(claimsFile)) {
+    fail(`Missing Truth & Evidence Registry file: ${claimsFile}`);
+  }
+}
+
 const requireAuthComponent = "src/components/routing/RequireAuth.tsx";
 if (!existsSync(requireAuthComponent)) {
   fail(`Missing route auth guard: ${requireAuthComponent}`);

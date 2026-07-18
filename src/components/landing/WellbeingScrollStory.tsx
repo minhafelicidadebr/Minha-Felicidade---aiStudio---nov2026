@@ -14,7 +14,7 @@ const ACTS = [
     quoteAuthor: "— Berridge, 1996",
     cite: "Brickman & Campbell (1971) · Hedonic Treadmill",
     accent: "from-rose-500/30 via-orange-500/20 to-transparent",
-    metric: "73% dos jovens relatam ansiedade frequente",
+    metric: "A ansiedade entre jovens é uma preocupação crescente",
   },
   {
     n: "02",
@@ -26,7 +26,7 @@ const ACTS = [
     quoteAuthor: "— Laurie Santos, Yale",
     cite: "Santos (2018) · Yale OpenCourseWare",
     accent: "from-amber-500/30 via-yellow-500/20 to-transparent",
-    metric: "+3.4 milhões de alunos · 6 práticas validadas",
+    metric: "Curso de Yale (The Science of Well-Being) · 6 práticas centrais",
   },
   {
     n: "03",
@@ -38,7 +38,7 @@ const ACTS = [
     quoteAuthor: "— Edmund Hillary",
     cite: "Deci & Ryan (2000) · Self-Determination Theory",
     accent: "from-emerald-500/30 via-teal-500/20 to-transparent",
-    metric: "58% de redução em ruminação aos 21 dias",
+    metric: "6 práticas de bem-estar com base em evidência",
   },
   {
     n: "04",
@@ -50,7 +50,7 @@ const ACTS = [
     quoteAuthor: "— James Clear",
     cite: "Gollwitzer (1999) · Dweck (2006) · Oettingen (2014)",
     accent: "from-violet-500/30 via-fuchsia-500/20 to-transparent",
-    metric: "3x mais adesão · efeito 18 meses depois",
+    metric: "Mudança sustentável por hábito, não por força de vontade",
   },
 ];
 

@@ -59,13 +59,15 @@ export default function TestimonialsSection() {
       <div className="container max-w-6xl relative">
         <motion.div className="text-center mb-16" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 text-secondary-foreground text-sm font-semibold mb-4">
-            💬 Depoimentos Reais
+            💬 Exemplos ilustrativos
           </span>
           <h2 className="text-3xl md:text-5xl font-display font-bold mb-4">
-            Quem já <span className="text-gradient">experimentou</span>
+            Como a plataforma <span className="text-gradient">pode ser usada</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Estudantes, professores e psicólogos compartilham suas experiências.
+            Cenários ilustrativos de uso por estudantes e educadores. Não são
+            depoimentos verificados — publicaremos relatos reais, com
+            consentimento, conforme forem coletados.
           </p>
         </motion.div>
 
