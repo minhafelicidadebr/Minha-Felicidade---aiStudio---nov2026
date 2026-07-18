@@ -8,7 +8,8 @@ export type NotificationKind =
     | "renewal_reminder"
     | "payment_failed"
     | "subscription_expired"
-    | "subscription_canceled";
+    | "subscription_canceled"
+    | "escolar_claim";
 
 export interface EmailTemplateInput {
     kind: NotificationKind;
@@ -16,6 +17,7 @@ export interface EmailTemplateInput {
     billingInterval?: string;
     periodEnd?: string;
     appUrl?: string;
+    claimToken?: string; // só para 'escolar_claim' (código de associação)
 }
 
 export interface RenderedEmail {
@@ -109,6 +111,18 @@ export function renderEmail(input: EmailTemplateInput): RenderedEmail {
                     `Renovação cancelada`,
                     (renew ? `<p>Sua renovação foi cancelada. Você mantém o acesso ao plano <strong>${plan}</strong> até <strong>${renew}</strong>, sem nova cobrança.</p>` : `<p>Sua renovação foi cancelada. Você mantém o acesso até o fim do ciclo atual, sem nova cobrança.</p>`) +
                     `<p>Mudou de ideia? É só assinar de novo quando quiser.</p>`,
+                    input.appUrl,
+                ),
+            };
+
+        case "escolar_claim":
+            return {
+                subject: `Ative a assinatura escolar da sua escola`,
+                html: shell(
+                    `Assinatura escolar paga`,
+                    `<p>Recebemos o pagamento do Plano Escolar. Para ativar e gerir a assinatura, crie sua conta (ou entre) e informe o código de associação abaixo na página de assinatura:</p>` +
+                    (input.claimToken ? `<p style="font-size:18px;letter-spacing:1px"><strong>${input.claimToken}</strong></p>` : "") +
+                    `<p>Você pode usar qualquer e-mail para criar a conta — este código é a sua prova de compra.</p>`,
                     input.appUrl,
                 ),
             };

@@ -10,6 +10,7 @@ export type ClaimReason =
     | "associated"
     | "no_claimable_intent"
     | "email_unconfirmed"
+    | "invalid_token"
     | "error";
 
 export interface ClaimResult {
@@ -26,7 +27,12 @@ interface RpcClaimPayload {
 
 /** Normaliza uma reason vinda da RPC para o conjunto conhecido. */
 export function normalizeClaimReason(reason: unknown): ClaimReason {
-    if (reason === "associated" || reason === "no_claimable_intent" || reason === "email_unconfirmed") {
+    if (
+        reason === "associated" ||
+        reason === "no_claimable_intent" ||
+        reason === "email_unconfirmed" ||
+        reason === "invalid_token"
+    ) {
         return reason;
     }
     return "error";
@@ -37,6 +43,23 @@ export async function claimEscolarSubscription(): Promise<ClaimResult> {
         // Cast `as never`: a RPC ainda não está nos tipos gerados até o Lovable
         // regenerá-los (mesmo padrão de get_my_payment_history / cancelamento).
         const { data, error } = await supabase.rpc("claim_escolar_subscription" as never);
+        if (error) return { ok: false, reason: "error" };
+
+        const payload = (data ?? {}) as RpcClaimPayload;
+        const reason = normalizeClaimReason(payload.reason);
+        return { ok: payload.ok === true, reason, org_name: payload.org_name };
+    } catch {
+        return { ok: false, reason: "error" };
+    }
+}
+
+/**
+ * Abordagem B: reivindica a assinatura escolar por CÓDIGO (token), permitindo
+ * usar um e-mail diferente do checkout. O token é a prova de compra. Nunca lança.
+ */
+export async function claimEscolarWithToken(token: string): Promise<ClaimResult> {
+    try {
+        const { data, error } = await supabase.rpc("claim_escolar_with_token" as never, { _token: token } as never);
         if (error) return { ok: false, reason: "error" };
 
         const payload = (data ?? {}) as RpcClaimPayload;

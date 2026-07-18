@@ -51,11 +51,22 @@ chamador, segura por construção (não depende da config global de confirmaçã
     `NOTIFY pgrst, 'reload schema';` e validar o fluxo em sandbox.
   - _Requirements: 4.4_
 
+## Abordagem B — claim por token (implementada)
+
+- [x] B1. Migration: `claim_token` em `purchase_intents`, RPC
+  `claim_escolar_with_token(uuid)`, e ampliação do CHECK de
+  `notification_outbox.kind` com `escolar_claim`.
+- [x] B2. Template `escolar_claim` nos dois `email-templates.ts` (espelho) + teste.
+- [x] B3. `mp-webhook` enfileira o e-mail do token após ativação pré-cadastro
+  (idempotente; RPC de pagamento intocada).
+- [x] B4. Cliente `claimEscolarWithToken` + testes; UI de código na `SubscriptionPage`.
+- [ ] B5. PENDENTE (humano): configurar `RESEND_API_KEY` para a entrega do e-mail;
+  aplicar a migration; validar o fluxo por código.
+
 ## Notes
 
 - Não altera `activate_subscription_from_intent`, `_shared/crisis.ts`,
   `guardian_consent_events`, `ai_usage_limits` nem o preço (Requirement 4.2).
 - `organization_subscriptions` continua sem policy de escrita para o cliente;
   criação só pela RPC (Requirement 4.3).
-- Follow-up: abordagem B (token) para claim com e-mail diferente.
 

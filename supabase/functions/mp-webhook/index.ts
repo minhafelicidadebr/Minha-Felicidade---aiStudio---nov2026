@@ -93,6 +93,33 @@ serve(async (req) => {
 
         if (error) throw error;
 
+        // Escolar pré-cadastro (sem conta ainda): enfileira o e-mail com o CÓDIGO
+        // de associação (abordagem B) para o gestor reivindicar depois do cadastro.
+        // Enqueue é best-effort e idempotente (dedupe); nunca reverte a ativação.
+        const result = (data ?? {}) as { reason?: string };
+        if (result.reason === "approved_pending_association") {
+            try {
+                const { data: intent } = await service
+                    .from("purchase_intents")
+                    .select("contact_email, claim_token")
+                    .eq("external_reference", payment.external_reference)
+                    .maybeSingle();
+                const contactEmail = (intent as { contact_email?: string } | null)?.contact_email;
+                const claimToken = (intent as { claim_token?: string } | null)?.claim_token;
+                if (contactEmail && claimToken) {
+                    await service.from("notification_outbox").insert({
+                        kind: "escolar_claim",
+                        recipient_email: contactEmail,
+                        user_id: null,
+                        payload: { claim_token: claimToken },
+                        dedupe_key: "escolar_claim:" + String(payment.id),
+                    });
+                }
+            } catch (enqueueErr) {
+                console.error("mp-webhook escolar_claim enqueue failed (non-fatal):", enqueueErr);
+            }
+        }
+
         return jsonResponse({ ok: true, result: data }, 200);
     } catch (e) {
         console.error("mp-webhook error:", e);

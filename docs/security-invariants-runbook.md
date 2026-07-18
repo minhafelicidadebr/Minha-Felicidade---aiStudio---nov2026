@@ -23,6 +23,7 @@ The Supabase hardening path is versioned as migrations. Apply them in timestamp 
 17. `supabase/migrations/20260718131000_get_funnel_overview.sql` — aggregate funnel RPC (`SECURITY DEFINER`, teacher/manager only, audited).
 18. `supabase/migrations/20260718132000_upgrade_event_on_activation.sql` — reproduces `activate_subscription_from_intent` adding a server-side `upgrade` funnel event.
 19. `supabase/migrations/20260718140000_claim_escolar_subscription.sql` — self-scoped RPC that lets a manager claim a paid pre-signup escolar subscription by their **confirmed** email (creates `organization_subscriptions`, grants `manager`, marks the intent).
+20. `supabase/migrations/20260718150000_escolar_claim_token.sql` — adds `purchase_intents.claim_token`, RPC `claim_escolar_with_token(uuid)` (claim by code, different email allowed), and extends `notification_outbox.kind` with `escolar_claim`.
 
 The `20260613144818...` migration was generated remotely after the first foundation migration. It is mostly idempotent duplication. The later `20260613170000...` migration is still required because it removes explicit `anon`/`authenticated` EXECUTE grants that are not removed by revoking from `PUBLIC`.
 
@@ -198,8 +199,16 @@ Configurar no Lovable/Supabase dois disparos agendados, enviando o header
   `organization_subscriptions` (idempotente: só se o dono ainda não tiver uma),
   concede `manager` (`ON CONFLICT DO NOTHING`), marca `purchase_intents.user_id`,
   audita em `data_access_logs`. `organization_subscriptions` continua sem policy
-  de escrita para o cliente. Follow-up: abordagem B (token no `contact_email`)
-  para claim com e-mail diferente.
+  de escrita para o cliente.
+- Abordagem B (token) — migration `20260718150000_escolar_claim_token.sql`:
+  coluna `purchase_intents.claim_token` (uuid), RPC `claim_escolar_with_token(uuid)`
+  (self-scoped, associa por CÓDIGO, permitindo e-mail diferente do checkout — o
+  token é a prova de compra), e ampliação do CHECK de `notification_outbox.kind`
+  para `escolar_claim`. O `mp-webhook` enfileira o e-mail com o token após a
+  ativação pré-cadastro (`reason='approved_pending_association'`), idempotente
+  por `dedupe_key='escolar_claim:<mp_payment_id>'`. **Entrega depende do Resend**
+  (`RESEND_API_KEY`, pendente): sem ele, o e-mail fica enfileirado (degradação
+  graciosa), mas o código de associação pode ser usado assim que entregue.
 
 ## Onda 2 — Instrumentação (funil de conversão)
 

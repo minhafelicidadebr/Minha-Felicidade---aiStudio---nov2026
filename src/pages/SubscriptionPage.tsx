@@ -5,7 +5,7 @@ import { Crown, CreditCard, Calendar, Users, ArrowLeft, CheckCircle2, AlertCircl
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 import { consumePendingCheckout, startIndividualCheckout } from "@/lib/checkout";
-import { claimEscolarSubscription } from "@/lib/claim-escolar";
+import { claimEscolarSubscription, claimEscolarWithToken } from "@/lib/claim-escolar";
 import { planFeatureLabels } from "@/lib/plan-features";
 import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
@@ -46,6 +46,7 @@ export default function SubscriptionPage() {
   const [canceling, setCanceling] = useState(false);
   const [canceled, setCanceled] = useState(false);
   const [claiming, setClaiming] = useState(false);
+  const [claimToken, setClaimToken] = useState("");
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -126,30 +127,50 @@ export default function SubscriptionPage() {
     }
   };
 
+  const reportClaim = (result: Awaited<ReturnType<typeof claimEscolarSubscription>>) => {
+    if (result.ok) {
+      toast({
+        title: "Assinatura escolar associada! 🎉",
+        description: result.org_name ? `Organização: ${result.org_name}` : undefined,
+      });
+      refetch();
+    } else if (result.reason === "email_unconfirmed") {
+      toast({
+        title: "Confirme seu e-mail primeiro",
+        description: "Para associar a assinatura escolar, confirme o e-mail da sua conta e tente de novo.",
+        variant: "destructive",
+      });
+    } else if (result.reason === "no_claimable_intent") {
+      toast({
+        title: "Nenhuma assinatura escolar encontrada",
+        description: "Não achamos uma compra escolar paga para o e-mail desta conta. Use o mesmo e-mail do checkout ou o código de associação.",
+      });
+    } else if (result.reason === "invalid_token") {
+      toast({
+        title: "Código inválido",
+        description: "Não encontramos uma assinatura escolar paga para este código. Confira o código do e-mail.",
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Não foi possível associar agora", description: "Tente novamente em instantes.", variant: "destructive" });
+    }
+  };
+
   const handleClaimEscolar = async () => {
     setClaiming(true);
     try {
-      const result = await claimEscolarSubscription();
-      if (result.ok) {
-        toast({
-          title: "Assinatura escolar associada! 🎉",
-          description: result.org_name ? `Organização: ${result.org_name}` : undefined,
-        });
-        refetch();
-      } else if (result.reason === "email_unconfirmed") {
-        toast({
-          title: "Confirme seu e-mail primeiro",
-          description: "Para associar a assinatura escolar, confirme o e-mail da sua conta e tente de novo.",
-          variant: "destructive",
-        });
-      } else if (result.reason === "no_claimable_intent") {
-        toast({
-          title: "Nenhuma assinatura escolar encontrada",
-          description: "Não achamos uma compra escolar paga para o e-mail desta conta. Use o mesmo e-mail do checkout.",
-        });
-      } else {
-        toast({ title: "Não foi possível associar agora", description: "Tente novamente em instantes.", variant: "destructive" });
-      }
+      reportClaim(await claimEscolarSubscription());
+    } finally {
+      setClaiming(false);
+    }
+  };
+
+  const handleClaimToken = async () => {
+    const token = claimToken.trim();
+    if (!token) return;
+    setClaiming(true);
+    try {
+      reportClaim(await claimEscolarWithToken(token));
     } finally {
       setClaiming(false);
     }
@@ -322,6 +343,29 @@ export default function SubscriptionPage() {
             >
               {claiming ? "Associando..." : "Associar assinatura escolar"}
             </button>
+
+            <div className="mt-5 pt-5 border-t border-border">
+              <p className="text-sm text-muted-foreground mb-3">
+                Criou a conta com um e-mail diferente do checkout? Informe o código de associação que
+                enviamos por e-mail:
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="text"
+                  value={claimToken}
+                  onChange={(e) => setClaimToken(e.target.value)}
+                  placeholder="Código de associação"
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-muted border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                />
+                <button
+                  onClick={handleClaimToken}
+                  disabled={claiming || !claimToken.trim()}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-muted hover:bg-muted/80 text-sm font-medium transition-colors disabled:opacity-60"
+                >
+                  Usar código
+                </button>
+              </div>
+            </div>
           </motion.div>
         )}
 

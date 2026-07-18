@@ -105,8 +105,17 @@ escrita do cliente em `user_roles`.
   'organization'; repetir o claim não duplica; e-mail não confirmado bloqueia.
 - `npm run quality` verde a cada tarefa.
 
+## Abordagem B (implementada) — claim por token
+
+Complementa A para o caso de e-mail diferente do checkout. `purchase_intents`
+ganha `claim_token` (uuid); a RPC `claim_escolar_with_token(_token)` associa a
+intent paga a quem apresenta o código (o token é a prova de compra, entregue ao
+`contact_email`). O `mp-webhook` enfileira o e-mail `escolar_claim` com o token
+após a ativação pré-cadastro (idempotente por dedupe). Templates em ambos os
+`email-templates.ts` (espelho 1:1). **Entrega depende do Resend** (secret
+pendente): sem ele o e-mail fica enfileirado (degradação graciosa). A RPC de
+pagamento NÃO é tocada — o enqueue vive no webhook.
+
 ## Fora de escopo / follow-up
 
-- Abordagem B (token enviado ao `contact_email` no checkout) — permite claim com
-  e-mail diferente; hardening futuro, depende do dispatcher Resend.
-- Convite/gestão de assentos de alunos.
+- Endurecimento por IP/captcha; convite/gestão de assentos de alunos.

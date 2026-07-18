@@ -7,6 +7,7 @@ const KINDS: NotificationKind[] = [
     "payment_failed",
     "subscription_expired",
     "subscription_canceled",
+    "escolar_claim",
 ];
 
 describe("renderEmail", () => {
@@ -43,5 +44,11 @@ describe("renderEmail", () => {
         const out = renderEmail({ kind: "renewal_reminder" });
         expect(out.subject.length).toBeGreaterThan(0);
         expect(out.html.length).toBeGreaterThan(0);
+    });
+
+    it("claim escolar mostra o código de associação quando fornecido", () => {
+        const out = renderEmail({ kind: "escolar_claim", claimToken: "TOKEN-ABC-123", appUrl: "https://app.exemplo" });
+        expect(out.subject.toLowerCase()).toContain("escolar");
+        expect(out.html).toContain("TOKEN-ABC-123");
     });
 });
