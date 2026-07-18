@@ -22,6 +22,7 @@ The Supabase hardening path is versioned as migrations. Apply them in timestamp 
 16. `supabase/migrations/20260718130000_landing_events.sql` — write-only funnel events table (client can INSERT only; no SELECT/UPDATE/DELETE).
 17. `supabase/migrations/20260718131000_get_funnel_overview.sql` — aggregate funnel RPC (`SECURITY DEFINER`, teacher/manager only, audited).
 18. `supabase/migrations/20260718132000_upgrade_event_on_activation.sql` — reproduces `activate_subscription_from_intent` adding a server-side `upgrade` funnel event.
+19. `supabase/migrations/20260718140000_claim_escolar_subscription.sql` — self-scoped RPC that lets a manager claim a paid pre-signup escolar subscription by their **confirmed** email (creates `organization_subscriptions`, grants `manager`, marks the intent).
 
 The `20260613144818...` migration was generated remotely after the first foundation migration. It is mostly idempotent duplication. The later `20260613170000...` migration is still required because it removes explicit `anon`/`authenticated` EXECUTE grants that are not removed by revoking from `PUBLIC`.
 
@@ -185,6 +186,20 @@ Configurar no Lovable/Supabase dois disparos agendados, enviando o header
   `assertTriggerSecret` (o gate exige a colocação). As functions worker
   `process-notifications` e `subscription-lifecycle` são obrigadas pelo gate a
   chamar `assertTriggerSecret` (não são públicas).
+
+### Associação escolar pré-cadastro (Req 2.3 da Onda 1)
+
+- `claim_escolar_subscription()` — `SECURITY DEFINER`, `search_path=public`,
+  self-scoped, `EXECUTE` só `authenticated`. Resolve e-mail do `auth.uid()` de
+  `auth.users` (nunca do cliente) e **exige `email_confirmed_at IS NOT NULL`**
+  (segurança por construção — independe da config global de confirmação).
+  Associa apenas intents `kind='escolar'`/`status='approved'`/`user_id IS NULL`
+  cujo `contact_email` casa (case-insensitive) com o e-mail do chamador. Cria a
+  `organization_subscriptions` (idempotente: só se o dono ainda não tiver uma),
+  concede `manager` (`ON CONFLICT DO NOTHING`), marca `purchase_intents.user_id`,
+  audita em `data_access_logs`. `organization_subscriptions` continua sem policy
+  de escrita para o cliente. Follow-up: abordagem B (token no `contact_email`)
+  para claim com e-mail diferente.
 
 ## Onda 2 — Instrumentação (funil de conversão)
 

@@ -5,6 +5,7 @@ import { Crown, CreditCard, Calendar, Users, ArrowLeft, CheckCircle2, AlertCircl
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 import { consumePendingCheckout, startIndividualCheckout } from "@/lib/checkout";
+import { claimEscolarSubscription } from "@/lib/claim-escolar";
 import { planFeatureLabels } from "@/lib/plan-features";
 import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
@@ -44,6 +45,7 @@ export default function SubscriptionPage() {
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [canceling, setCanceling] = useState(false);
   const [canceled, setCanceled] = useState(false);
+  const [claiming, setClaiming] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -121,6 +123,35 @@ export default function SubscriptionPage() {
       });
     } finally {
       setCanceling(false);
+    }
+  };
+
+  const handleClaimEscolar = async () => {
+    setClaiming(true);
+    try {
+      const result = await claimEscolarSubscription();
+      if (result.ok) {
+        toast({
+          title: "Assinatura escolar associada! 🎉",
+          description: result.org_name ? `Organização: ${result.org_name}` : undefined,
+        });
+        refetch();
+      } else if (result.reason === "email_unconfirmed") {
+        toast({
+          title: "Confirme seu e-mail primeiro",
+          description: "Para associar a assinatura escolar, confirme o e-mail da sua conta e tente de novo.",
+          variant: "destructive",
+        });
+      } else if (result.reason === "no_claimable_intent") {
+        toast({
+          title: "Nenhuma assinatura escolar encontrada",
+          description: "Não achamos uma compra escolar paga para o e-mail desta conta. Use o mesmo e-mail do checkout.",
+        });
+      } else {
+        toast({ title: "Não foi possível associar agora", description: "Tente novamente em instantes.", variant: "destructive" });
+      }
+    } finally {
+      setClaiming(false);
     }
   };
 
@@ -265,6 +296,32 @@ export default function SubscriptionPage() {
                 </div>
               ))}
             </div>
+          </motion.div>
+        )}
+
+        {/* Claim de assinatura escolar paga antes do cadastro (Req 2.3) */}
+        {!isPremium && (
+          <motion.div
+            className="rounded-3xl border border-border p-6 mt-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+          >
+            <h3 className="font-display font-bold text-lg mb-2 flex items-center gap-2">
+              <Users className="w-5 h-5 text-primary" />
+              Assinatura escolar paga antes do cadastro?
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Se sua escola pagou o Plano Escolar antes de você criar a conta, associe agora — use o
+              mesmo e-mail (confirmado) do checkout.
+            </p>
+            <button
+              onClick={handleClaimEscolar}
+              disabled={claiming}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl gradient-institute text-primary-foreground text-sm font-semibold shadow-warm hover:shadow-glow transition-all disabled:opacity-60"
+            >
+              {claiming ? "Associando..." : "Associar assinatura escolar"}
+            </button>
           </motion.div>
         )}
 
