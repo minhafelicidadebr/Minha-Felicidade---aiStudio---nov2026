@@ -5,8 +5,22 @@ import type { Database } from './types';
 // secreta no frontend e exige as envs. Ver src/lib/supabase-key.ts.
 import { assertPublicSupabaseKey, assertSupabaseUrl } from '@/lib/supabase-key';
 
-const SUPABASE_URL = assertSupabaseUrl(import.meta.env.VITE_SUPABASE_URL);
-const SUPABASE_PUBLISHABLE_KEY = assertPublicSupabaseKey(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
+// Fallback público (incidente 2026-07-18): o build publicado no Lovable não
+// tinha VITE_SUPABASE_URL/VITE_SUPABASE_PUBLISHABLE_KEY configuradas em
+// Workspace Settings → Build Secrets, e isso deixava o site inteiro em
+// branco. Estes dois valores NÃO são segredo: o Vite embute a env no bundle
+// do navegador de qualquer forma (vindo de env ou hardcoded, o público vê o
+// mesmo texto); a proteção real do banco é o RLS no servidor, não a opacidade
+// da URL/anon key. Preferível configurar via Build Secrets no Lovable — este
+// fallback existe só para o site nunca mais ficar em branco por essa causa.
+const FALLBACK_SUPABASE_URL = 'https://ctjwyybmlwhynherikqy.supabase.co';
+const FALLBACK_SUPABASE_PUBLISHABLE_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0and5eWJtbHdoeW5oZXJpa3F5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMDcyMjIsImV4cCI6MjA5OTc4MzIyMn0.B3VKecqEmSmEVjxHrLBHbv_rsQYFe_68oP2K-NVE3XoAmbo';
+
+const SUPABASE_URL = assertSupabaseUrl(import.meta.env.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL);
+const SUPABASE_PUBLISHABLE_KEY = assertPublicSupabaseKey(
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || FALLBACK_SUPABASE_PUBLISHABLE_KEY,
+);
 
 
 function isNewSupabaseApiKey(value: string): boolean {
