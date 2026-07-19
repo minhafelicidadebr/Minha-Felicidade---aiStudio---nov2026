@@ -14,35 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      // Manual stub (migration 20260718130000_landing_events): platform-
-      // generated file; table type added by hand until types are regenerated.
-      landing_events: {
-        Row: {
-          created_at: string
-          id: string
-          kind: string
-          metadata: Json
-          session_id: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          kind: string
-          metadata?: Json
-          session_id: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          kind?: string
-          metadata?: Json
-          session_id?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       ai_usage_limits: {
         Row: {
           first_requested_at: string
@@ -133,6 +104,33 @@ export type Database = {
           occurred_at?: string
           policy_version?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      landing_events: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          metadata: Json
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          metadata?: Json
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          metadata?: Json
+          session_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -357,6 +355,7 @@ export type Database = {
         Row: {
           amount_brl_cents: number
           billing_interval: string
+          claim_token: string
           contact_email: string | null
           contact_name: string | null
           created_at: string
@@ -375,6 +374,7 @@ export type Database = {
         Insert: {
           amount_brl_cents: number
           billing_interval: string
+          claim_token?: string
           contact_email?: string | null
           contact_name?: string | null
           created_at?: string
@@ -393,6 +393,7 @@ export type Database = {
         Update: {
           amount_brl_cents?: number
           billing_interval?: string
+          claim_token?: string
           contact_email?: string | null
           contact_name?: string | null
           created_at?: string
@@ -584,10 +585,13 @@ export type Database = {
         }
         Returns: Json
       }
+      claim_escolar_subscription: { Args: never; Returns: Json }
+      claim_escolar_with_token: { Args: { _token: string }; Returns: Json }
       enforce_ai_usage_limit: {
         Args: { _function_name: string }
         Returns: Json
       }
+      get_funnel_overview: { Args: { _days?: number }; Returns: Json }
       get_learning_progress_overview: { Args: never; Returns: Json }
       get_my_guardian_consent_status: { Args: never; Returns: Json }
       get_my_learning_progress_summary: { Args: never; Returns: Json }
@@ -631,13 +635,7 @@ export type Database = {
         Args: { _reminder_days?: number }
         Returns: Json
       }
-      // Manual stub (migration 20260718120000_set_my_birth_date): this file
-      // is platform-generated; the signature was added by hand so typecheck
-      // recognizes the RPC until the types are regenerated.
-      set_my_birth_date: {
-        Args: { _birth_date: string }
-        Returns: Json
-      }
+      set_my_birth_date: { Args: { _birth_date: string }; Returns: Json }
       user_has_feature: {
         Args: { _feature: string; _user_id: string }
         Returns: boolean
