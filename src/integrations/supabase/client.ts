@@ -15,7 +15,7 @@ import { assertPublicSupabaseKey, assertSupabaseUrl } from '@/lib/supabase-key';
 // fallback existe só para o site nunca mais ficar em branco por essa causa.
 const FALLBACK_SUPABASE_URL = 'https://ctjwyybmlwhynherikqy.supabase.co';
 const FALLBACK_SUPABASE_PUBLISHABLE_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0and5eWJtbHdoeW5oZXJpa3F5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMDcyMjIsImV4cCI6MjA5OTc4MzIyMn0.B3VKecqEmSmEVjxHrLBHbv_rsQYFe_68oP2K-NVE3XoAmbo';
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0and5eWJtbHdoeW5oZXJpa3F5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMDcyMjIsImV4cCI6MjA5OTc4MzIyMn0.B3VKecqEmSmEVjxHrLBHbv_rsQYFe_68oP2K-NVE3Xo';
 
 const SUPABASE_URL = assertSupabaseUrl(import.meta.env.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL);
 const SUPABASE_PUBLISHABLE_KEY = assertPublicSupabaseKey(
