@@ -1,9 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Sparkles, MessageCircle, Brain } from "lucide-react";
-
-const AVATAR_URL =
-  "https://static.wixstatic.com/media/575677_d1cc9ff366794d83a8095092ca1a82fe~mv2.png/v1/fill/w_648,h_648,al_c,lg_1,q_90,enc_avif,quality_auto/avatares%20AI%20(6).png";
+import AlegriaAvatar from "@/components/AlegriaAvatar";
 
 type Ctx = {
   moduleId?: string;
@@ -36,19 +34,8 @@ export function AlegriaFAB({ moduleId, prompt, label = "Pergunte à AlegrIA" }: 
       className="fixed bottom-5 right-5 z-40 group flex items-center gap-3 pl-2 pr-4 py-2 rounded-full glass-card shadow-float hover:shadow-glow border border-primary/30 backdrop-blur-xl"
       aria-label={label}
     >
-      <span className="relative">
-        <motion.span
-          className="absolute inset-0 rounded-full bg-primary/40 blur-md"
-          animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
-          transition={{ duration: 2.2, repeat: Infinity }}
-        />
-        <img
-          src={AVATAR_URL}
-          alt=""
-          className="relative w-10 h-10 rounded-full ring-2 ring-primary/40 object-cover"
-        />
-        <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-success border-2 border-background" />
-      </span>
+      <AlegriaAvatar size={40} radius="rounded-full" showStatus alt="" />
+
       <span className="hidden sm:flex flex-col items-start leading-tight">
         <span className="text-[10px] font-semibold text-primary uppercase tracking-wide flex items-center gap-1">
           <Sparkles className="w-3 h-3" /> AlegrIA
@@ -102,18 +89,8 @@ export function AlegriaHeroCard({ moduleId, suggestions }: { moduleId?: string; 
         transition={{ duration: 7, repeat: Infinity }}
       />
       <div className="relative flex items-start gap-4">
-        <div className="relative shrink-0">
-          <motion.div
-            className="absolute inset-0 rounded-2xl bg-primary/30 blur-xl"
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 3, repeat: Infinity }}
-          />
-          <img
-            src={AVATAR_URL}
-            alt="AlegrIA"
-            className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl ring-2 ring-primary/40 object-cover shadow-warm"
-          />
-        </div>
+        <AlegriaAvatar size={76} active alt="AlegrIA" />
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/15 text-primary flex items-center gap-1">

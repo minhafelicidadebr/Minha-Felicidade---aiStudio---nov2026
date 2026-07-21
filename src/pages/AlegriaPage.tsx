@@ -9,13 +9,14 @@ import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { modules } from "@/data/courseData";
 import BackToVideoBanner from "@/components/learning/BackToVideoBanner";
+import AlegriaAvatar, { ALEGRIA_AVATAR_URL } from "@/components/AlegriaAvatar";
 import { supabase } from "@/integrations/supabase/client";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/aledria-chat`;
 
-const AVATAR_URL = "https://static.wixstatic.com/media/575677_d1cc9ff366794d83a8095092ca1a82fe~mv2.png/v1/fill/w_648,h_648,al_c,lg_1,q_90,enc_avif,quality_auto/avatares%20AI%20(6).png";
+const AVATAR_URL = ALEGRIA_AVATAR_URL;
 
 const SUGGESTED_QUESTIONS = [
   { icon: Sparkles, text: "O que é felicidade segundo a ciência?", color: "from-primary/20 to-secondary/20" },
@@ -173,22 +174,13 @@ export default function AlegriaPage() {
       <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full pt-20 pb-4 px-4">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-4 mb-4 px-2">
-          <div className="relative">
-            <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-warm ring-2 ring-primary/20">
-              <img src={AVATAR_URL} alt="AlegrIA — Tutora socrática" className="w-full h-full object-cover" />
-            </div>
-            <motion.div
-              className="absolute -bottom-1 -right-1 w-4 h-4 bg-success rounded-full border-2 border-background"
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-          </div>
+          <AlegriaAvatar size={56} showStatus active={isLoading} alt="AlegrIA — sua tutora do bem-estar" />
           <div className="flex-1">
             <h1 className="font-display text-xl font-bold flex items-center gap-2">
               AlegrIA <Sparkles className="w-4 h-4 text-primary" />
             </h1>
             <p className="text-xs text-muted-foreground">
-              {mod ? `Módulo ${mod.number}: ${mod.title}` : "Tutora socrática · 5 módulos de Yale · Ciência do Bem-Estar"}
+              {mod ? `Módulo ${mod.number}: ${mod.title}` : "Sua tutora do bem-estar · 5 módulos inspirados em Yale"}
             </p>
           </div>
           <button onClick={resetChat} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all" title="Nova conversa" aria-label="Iniciar nova conversa">
@@ -225,11 +217,10 @@ export default function AlegriaPage() {
                     <img src={AVATAR_URL} alt="AlegrIA" className="w-full h-full object-cover" />
                   </div>
                 )}
-                <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                  msg.role === "user"
-                    ? "gradient-institute text-primary-foreground rounded-br-md shadow-warm"
-                    : "glass-card rounded-bl-md"
-                }`}>
+                <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${msg.role === "user"
+                  ? "gradient-institute text-primary-foreground rounded-br-md shadow-warm"
+                  : "glass-card rounded-bl-md"
+                  }`}>
                   {msg.role === "assistant" ? (
                     <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:mb-0.5 [&_strong]:text-foreground [&_a]:text-primary [&_a]:underline">
                       <ReactMarkdown>{msg.content}</ReactMarkdown>
