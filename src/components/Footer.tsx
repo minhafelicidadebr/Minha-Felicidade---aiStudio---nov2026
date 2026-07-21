@@ -29,7 +29,7 @@ export default function Footer() {
   const navigate = useNavigate();
 
   const DEMO_EMAIL = "minhafelicidadebr@gmail.com";
-  const DEMO_PASSWORD = "luzpazeamor";
+  const DEMO_PASSWORD = "@Fib2030";
 
   const handleDemoLogin = async () => {
     if (demoPass !== DEMO_PASSWORD) {
