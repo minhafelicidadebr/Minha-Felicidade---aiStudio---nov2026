@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Play, BookOpen, Sparkles, Users, Star, TrendingUp, Heart, ArrowRight, ArrowDown, Shield, Zap, GraduationCap, Drama, Brain, Compass, Rocket } from "lucide-react";
+import { Play, Sparkles, Heart, ArrowRight, ArrowDown, Shield, GraduationCap, Drama, Brain, Compass, Rocket } from "lucide-react";
 import heroYouth from "@/assets/hero-youth-2026.jpg";
 import logoIcon from "@/assets/logo-icon.png";
 import logoLightBg from "@/assets/logo-light-bg.png";
@@ -24,18 +24,19 @@ import MoodCheckIn from "@/components/landing/MoodCheckIn";
 import WellbeingScrollStory from "@/components/landing/WellbeingScrollStory";
 import Footer from "@/components/Footer";
 
-const stats = [
-  { icon: Users, value: "+12k", label: "jovens transformados", delay: 0 },
-  { icon: Star, value: "4.9★", label: "satisfação de escolas", delay: 0.1 },
-  { icon: TrendingUp, value: "87%", label: "redução de ansiedade*", delay: 0.2 },
-  { icon: Heart, value: "Yale", label: "currículo licenciado", delay: 0.3 },
+// Benefit pillars — honest value props, no fabricated metrics
+const pillars = [
+  { icon: Brain, value: "Autoconhecimento", label: "entenda como sua mente funciona", delay: 0 },
+  { icon: Heart, value: "Menos ansiedade", label: "práticas de 60 segundos que acalmam", delay: 0.1 },
+  { icon: Sparkles, value: "AlegrIA", label: "uma tutora com IA que escuta você", delay: 0.2 },
+  { icon: GraduationCap, value: "Ciência de Yale", label: "inspirado no curso de bem-estar de Yale", delay: 0.3 },
 ];
 
 const trustBadges = [
-  { icon: Shield, label: "Fontes Verificáveis" },
-  { icon: GraduationCap, label: "Baseado em Yale" },
-  { icon: Zap, label: "IA Socrática" },
-  { icon: BookOpen, label: "WCAG 2.2" },
+  { icon: Shield, label: "Fontes verificáveis" },
+  { icon: GraduationCap, label: "Inspirado em Yale" },
+  { icon: Heart, label: "Feito para adolescentes" },
+  { icon: Sparkles, label: "Tutora com IA" },
 ];
 
 export default function LandingPage() {
@@ -110,7 +111,7 @@ export default function LandingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <Sparkles className="w-4 h-4" /> SaaS Educacional · Currículo Yale · Demo gratuita
+              <Sparkles className="w-4 h-4" /> Ciência de Yale · Feito para adolescentes · Comece grátis
             </motion.span>
 
             <h1 className="text-5xl md:text-7xl lg:text-[5.5rem] font-display font-bold leading-[1.02] mb-6 tracking-tight">
@@ -123,7 +124,7 @@ export default function LandingPage() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.6 }}
               >
-                que sua escola pode adotar hoje
+                ao alcance de cada jovem
               </motion.span>
             </h1>
 
@@ -133,8 +134,10 @@ export default function LandingPage() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
             >
-              Plataforma SaaS que transforma o currículo #1 de Yale em jornada gamificada com IA socrática.
-              <strong className="text-foreground"> Teste grátis 14 dias</strong> · planos a partir de R$ 29/mês · descontos B2B para redes escolares.
+              Transformamos o curso de bem-estar mais procurado da Universidade de Yale em uma jornada viva:
+              aulas curtas, práticas de 60 segundos e a AlegrIA, uma tutora com inteligência artificial que
+              conversa, acolhe e ajuda cada jovem a lidar com a ansiedade e se sentir melhor.
+              <strong className="text-foreground"> Comece grátis</strong> · planos a partir de R$ 29 por mês.
             </motion.p>
 
             <motion.div
@@ -166,7 +169,7 @@ export default function LandingPage() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.85 }}
             >
-              Sem cartão de crédito · Cancele quando quiser · Adotado por +120 escolas
+              Sem cartão de crédito · Cancele quando quiser · Comece em 2 minutos
             </motion.p>
 
             {/* Trust badges — premium chips */}
@@ -187,11 +190,11 @@ export default function LandingPage() {
             </motion.div>
           </motion.div>
 
-          {/* Stats — premium floating tiles */}
+          {/* Benefit pillars — premium floating tiles (value props, not fabricated metrics) */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 max-w-4xl mx-auto w-full">
-            {stats.map((s) => (
+            {pillars.map((s) => (
               <motion.div
-                key={s.label}
+                key={s.value}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1 + s.delay, duration: 0.6 }}
@@ -200,7 +203,7 @@ export default function LandingPage() {
                 <span className="icon-tile-premium w-11 h-11 rounded-xl mb-3 mx-auto group-hover:rotate-3 transition-transform">
                   <s.icon className="w-5 h-5" />
                 </span>
-                <div className="text-xl md:text-2xl font-display font-bold text-gradient-aurora">{s.value}</div>
+                <div className="text-base md:text-lg font-display font-bold text-gradient-aurora leading-tight">{s.value}</div>
                 <div className="text-[11px] md:text-xs text-muted-foreground leading-tight mt-1">{s.label}</div>
               </motion.div>
             ))}
@@ -272,7 +275,7 @@ export default function LandingPage() {
                   <span className="text-gradient-aurora">Hábitos saudáveis.</span>
                 </h2>
                 <p className="text-base md:text-lg text-foreground/85 mt-4 leading-relaxed">
-                  Em 5 módulos, a Dra. Laurie Santos reúne as melhores ideias do curso "Psychology and the Good Life".
+                  Em 5 módulos, você mergulha nas ideias centrais do curso "Psychology and the Good Life", de Yale, adaptadas para a realidade dos jovens brasileiros.
                 </p>
               </motion.div>
             </div>
@@ -286,7 +289,7 @@ export default function LandingPage() {
               transition={{ delay: 0.7 }}
             >
               <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-              <span className="text-xs font-semibold">+12.000 jovens já começaram</span>
+              <span className="text-xs font-semibold">Bem-estar que se pratica</span>
             </motion.div>
           </motion.div>
 
@@ -367,8 +370,8 @@ export default function LandingPage() {
               viewport={{ once: true }}
               transition={{ delay: 0.6 }}
             >
-              <p className="text-xs font-bold text-primary mb-1">+12.000 JOVENS</p>
-              <p className="text-sm leading-snug text-foreground/90">já reescreveram a própria história com ciência.</p>
+              <p className="text-xs font-bold text-primary mb-1">CIÊNCIA DE VERDADE</p>
+              <p className="text-sm leading-snug text-foreground/90">transformada em prática para a sua vida real.</p>
             </motion.div>
           </motion.div>
 
@@ -411,7 +414,7 @@ export default function LandingPage() {
                 Você está pronto para se sentir <em className="not-italic underline decoration-primary-foreground/40 underline-offset-4">melhor</em>?
               </h2>
               <p className="text-primary-foreground/85 mb-8 text-base md:text-lg leading-relaxed">
-                Comece sua jornada de bem-estar baseada em ciência.<br/>
+                Comece sua jornada de bem-estar baseada em ciência.<br />
                 <strong>Gratuito. Gamificado. Com tutoria de IA.</strong>
               </p>
               <button
@@ -423,7 +426,7 @@ export default function LandingPage() {
                 <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
               </button>
               <p className="text-xs text-primary-foreground/60 mt-4">
-                ✓ Sem cartão · ✓ +12.000 jovens · ✓ Ciência de Yale
+                ✓ Sem cartão · ✓ Comece grátis · ✓ Inspirado em Yale
               </p>
             </motion.div>
           </div>
