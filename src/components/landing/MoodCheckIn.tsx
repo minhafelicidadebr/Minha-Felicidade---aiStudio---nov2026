@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Heart, Clock, Sparkles, CheckCircle2 } from "lucide-react";
+import { ConfettiCelebration } from "@/components/learning/LearningFX";
 
 type Mood = {
   id: string;
@@ -118,51 +119,72 @@ export default function MoodCheckIn() {
             <Heart className="w-3.5 h-3.5" /> Check-in emocional · 1 toque · 60 s
           </span>
           <h2 className="text-4xl md:text-6xl font-display font-bold mb-4 leading-[1.05]">
-            Como você está <span className="text-gradient-aurora">agora</span>?
+            O que você sente agora <span className="text-gradient-aurora">importa</span>.
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            A landing inteira se reorganiza para o que <strong className="text-foreground">você</strong> precisa — com evidência, <strong className="text-foreground">prática de 60s</strong>, módulo sugerido e plano recomendado.
+            Escolha o que mais combina com esse momento. Temos uma <strong className="text-foreground">prática de 60 segundos</strong>, uma aula e um caminho feitos pra isso.
           </p>
         </motion.div>
 
-        {/* Mood grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-w-3xl mx-auto mb-10">
+        {/* Mood grid — premium design */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-5 max-w-3xl mx-auto mb-6">
           {MOODS.map((m, i) => (
             <motion.button
               key={m.id}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.06 }}
-              whileHover={{ y: -4 }}
-              whileTap={{ scale: 0.96 }}
+              transition={{ delay: i * 0.08 }}
+              whileHover={{ y: -6, scale: 1.03 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => handleSelect(m)}
-              className={`relative p-5 rounded-2xl glass-card border transition-all hover:shadow-float group ${selected?.id === m.id
+              className={`relative p-6 rounded-3xl backdrop-blur-md bg-card/60 border-2 transition-all duration-300 group shadow-sm hover:shadow-float ${selected?.id === m.id
                 ? "border-primary shadow-glow scale-[1.02]"
-                : "border-border/40 hover:border-primary/40"
+                : "border-border/30 hover:border-primary/50"
                 }`}
               aria-pressed={selected?.id === m.id}
             >
-              <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${m.color} opacity-0 group-hover:opacity-100 transition-opacity`} />
-              <div className="relative">
+              <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${m.color} opacity-40 group-hover:opacity-70 transition-opacity duration-300`} />
+              <div className="relative flex flex-col items-center text-center gap-2">
                 <motion.div
-                  className="text-4xl mb-2"
-                  animate={selected?.id === m.id ? { scale: [1, 1.2, 1] } : {}}
-                  transition={{ duration: 0.5 }}
+                  className="text-5xl md:text-6xl"
+                  animate={selected?.id === m.id ? { scale: [1, 1.2, 1], rotate: [0, 5, -5, 0] } : {}}
+                  transition={{ duration: 0.6 }}
                 >{m.emoji}</motion.div>
-                <div className="text-sm font-semibold">{m.label}</div>
+                <div className="text-sm font-bold">{m.label}</div>
+                <span className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center gap-1">
+                  Explorar <ArrowRight className="w-3 h-3" />
+                </span>
                 {selected?.id === m.id && (
                   <motion.div
                     layoutId="mood-check"
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full gradient-institute flex items-center justify-center shadow-warm"
+                    className="absolute -top-2 -right-2 w-6 h-6 rounded-full gradient-institute flex items-center justify-center shadow-warm"
                   >
-                    <CheckCircle2 className="w-3 h-3 text-primary-foreground" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-primary-foreground" />
                   </motion.div>
                 )}
               </div>
             </motion.button>
           ))}
         </div>
+
+        {/* CTA sutil animado */}
+        {!selected && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center text-sm text-muted-foreground mb-10"
+          >
+            <motion.span
+              animate={{ y: [0, 4, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="inline-block"
+            >
+              ↓
+            </motion.span>{" "}
+            toque no que você sente
+          </motion.p>
+        )}
 
         {/* Personalized roteiro */}
         <AnimatePresence mode="wait">
@@ -223,15 +245,18 @@ export default function MoodCheckIn() {
                       </li>
                     ))}
                   </ol>
-                  <button
-                    onClick={() => setCommitted(true)}
-                    className={`w-full text-xs font-bold px-3 py-2 rounded-xl transition-all border ${committed
-                      ? "bg-success/15 text-success border-success/40"
-                      : "bg-background/60 hover:bg-background border-border/40 hover:border-primary/40"
-                      }`}
-                  >
-                    {committed ? "✓ Compromisso registrado — você acabou de praticar ciência" : "Me comprometo a tentar agora"}
-                  </button>
+                  <div className="relative">
+                    <button
+                      onClick={() => setCommitted(true)}
+                      className={`w-full text-sm font-bold px-4 py-3 rounded-xl transition-all border ${committed
+                        ? "bg-success/15 text-success border-success/40 scale-[1.02]"
+                        : "bg-background/60 hover:bg-primary/10 border-border/40 hover:border-primary/50 hover:scale-[1.01]"
+                        }`}
+                    >
+                      {committed ? "✓ Compromisso registrado — você acabou de praticar ciência 🎉" : "✨ Me comprometo a tentar agora"}
+                    </button>
+                    <ConfettiCelebration active={committed} count={80} />
+                  </div>
                 </motion.div>
 
                 {/* Module + plan */}
