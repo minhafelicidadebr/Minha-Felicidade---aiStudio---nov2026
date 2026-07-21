@@ -127,8 +127,8 @@ export function AlegriaHeroCard({ moduleId, suggestions }: { moduleId?: string; 
             Converse com a <span className="text-gradient">AlegrIA</span>
           </h3>
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 max-w-lg">
-            Tutora socrática treinada na biblioteca completa de Yale + PERMA-V, neurociência da felicidade e
-            economia comportamental. Respostas com <strong>citações verificáveis</strong> e raciocínio Tree-of-Thoughts.
+            Sua companheira de estudo que sabe tudo sobre felicidade, bem-estar e como o cérebro funciona.
+            Faz perguntas que te fazem pensar, mostra <strong>de onde veio cada resposta</strong> e te ajuda a aplicar na sua vida real.
           </p>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {chips.map((q) => (

@@ -14,9 +14,9 @@ const SUGGESTED = [
 
 // Cognitive scaffolding — what AlegrIA does while it "thinks" (ToT visible).
 const THINK_STEPS = [
-  { icon: Brain, label: "Identificando o nó emocional" },
-  { icon: BookOpen, label: "Consultando RAG: Yale, PERMA-V, PNAS" },
-  { icon: Sparkles, label: "Compondo resposta socrática" },
+  { icon: Brain, label: "Entendendo sua dúvida" },
+  { icon: BookOpen, label: "Buscando nas fontes de ciência do bem-estar" },
+  { icon: Sparkles, label: "Montando uma resposta pra você" },
 ];
 
 // Sample mini-conversations shown before user asks (instructional priming).
