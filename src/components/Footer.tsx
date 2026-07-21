@@ -1,7 +1,9 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import logoIcon from "@/assets/logo-icon.png";
 import logoDarkBg from "@/assets/logo-dark-bg.png";
-import { Heart, ExternalLink } from "lucide-react";
+import { Heart, ExternalLink, KeyRound } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const platformLinks = [
   { to: "/auth", label: "Acessar Curso" },
@@ -20,6 +22,39 @@ const resourceLinks = [
 ];
 
 export default function Footer() {
+  const [showDemo, setShowDemo] = useState(false);
+  const [demoPass, setDemoPass] = useState("");
+  const [demoError, setDemoError] = useState("");
+  const [demoLoading, setDemoLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const DEMO_EMAIL = "demo@felicidadelab.app";
+  const DEMO_PASSWORD = "luzpazeamor";
+
+  const handleDemoLogin = async () => {
+    if (demoPass !== DEMO_PASSWORD) {
+      setDemoError("Senha incorreta");
+      return;
+    }
+    setDemoLoading(true);
+    setDemoError("");
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: DEMO_EMAIL,
+        password: DEMO_PASSWORD,
+      });
+      if (error) {
+        setDemoError("Conta demo indisponível no momento");
+        return;
+      }
+      navigate("/dashboard", { replace: true });
+    } catch {
+      setDemoError("Erro ao entrar. Tente novamente.");
+    } finally {
+      setDemoLoading(false);
+    }
+  };
+
   return (
     <footer className="bg-foreground text-background relative overflow-hidden" role="contentinfo">
       {/* Subtle gradient overlay */}
@@ -92,9 +127,40 @@ export default function Footer() {
           <p className="text-xs opacity-40 flex items-center gap-1">
             © 2025 Instituto Felicidade para Todos. Feito com <Heart className="w-3 h-3 text-destructive fill-destructive" /> para adolescentes.
           </p>
-          <p className="text-xs opacity-40">
-            Fontes auditáveis • WCAG 2.2 • Anti-alucinação • SDT
-          </p>
+          <div className="flex items-center gap-4">
+            {!showDemo ? (
+              <button
+                onClick={() => setShowDemo(true)}
+                className="text-xs opacity-40 hover:opacity-80 transition-opacity flex items-center gap-1"
+              >
+                <KeyRound className="w-3 h-3" /> Acesso Demo
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  type="password"
+                  value={demoPass}
+                  onChange={(e) => { setDemoPass(e.target.value); setDemoError(""); }}
+                  onKeyDown={(e) => e.key === "Enter" && handleDemoLogin()}
+                  placeholder="Senha demo"
+                  className="px-3 py-1.5 rounded-lg bg-background/10 border border-background/20 text-xs text-background placeholder:text-background/40 focus:outline-none focus:ring-1 focus:ring-primary/50 w-32"
+                  autoFocus
+                />
+                <button
+                  onClick={handleDemoLogin}
+                  disabled={demoLoading}
+                  className="px-3 py-1.5 rounded-lg bg-primary/80 text-xs font-semibold text-primary-foreground hover:bg-primary transition-colors disabled:opacity-50"
+                >
+                  {demoLoading ? "..." : "Entrar"}
+                </button>
+                <button onClick={() => { setShowDemo(false); setDemoPass(""); setDemoError(""); }} className="text-xs opacity-40 hover:opacity-80">✕</button>
+                {demoError && <span className="text-xs text-destructive">{demoError}</span>}
+              </div>
+            )}
+            <p className="text-xs opacity-40">
+              Fontes auditáveis • WCAG 2.2 • Anti-alucinação • SDT
+            </p>
+          </div>
         </div>
       </div>
     </footer>
