@@ -90,6 +90,37 @@ audited in `data_access_logs`. `REVOKE EXECUTE FROM PUBLIC, anon` +
 (still INSERT-only). Out of scope: editing an already-set birth date, strong age
 assurance, bulk admin backfill.
 
+### Incidente 2026-07-20: trigger `on_auth_user_created` ausente
+
+Descoberto durante a validação pós-deploy: o projeto `ctjwyybmlwhynherikqy` tinha
+a função `handle_new_user()` atualizada, mas **sem o trigger** que a conecta a
+`auth.users` (`CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users
+FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();`, definido em
+`20260308005342_d6791b55-...sql`). Sem o trigger, todo cadastro novo criava a
+conta em `auth.users` mas **nenhuma linha em `profiles`** — o que causava um
+loop infinito na tela `/completar-cadastro` (o gate de consentimento nunca
+conseguia estabelecer a idade, porque não havia perfil para ler).
+
+Causa provável: esse projeto Supabase recebeu apenas as migrations mais
+recentes aplicadas manualmente (a partir de `20260613...`), sem o histórico
+completo desde o início do projeto — o trigger é definido na primeira migration
+do repositório e nunca foi reaplicado isoladamente.
+
+Correção aplicada manualmente (idempotente, sem migration nova pois só recria
+uma peça já especificada em migration existente):
+
+```sql
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+```
+
+Verificação: `SELECT tgname, tgrelid::regclass FROM pg_trigger WHERE tgname =
+'on_auth_user_created';` deve retornar 1 linha (`auth.users`). Se este projeto
+for recriado do zero, confirmar que **todas** as migrations de
+`supabase/migrations/` foram aplicadas em ordem, não apenas as mais recentes —
+esse foi o gap real.
+
 ## Onda 1 — Monetização (Mercado Pago)
 
 ### Secrets (configurar no painel do Supabase/Lovable Cloud — NUNCA commitar)

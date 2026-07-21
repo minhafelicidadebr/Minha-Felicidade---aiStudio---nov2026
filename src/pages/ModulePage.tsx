@@ -3,13 +3,14 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { modules, quizQuestions, flashcards, evidenceItems, videoLessons } from "@/data/courseData";
 import { moduleContents, simulatorScenarios, debateTopics, poems, coDesignTemplates } from "@/data/moduleContents";
-import { ArrowLeft, Clock, AlertTriangle, CheckCircle2, Info, Lightbulb, ArrowRight, Play, ExternalLink, Zap, X, Sparkles, Trophy, Star, Rocket, Maximize2, Bot, Target, Layers, BarChart3, Gamepad2, Swords, Drama, Blocks, Wind, Compass, NotebookPen, Puzzle, Network, Activity, CalendarDays, FlaskConical, Award, Brain, Dumbbell, TrendingUp } from "lucide-react";
+import { ArrowLeft, Clock, AlertTriangle, CheckCircle2, Info, Lightbulb, ArrowRight, Play, ExternalLink, Zap, X, Sparkles, Trophy, Star, Rocket, Maximize2, Bot, Target, Layers, BarChart3, Gamepad2, Swords, Drama, Blocks, Wind, Compass, NotebookPen, Puzzle, Network, Activity, CalendarDays, FlaskConical, Award, Brain, Dumbbell, TrendingUp, Lock, Crown } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { AlegriaFAB } from "@/components/AlegriaCTA";
 import InlineActivities from "@/components/learning/InlineActivities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useProgress } from "@/hooks/useProgress";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const statusIcon = {
   verificado: <CheckCircle2 className="w-4 h-4 text-success shrink-0" />,
@@ -54,6 +55,7 @@ export default function ModulePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { hasFeature, loading: subLoading } = useSubscription();
   const mod = modules.find((m) => m.id === id);
   const content = id ? moduleContents[id] : undefined;
   const videos = id ? videoLessons.filter((v) => v.module === id) : [];
@@ -62,6 +64,11 @@ export default function ModulePage() {
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
   const { trackActivity } = useProgress();
   const [stimulusIdx] = useState(() => Math.floor(Math.random() * STIMULUS_PHRASES.length));
+
+  // Gate de módulo: plano gratuito só acessa o Módulo 1 ("mentiras").
+  // Planos pagos têm a feature "modules" que libera todos.
+  const moduleAllowed =
+    subLoading || hasFeature("modules") || (id === "mentiras" && hasFeature("module_1"));
 
   // Auto-open the panel when arriving back from an activity via ?video=<youtubeId>
   useEffect(() => {
@@ -80,6 +87,40 @@ export default function ModulePage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, videos.length]);
+
+  // Gate de módulo (após todos os hooks): plano gratuito só acessa Módulo 1.
+  if (!subLoading && !moduleAllowed) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container max-w-2xl pt-24 pb-16 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-8 h-8 text-primary" />
+          </div>
+          <h1 className="text-2xl font-display font-bold mb-2">Módulo Premium</h1>
+          <p className="text-muted-foreground mb-6">
+            Este módulo faz parte dos planos pagos. Faça upgrade para desbloquear
+            todos os módulos, ferramentas avançadas e AlegrIA ilimitada.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={() => navigate("/#planos")}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl gradient-institute text-primary-foreground font-bold text-sm shadow-warm hover:shadow-glow transition-all"
+            >
+              <Crown className="w-4 h-4" /> Ver Planos
+            </button>
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-muted text-foreground font-medium text-sm transition-colors hover:bg-muted/80"
+            >
+              Voltar ao Dashboard
+            </button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!mod || !content) {
     return (

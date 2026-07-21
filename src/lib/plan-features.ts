@@ -4,19 +4,20 @@
 
 export const PLAN_FEATURE_LABELS: Record<string, string[]> = {
     free: [
-        "5 módulos completos",
-        "32 vídeos com legendas",
+        "Módulo 1 completo (As Grandes Mentiras)",
+        "AlegrIA (9 perguntas/dia)",
         "Quiz adaptativo (nível 1)",
         "Flashcards básicos",
-        "AlegrIA (5 perguntas/dia)",
         "Dashboard de progresso",
         "Respiração Consciente",
         "Roda da Vida",
         "Diário de Gratidão",
         "Jogo da Memória",
+        "Termômetro Emocional",
     ],
     intermediate: [
         "Tudo do plano Gratuito",
+        "5 módulos completos (32 vídeos)",
         "Quiz adaptativo (3 níveis)",
         "AlegrIA ilimitada",
         "Simulador de decisões",

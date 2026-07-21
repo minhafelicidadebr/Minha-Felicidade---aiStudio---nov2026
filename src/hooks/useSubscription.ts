@@ -16,8 +16,8 @@ export interface UserPlan {
 const DEFAULT_PLAN: UserPlan = {
   plan_slug: "free",
   plan_name: "Gratuito",
-  features: ["modules", "quiz_basic", "flashcards_basic", "alegria_5", "dashboard", "breathing", "lifewheel", "gratitude", "memory", "emotions"],
-  limits: { alegria_daily: 5, quiz_levels: 1 },
+  features: ["module_1", "quiz_basic", "flashcards_basic", "alegria_9", "dashboard", "breathing", "lifewheel", "gratitude", "memory", "emotions"],
+  limits: { alegria_daily: 9, quiz_levels: 1 },
   source: "default",
   status: "active",
 };
