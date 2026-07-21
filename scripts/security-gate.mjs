@@ -190,6 +190,24 @@ if (existsSync(supabaseClient)) {
   }
 }
 
+// Global Error Boundary: garante que erros de renderização nunca resultam em
+// tela totalmente branca sem explicação (especialmente importante para público
+// adolescente que não sabe o que fazer diante de uma página vazia).
+if (!existsSync("src/components/ErrorBoundary.tsx")) {
+  fail("Missing global Error Boundary: src/components/ErrorBoundary.tsx");
+} else {
+  const text = readIfExists("src/components/ErrorBoundary.tsx");
+  if (!text.includes("getDerivedStateFromError") || !text.includes("componentDidCatch")) {
+    fail("ErrorBoundary must implement getDerivedStateFromError and componentDidCatch");
+  }
+}
+if (existsSync("src/App.tsx")) {
+  const text = readIfExists("src/App.tsx");
+  if (!text.includes("<ErrorBoundary")) {
+    fail("App.tsx must wrap the component tree with <ErrorBoundary>");
+  }
+}
+
 // Truth & Evidence Registry: o registro de claims e seu validador/testes devem
 // existir. A integridade do conteúdo (nenhum claim aprovado sem prova) é
 // verificada pelo teste Vitest do registro real, que roda no `npm run quality`.

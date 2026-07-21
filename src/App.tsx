@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import RequireAuth from "@/components/routing/RequireAuth";
 import RequireRole from "@/components/routing/RequireRole";
 import RequireGuardianConsent from "@/components/routing/RequireGuardianConsent";
@@ -86,77 +87,79 @@ const privateRoutes: PrivateRoute[] = [
 ];
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <ScrollToTop />
-        <Suspense fallback={<RouteFallback />}>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route
-              path="/consentimento-responsavel"
-              element={
-                <RequireAuth>
-                  <GuardianConsentPage />
-                </RequireAuth>
-              }
-            />
-            {/* Captura de data de nascimento para contas legadas (sem birth_date).
-                Atrás de RequireAuth, mas FORA do gate de consentimento — senão o
-                próprio needs_birth_date redirecionaria de volta em loop. */}
-            <Route
-              path="/completar-cadastro"
-              element={
-                <RequireAuth>
-                  <BirthDateCompletionPage />
-                </RequireAuth>
-              }
-            />
-            {/* Retorno do checkout: atrás de RequireAuth, mas fora do gate de
-                consentimento — quem acabou de pagar não deve ser bloqueado
-                aqui. A ativação real é confirmada via get_my_plan/webhook. */}
-            <Route
-              path="/assinatura/sucesso"
-              element={
-                <RequireAuth>
-                  <SubscriptionSuccessPage />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/assinatura/pendente"
-              element={
-                <RequireAuth>
-                  <SubscriptionPendingPage />
-                </RequireAuth>
-              }
-            />
-            {privateRoutes.map((route) => (
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ScrollToTop />
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/auth" element={<AuthPage />} />
               <Route
-                key={route.path}
-                path={route.path}
+                path="/consentimento-responsavel"
                 element={
                   <RequireAuth>
-                    <RequireGuardianConsent>
-                      {route.roles ? (
-                        <RequireRole allowedRoles={route.roles}>{route.element}</RequireRole>
-                      ) : (
-                        route.element
-                      )}
-                    </RequireGuardianConsent>
+                    <GuardianConsentPage />
                   </RequireAuth>
                 }
               />
-            ))}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+              {/* Captura de data de nascimento para contas legadas (sem birth_date).
+                Atrás de RequireAuth, mas FORA do gate de consentimento — senão o
+                próprio needs_birth_date redirecionaria de volta em loop. */}
+              <Route
+                path="/completar-cadastro"
+                element={
+                  <RequireAuth>
+                    <BirthDateCompletionPage />
+                  </RequireAuth>
+                }
+              />
+              {/* Retorno do checkout: atrás de RequireAuth, mas fora do gate de
+                consentimento — quem acabou de pagar não deve ser bloqueado
+                aqui. A ativação real é confirmada via get_my_plan/webhook. */}
+              <Route
+                path="/assinatura/sucesso"
+                element={
+                  <RequireAuth>
+                    <SubscriptionSuccessPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/assinatura/pendente"
+                element={
+                  <RequireAuth>
+                    <SubscriptionPendingPage />
+                  </RequireAuth>
+                }
+              />
+              {privateRoutes.map((route) => (
+                <Route
+                  key={route.path}
+                  path={route.path}
+                  element={
+                    <RequireAuth>
+                      <RequireGuardianConsent>
+                        {route.roles ? (
+                          <RequireRole allowedRoles={route.roles}>{route.element}</RequireRole>
+                        ) : (
+                          route.element
+                        )}
+                      </RequireGuardianConsent>
+                    </RequireAuth>
+                  }
+                />
+              ))}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
