@@ -28,7 +28,7 @@ export default function Footer() {
   const [demoLoading, setDemoLoading] = useState(false);
   const navigate = useNavigate();
 
-  const DEMO_EMAIL = "demo@felicidadelab.app";
+  const DEMO_EMAIL = "minhafelicidadebr@gmail.com";
   const DEMO_PASSWORD = "luzpazeamor";
 
   const handleDemoLogin = async () => {
