@@ -33,3 +33,11 @@
 - Ajuste de segurança: primeira versão do App.tsx quebrou `scripts/security-gate.mjs` (checa
   literal de `RequireRole`); corrigido preservando o literal exato.
 - `npm run quality`: 83 testes, lint, typecheck, build, security gate — verde.
+
+## 2026-07 · ONDA 1 Corte 1.2 — Integridade da assinatura
+- Auditoria por buscas direcionadas: `user_subscriptions` ok (sem policy de INSERT/UPDATE para
+  authenticated). `organization_subscriptions` **tinha** policy de UPDATE para `authenticated`
+  (owner_id podia alterar plan/status/seats/vigência pelo client).
+- Migration `20260722190000_drop_org_subscriptions_update_policy.sql`: remove essa policy.
+- Runbook atualizado (item 21).
+- `npm run quality`: 83 testes, lint, typecheck, build, security gate — verde.

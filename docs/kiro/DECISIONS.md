@@ -38,3 +38,14 @@
 - **D13.** Não toquei no gate inline de `ModulePage` (`moduleAllowed`) nesta rodada — mesmo bug de
   fail-open, mas é local e de menor risco (módulo gratuito real é só 1 de 5); registrado no
   backlog para não ampliar o escopo do corte.
+
+## 2026-07 · ONDA 1 Corte 1.2 — Integridade da assinatura
+- **D14.** `user_subscriptions` confirmada limpa: policies de INSERT/UPDATE para `authenticated`
+  foram removidas na migration `20260613144818`. Nenhuma migration posterior as recriou.
+- **D15.** `organization_subscriptions` tinha uma policy de UPDATE para `authenticated`
+  (`"Owners can update own org subscriptions"`, criada em `20260709164308`) que permitia ao
+  owner_id alterar QUALQUER coluna (plan_id, status, max_seats, current_period_end) diretamente
+  via PostgREST. Decisão: remover (migration `20260722190000`). Nenhuma funcionalidade do app
+  exige UPDATE direto pelo client — todas as escritas legítimas passam por RPCs SECURITY DEFINER.
+- **D16.** Não toquei em `request_subscription_cancellation` (é SECURITY DEFINER, self-scoped,
+  só altera `cancel_at_period_end` — campo diferente de plan/status/vigência/seats). É legítima.

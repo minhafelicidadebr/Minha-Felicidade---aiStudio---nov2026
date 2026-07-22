@@ -4,20 +4,20 @@
 - P0.0 (marca/PI/independência): **APROVADO**.
 - ONDA 1 · Corte 1.1 (entitlement canônico): rotas premium agora exigem feature server-side;
   fail-open corrigido em `FeatureGate`. Ver `COMMERCIAL_GATES.md`.
+- ONDA 1 · Corte 1.2 (integridade da assinatura): `user_subscriptions` confirmada sem policy
+  de escrita para `authenticated`; `organization_subscriptions` tinha UPDATE aberto — migration
+  `20260722190000` remove essa policy. Ver `COMMERCIAL_GATES.md` e runbook item 21.
 
-## Próxima ação recomendada: ONDA 1 — Corte 1.2 (Integridade da assinatura)
-Verificar (buscas direcionadas, sem reauditoria completa):
-- Confirmar que `user_subscriptions`/`organization_subscriptions` não têm policy de
-  INSERT/UPDATE para `authenticated` (contexto do produto diz que já foi removida em
-  2026-06-13 — **confirmar no schema atual**, não assumir).
-- Confirmar que a única escritora do estado de assinatura é
-  `activate_subscription_from_intent` (SECURITY DEFINER, service_role, chamada pelo
-  `mp-webhook`).
-- Testar (ou escrever teste) que uma tentativa de update direto pelo client (`authenticated`)
-  nessas tabelas falha por RLS.
-- Critério de aceite do corte: "usuário institucional não consegue alterar diretamente seu
-  plano, status, vigência ou número de licenças."
+## Próxima ação recomendada: ONDA 1 — Corte 1.3 (Limites de IA centralizados)
+Verificar (buscas direcionadas):
+- Confirmar que a RPC `enforce_ai_usage_limit` é a fonte canônica dos limites de IA e que
+  os limites lá correspondem ao que o landing/planos/frontend mostram.
+- Confirmar que TODAS as edge functions de IA (`aledria-chat`, `cognitive-mirror`,
+  `future-self`, `signature-strengths`) chamam `enforceAiUsageLimit` antes do gateway.
+- Verificar que a mensagem de limite mostrada ao usuário reflete o plano real.
+- Critério de aceite: "landing, banco, edge functions e frontend exibem exatamente a mesma
+  regra de limites de IA."
 
-**Antes de editar:** ler `supabase/migrations/20260708120500_activate_subscription_from_intent.sql`
-e as migrations mais recentes de RLS em `user_subscriptions`/`organization_subscriptions`;
-não reabrir todo o histórico de migrations.
+**Antes de editar:** ler `supabase/functions/_shared/ai-usage.ts` e
+`supabase/migrations/20260613190000_ai_usage_rate_limits.sql` (fonte canônica do limit).
+Depois: comparar com `useSubscription` (client) e `PricingSection`/FAQ (landing).

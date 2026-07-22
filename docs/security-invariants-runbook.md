@@ -297,3 +297,5 @@ npm run quality
 ```
 
 Database tests remain in `supabase/tests/security_invariants.sql` for environments with pgTAP/Supabase CLI and Docker available.
+
+21. `supabase/migrations/20260722190000_drop_org_subscriptions_update_policy.sql` — Drops the `"Owners can update own org subscriptions"` UPDATE policy on `organization_subscriptions`. The owner_id could previously UPDATE any column (plan_id, status, max_seats, current_period_end) directly via PostgREST. All legitimate writes are via SECURITY DEFINER RPCs (activate_subscription_from_intent, claim_escolar_subscription, claim_escolar_subscription_token, subscription_lifecycle, request_subscription_cancellation). No direct client-side UPDATE is required for any supported operation. Idempotent (IF EXISTS).
