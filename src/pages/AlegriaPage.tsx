@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { Send, Sparkles, BookOpen, Lightbulb, Heart, Brain, Loader2, Zap, Users, MessageCircle, RotateCcw } from "lucide-react";
+import { Send, Sparkles, BookOpen, Lightbulb, Heart, Brain, Loader2, Zap, Users, MessageCircle, RotateCcw, ArrowLeft } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import AiSafetyNotice from "@/components/AiSafetyNotice";
 import Footer from "@/components/Footer";
@@ -110,8 +110,15 @@ async function streamChat({ messages, moduleContext, onDelta, onDone, onError }:
 
 export default function AlegriaPage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const moduleId = searchParams.get("module");
   const mod = moduleId ? modules.find(m => m.id === moduleId) : null;
+  const hasBackParam = !!searchParams.get("back");
+
+  const goBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/dashboard");
+  };
 
   const [messages, setMessages] = useState<Msg[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
@@ -172,6 +179,17 @@ export default function AlegriaPage() {
       <Navbar />
       <BackToVideoBanner />
       <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full pt-20 pb-4 px-4">
+        {/* Back — always available when not arriving from a video (which shows its own banner) */}
+        {!hasBackParam && (
+          <button
+            onClick={goBack}
+            className="self-start flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-3 px-2 transition-colors"
+            aria-label="Voltar para a página anterior"
+          >
+            <ArrowLeft className="w-4 h-4" /> Voltar
+          </button>
+        )}
+
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-4 mb-4 px-2">
           <AlegriaAvatar size={56} showStatus active={isLoading} alt="AlegrIA — sua tutora do bem-estar" />

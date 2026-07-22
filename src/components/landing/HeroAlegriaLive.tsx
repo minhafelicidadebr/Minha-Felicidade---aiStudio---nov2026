@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Send, Loader2, ArrowRight, Brain, BookOpen, Quote } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
+import AlegriaAvatar from "@/components/AlegriaAvatar";
 import { supabase } from "@/integrations/supabase/client";
 
 const SUGGESTED = [
@@ -22,12 +23,12 @@ const THINK_STEPS = [
 // Sample mini-conversations shown before user asks (instructional priming).
 const PREVIEW_BUBBLES = [
   "É natural sentir isso ✨ Vamos por partes…",
-  "A ciência mostra que pequenos rituais reorganizam o cérebro (Killingsworth, 2010).",
+  "Pequenos hábitos do dia a dia mudam como a gente se sente.",
   "Posso te sugerir 1 prática de 90 segundos?",
 ];
 
 const buildLocalPreview = (question: string) =>
-  `**Versao demo:** sua pergunta foi "${question}". No app completo, a AlegrIA responde com RAG do curso, fontes verificadas e historico da sua trilha.\n\nUma micro-pratica agora: por 30 segundos, note onde essa pergunta aparece no corpo e nomeie a emocao principal. Mente divagante se relaciona a menor bem-estar no estudo de Killingsworth & Gilbert (2010).\n\nQuer testar ao vivo com seguranca? Abra o app completo.`;
+  `**Versão demo:** sua pergunta foi "${question}". No app completo, eu respondo com base no curso inteiro, com fontes confiáveis e lembrando do seu histórico.\n\nUma prática rápida agora: por 30 segundos, perceba onde essa preocupação aparece no seu corpo e dê um nome pra emoção principal. Quando a mente para de divagar, a gente costuma se sentir melhor (Killingsworth & Gilbert, 2010).\n\nQuer conversar comigo de verdade? Crie sua conta grátis.`;
 
 /**
  * Innovation #1 (v2) — Live AlegrIA hero with ToT-visible reasoning,
@@ -161,19 +162,13 @@ export default function HeroAlegriaLive() {
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
-            <motion.div
-              className="relative w-10 h-10 rounded-full gradient-institute flex items-center justify-center shadow-warm"
-              animate={{ boxShadow: ["0 0 0 0 hsl(var(--primary)/0.45)", "0 0 0 14px hsl(var(--primary)/0)", "0 0 0 0 hsl(var(--primary)/0)"] }}
-              transition={{ duration: 2.2, repeat: Infinity }}
-            >
-              <Sparkles className="w-4 h-4 text-primary-foreground" />
-            </motion.div>
+            <AlegriaAvatar size={40} radius="rounded-full" active={streaming} alt="AlegrIA" />
             <div className="text-left">
               <div className="font-display font-bold text-sm leading-tight flex items-center gap-1.5">
                 AlegrIA <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-primary/15 text-primary uppercase tracking-wider">live</span>
               </div>
               <div className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" /> Cérebro do ecossistema · ToT + RAG Yale
+                <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" /> Sua tutora do bem-estar
               </div>
             </div>
           </div>
@@ -193,7 +188,7 @@ export default function HeroAlegriaLive() {
                 exit={{ opacity: 0 }}
                 className="text-[10px] font-bold px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider"
               >
-                Yale RAG
+                Ciência de Yale
               </motion.span>
             )}
           </AnimatePresence>
@@ -252,7 +247,7 @@ export default function HeroAlegriaLive() {
                 ) : (
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>AlegrIA está pensando com rigor científico…</span>
+                    <span>AlegrIA está pensando…</span>
                   </div>
                 )}
                 {streaming && response && (
@@ -318,13 +313,13 @@ export default function HeroAlegriaLive() {
               className="mt-4 pt-4 border-t border-border/30"
             >
               <div className="text-[11px] text-center text-muted-foreground mb-2">
-                Essa foi a versão demo — no app completo são <strong className="text-foreground">19 práticas + 5 módulos Yale + relatórios PDF</strong>.
+                Essa foi a versão demo — no app completo você tem <strong className="text-foreground">os 5 módulos, todas as práticas e a AlegrIA sem limite</strong>.
               </div>
               <button
                 onClick={() => navigate("/auth")}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl gradient-institute text-primary-foreground text-sm font-bold shadow-warm hover:shadow-glow hover:scale-[1.02] transition-all group"
               >
-                Abrir o app completo · 14 dias grátis
+                Criar minha conta grátis
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </motion.div>
