@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, CheckCircle2, ChevronRight, RotateCcw, Sparkles, Trophy, X, XCircle, Zap, Layers, Bot, Target, Drama, Network, BarChart3, Gamepad2, Swords, Blocks, Wind, Compass, NotebookPen, Puzzle, Activity, CalendarDays, FlaskConical, Award } from "lucide-react";
 import { quizQuestions, flashcards } from "@/data/courseData";
+import { ALEGRIA_AVATAR_URL } from "@/components/AlegriaAvatar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useNeonFX } from "@/components/learning/NeonConfettiFX";
@@ -40,7 +41,7 @@ const ALL_TOOLS = [
   { Icon: CalendarDays, title: "21 Dias", path: "/challenge21", desc: "Micro-hábitos", accent: "text-lime-400" },
   { Icon: FlaskConical, title: "Hipóteses", path: "/hypothesis", desc: "Lab científico", accent: "text-cyan-400" },
   { Icon: Award, title: "Missões", path: "/missions", desc: "Desafios sociais", accent: "text-amber-400" },
-  { Icon: Bot, title: "AlegrIA", path: "/alegria", desc: "Tutora socrática", accent: "text-violet-400" },
+  { Icon: Bot, title: "AlegrIA", path: "/alegria", desc: "Sua tutora do bem-estar", accent: "text-violet-400" },
 ];
 
 function withCtx(path: string, moduleId: string, backHref: string, backLabel: string) {
@@ -120,11 +121,10 @@ function InlineQuiz({ moduleId, onOpenFull }: { moduleId: string; onOpenFull: ()
               key={i}
               onClick={(e) => choose(i, e)}
               disabled={reveal}
-              className={`w-full text-left text-xs p-2.5 rounded-xl border transition-all ${
-                isCorrect ? "bg-success/15 border-success text-foreground" :
+              className={`w-full text-left text-xs p-2.5 rounded-xl border transition-all ${isCorrect ? "bg-success/15 border-success text-foreground" :
                 isWrong ? "bg-destructive/15 border-destructive text-foreground" :
-                "border-border/40 hover:border-primary/40 hover:bg-muted/40"
-              }`}
+                  "border-border/40 hover:border-primary/40 hover:bg-muted/40"
+                }`}
             >
               <span className="inline-flex items-center gap-2">
                 {isCorrect && <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />}
@@ -234,7 +234,11 @@ export default function InlineActivities({ moduleId, backHref, backLabel }: Prop
                   onClick={() => go(t.path)}
                   className="p-3 rounded-2xl glass-card border border-border/30 hover:border-primary/40 hover:shadow-warm transition-all text-left"
                 >
-                  <span className={`icon-tile-premium w-10 h-10 rounded-xl flex items-center justify-center mb-2 ${t.accent}`}><t.Icon className="w-4 h-4" strokeWidth={1.75} /></span>
+                  {t.title === "AlegrIA" ? (
+                    <img src={ALEGRIA_AVATAR_URL} alt="AlegrIA" className="w-10 h-10 rounded-xl object-cover mb-2 ring-1 ring-primary/30" />
+                  ) : (
+                    <span className={`icon-tile-premium w-10 h-10 rounded-xl flex items-center justify-center mb-2 ${t.accent}`}><t.Icon className="w-4 h-4" strokeWidth={1.75} /></span>
+                  )}
                   <p className="font-display font-bold text-sm">{t.title}</p>
                   <p className="text-[10px] text-muted-foreground">{t.desc}</p>
                 </button>
@@ -261,7 +265,11 @@ export default function InlineActivities({ moduleId, backHref, backLabel }: Prop
               onClick={() => go(act.path)}
               className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted/50 transition-all text-left group border border-transparent hover:border-border/40"
             >
-              <span className={`w-9 h-9 rounded-lg flex items-center justify-center bg-muted/60 group-hover:scale-105 transition-transform ${act.accent}`}><act.Icon className="w-4 h-4" strokeWidth={1.75} /></span>
+              {act.title === "AlegrIA" ? (
+                <img src={ALEGRIA_AVATAR_URL} alt="AlegrIA" className="w-9 h-9 rounded-lg object-cover group-hover:scale-105 transition-transform ring-1 ring-primary/30" />
+              ) : (
+                <span className={`w-9 h-9 rounded-lg flex items-center justify-center bg-muted/60 group-hover:scale-105 transition-transform ${act.accent}`}><act.Icon className="w-4 h-4" strokeWidth={1.75} /></span>
+              )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold leading-tight">{act.title}</p>
                 <p className="text-[11px] text-muted-foreground">{act.desc}</p>
@@ -273,7 +281,8 @@ export default function InlineActivities({ moduleId, backHref, backLabel }: Prop
             onClick={() => go("/alegria")}
             className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl gradient-institute text-primary-foreground text-xs font-bold shadow-warm hover:shadow-glow transition-shadow"
           >
-            🤖 Pergunte à AlegrIA sobre esta aula
+            <img src={ALEGRIA_AVATAR_URL} alt="" className="w-5 h-5 rounded-full object-cover ring-1 ring-primary-foreground/40" />
+            Pergunte à AlegrIA sobre esta aula
           </button>
         </TabsContent>
 

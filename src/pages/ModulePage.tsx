@@ -6,6 +6,7 @@ import { moduleContents, simulatorScenarios, debateTopics, poems, coDesignTempla
 import { ArrowLeft, Clock, AlertTriangle, CheckCircle2, Info, Lightbulb, ArrowRight, Play, ExternalLink, Zap, X, Sparkles, Trophy, Star, Rocket, Maximize2, Bot, Target, Layers, BarChart3, Gamepad2, Swords, Drama, Blocks, Wind, Compass, NotebookPen, Puzzle, Network, Activity, CalendarDays, FlaskConical, Award, Brain, Dumbbell, TrendingUp, Lock, Crown } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { ALEGRIA_AVATAR_URL } from "@/components/AlegriaAvatar";
 import { AlegriaFAB } from "@/components/AlegriaCTA";
 import InlineActivities from "@/components/learning/InlineActivities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -24,7 +25,7 @@ const statusLabel = {
 };
 
 const activityDefs = [
-  { key: "alegria", Icon: Bot, title: "AlegrIA", path: "/alegria", check: () => true, desc: "Tutora socrática", color: "from-violet-500/15 to-purple-500/10", accent: "text-violet-400" },
+  { key: "alegria", Icon: Bot, title: "AlegrIA", path: "/alegria", check: () => true, desc: "Sua tutora do bem-estar", color: "from-violet-500/15 to-purple-500/10", accent: "text-violet-400" },
   { key: "quiz", Icon: Target, title: "Quiz", path: "/quiz", check: (id: string) => quizQuestions.some(q => q.module === id), desc: "Avaliação ativa", color: "from-orange-500/15 to-red-500/10", accent: "text-orange-400" },
   { key: "flashcards", Icon: Layers, title: "Flashcards", path: "/flashcards", check: (id: string) => flashcards.some(f => f.module === id), desc: "Repetição espaçada", color: "from-amber-500/15 to-yellow-500/10", accent: "text-amber-400" },
   { key: "evidence", Icon: BarChart3, title: "Evidências", path: "/evidence", check: (id: string) => evidenceItems.some(e => e.module === id), desc: "Base científica", color: "from-blue-500/15 to-cyan-500/10", accent: "text-blue-400" },
@@ -376,9 +377,13 @@ export default function ModulePage() {
                   aria-label={`Abrir ${act.title} para módulo ${mod.number}`}
                 >
                   <div className="absolute top-0 right-0 w-16 h-16 bg-background/5 rounded-full -translate-x-4 -translate-y-4 group-hover:scale-150 transition-transform duration-500" />
-                  <span className={`icon-tile-premium w-11 h-11 rounded-xl mb-3 flex items-center justify-center ${act.accent} group-hover:scale-105 transition-transform relative`} aria-hidden="true">
-                    <act.Icon className="w-5 h-5" strokeWidth={1.75} />
-                  </span>
+                  {act.key === "alegria" ? (
+                    <img src={ALEGRIA_AVATAR_URL} alt="" aria-hidden="true" className="w-11 h-11 rounded-xl object-cover mb-3 ring-1 ring-primary/30 group-hover:scale-105 transition-transform relative" />
+                  ) : (
+                    <span className={`icon-tile-premium w-11 h-11 rounded-xl mb-3 flex items-center justify-center ${act.accent} group-hover:scale-105 transition-transform relative`} aria-hidden="true">
+                      <act.Icon className="w-5 h-5" strokeWidth={1.75} />
+                    </span>
+                  )}
                   <h4 className="font-display font-bold text-sm relative">{act.title}</h4>
                   <p className="text-[10px] text-muted-foreground mt-0.5 relative">{act.desc}</p>
                   <ArrowRight className="w-3 h-3 text-muted-foreground absolute bottom-3 right-3 group-hover:text-primary transition-colors" />

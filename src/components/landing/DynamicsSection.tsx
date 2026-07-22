@@ -2,9 +2,10 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Play, Lightbulb, Target, Sparkles, Brain, ArrowRight, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import AlegriaAvatar from "@/components/AlegriaAvatar";
 
 const dynamics = [
-  { id: "chatbot", icon: "🤖", name: "AlegrIA", desc: "Tutora socrática com evidências científicas", color: "coral", xp: "+variável", detail: "Uma inteligência artificial treinada nos princípios da psicologia positiva e método socrático. Faça perguntas, explore conceitos e receba orientação personalizada com citações científicas reais.", features: ["Respostas baseadas em evidências", "Método socrático adaptativo", "Citações de estudos reais", "Personalizada ao seu progresso"], path: "/alegria" },
+  { id: "chatbot", icon: "🤖", name: "AlegrIA", desc: "Sua tutora do bem-estar, com respostas baseadas em ciência", color: "coral", xp: "+variável", detail: "Uma inteligência artificial que aprende com você: faça perguntas, explore os conceitos do curso e receba orientação personalizada — sempre mostrando de onde veio cada resposta.", features: ["Respostas baseadas em ciência", "Faz perguntas que te fazem pensar", "Mostra as fontes de cada resposta", "Se adapta ao seu progresso"], path: "/alegria" },
   { id: "quiz", icon: "🎯", name: "Quiz Adaptativo", desc: "3 níveis de dificuldade com feedback", color: "gold", xp: "+15 XP", detail: "Sistema de avaliação inteligente que se adapta ao seu nível. Comece no básico e avance até o expert com feedback detalhado e explicações.", features: ["3 níveis: Básico, Intermediário, Expert", "Feedback imediato com explicações", "Tracking de progresso por módulo", "+15 XP por resposta correta"], path: "/quiz" },
   { id: "flashcards", icon: "🃏", name: "Flashcards", desc: "Repetição espaçada para consolidação", color: "navy", xp: "+5 XP", detail: "Baseado no algoritmo de repetição espaçada de Leitner, os flashcards consolidam conceitos-chave na memória de longo prazo.", features: ["Algoritmo de repetição espaçada", "Categorias por módulo", "Flip interativo com animação", "+5 XP por card aprendido"], path: "/flashcards" },
   { id: "evidence", icon: "📊", name: "Evidence Explorer", desc: "Biblioteca científica curada por driver", color: "coral", xp: "+10 XP", detail: "Explore a base científica por trás de cada conceito. Artigos, estudos e meta-análises organizados por driver de felicidade.", features: ["Estudos peer-reviewed", "Organizado por driver", "Links para fontes originais", "Filtros por módulo e tema"], path: "/evidence" },
@@ -67,7 +68,11 @@ export default function DynamicsSection() {
                   </div>
                 </div>
 
-                <span className="text-4xl block mb-4 group-hover:scale-110 transition-transform inline-block">{d.icon}</span>
+                {d.id === "chatbot" ? (
+                  <span className="block mb-4 w-fit"><AlegriaAvatar size={48} radius="rounded-2xl" /></span>
+                ) : (
+                  <span className="text-4xl block mb-4 group-hover:scale-110 transition-transform inline-block">{d.icon}</span>
+                )}
                 <h4 className="font-display font-bold text-base mb-1">{d.name}</h4>
                 <p className="text-xs text-muted-foreground leading-relaxed mb-3">{d.desc}</p>
 
@@ -109,7 +114,11 @@ export default function DynamicsSection() {
                 >
                   <X className="w-4 h-4" />
                 </button>
-                <span className="text-5xl block mb-4 relative z-10">{selected.icon}</span>
+                {selected.id === "chatbot" ? (
+                  <span className="block mb-4 relative z-10 w-fit"><AlegriaAvatar size={64} radius="rounded-2xl" active /></span>
+                ) : (
+                  <span className="text-5xl block mb-4 relative z-10">{selected.icon}</span>
+                )}
                 <h3 className="font-display font-bold text-2xl mb-2 relative z-10">{selected.name}</h3>
                 <div className="flex items-center gap-2 relative z-10">
                   <span className="text-sm text-muted-foreground">{selected.desc}</span>

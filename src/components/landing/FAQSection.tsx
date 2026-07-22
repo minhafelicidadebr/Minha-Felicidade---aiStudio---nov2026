@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, HelpCircle } from "lucide-react";
+import { ALEGRIA_AVATAR_URL } from "@/components/AlegriaAvatar";
 
 const faqs = [
   {
@@ -25,7 +26,7 @@ const faqs = [
   },
   {
     q: "O que é a AlegrIA?",
-    a: "Tutora de inteligência artificial treinada nos conteúdos dos 5 módulos. Usa o método socrático para guiar seu aprendizado com citações científicas reais e auditáveis.",
+    a: "É a sua tutora com inteligência artificial, que conhece os conteúdos dos 5 módulos. Em vez de só dar a resposta, ela faz perguntas que te ajudam a pensar — e sempre mostra as fontes científicas de onde vieram as informações.",
     icon: "🤖"
   },
   {
@@ -87,7 +88,11 @@ export default function FAQSection() {
                 className="w-full flex items-center gap-3 p-5 text-left hover:bg-muted/30 transition-colors"
                 aria-expanded={open === i}
               >
-                <span className="text-lg shrink-0">{faq.icon}</span>
+                {faq.icon === "🤖" ? (
+                  <img src={ALEGRIA_AVATAR_URL} alt="AlegrIA" className="w-7 h-7 rounded-full object-cover shrink-0 ring-1 ring-primary/30" />
+                ) : (
+                  <span className="text-lg shrink-0">{faq.icon}</span>
+                )}
                 <span className="font-display font-bold text-sm flex-1 pr-4">{faq.q}</span>
                 <ChevronDown className={`w-5 h-5 text-muted-foreground shrink-0 transition-transform duration-300 ${open === i ? "rotate-180 text-primary" : ""}`} />
               </button>

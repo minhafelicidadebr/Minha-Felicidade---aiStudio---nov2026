@@ -12,6 +12,7 @@ import { BookOpen, Play, Trophy, Flame, ArrowRight, LogOut, Download, Star, BarC
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/useSubscription";
 import { AlegriaHeroCard, AlegriaTag } from "@/components/AlegriaCTA";
+import { ALEGRIA_AVATAR_URL } from "@/components/AlegriaAvatar";
 
 type ProgressRecord = Tables<"user_progress">;
 type ProfileRecord = Tables<"profiles">;
@@ -481,7 +482,11 @@ export default function DashboardPage() {
                 className="p-4 rounded-2xl glass-card hover:shadow-warm transition-all text-left"
                 aria-label={`Abrir ${d.title}`}
               >
-                <span className="text-2xl block mb-2" aria-hidden="true">{d.icon}</span>
+                {d.title === "AlegrIA" ? (
+                  <img src={ALEGRIA_AVATAR_URL} alt="" aria-hidden="true" className="w-9 h-9 rounded-xl object-cover mb-2 ring-1 ring-primary/30" />
+                ) : (
+                  <span className="text-2xl block mb-2" aria-hidden="true">{d.icon}</span>
+                )}
                 <h4 className="font-display font-bold text-sm">{d.title}</h4>
               </motion.button>
             ))}
