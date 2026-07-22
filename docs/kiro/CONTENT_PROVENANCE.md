@@ -27,7 +27,8 @@ uma linha aqui com estado e evidência de licença.
 
 ## Pendências de identificação em UI (backlog)
 
-- Player de vídeo (aula em `ModulePage`) ainda **não** exibe rótulo "Recurso externo" com
-  autor/plataforma/link oficial. → **NEXT_ACTION** (critério P0.0 "conteúdos externos
-  identificados" ainda não plenamente atendido).
-- Confirmar, por vídeo, se o embed é o player oficial do YouTube (permitido) e o titular.
+- [x] **Resolvido (2026-07):** player de vídeo (`ModulePage`, painel persistente + modal) agora
+  exibe `ExternalResourceNotice` ("Recurso externo": título, plataforma YouTube, link "Abrir na
+  fonte"). Componente: `src/components/learning/ExternalResourceNotice.tsx`.
+- Confirmar, por vídeo, o titular/canal exato de cada `youtubeId` (dado ainda não capturado em
+  `courseData.ts` — hoje o rótulo mostra plataforma + link, sem nome do canal). → P1.

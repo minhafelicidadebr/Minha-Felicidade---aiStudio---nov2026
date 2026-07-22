@@ -15,3 +15,11 @@
 - **D7.** Player de vídeo: rótulo "Recurso externo" não implementado agora (é um corte de UI);
   proveniência foi inventariada em `CONTENT_PROVENANCE.md`. → NEXT_ACTION.
 - **D8.** P0.0 classificado como **parcialmente aprovado** (honestidade > overclaim).
+
+## 2026-07 · Fechamento do P0.0 (D7)
+- **D9.** Criado `ExternalResourceNotice` (componente reutilizável) e aplicado nos dois players de
+  vídeo do `ModulePage` (painel persistente + modal). Mostra título, plataforma (YouTube) e link
+  "Abrir na fonte". Não inclui nome do canal/titular por vídeo — esse dado não existe hoje em
+  `courseData.ts` (`VideoLesson` não tem campo `channel`/`author`). Adicionar esse campo é P1
+  (exigiria popular ~32 registros; fora do escopo deste corte pontual).
+- Gate P0.0 reclassificado de "parcialmente aprovado" para **aprovado**.

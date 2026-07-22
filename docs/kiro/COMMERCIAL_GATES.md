@@ -6,8 +6,8 @@
       footer corrigidos).
 - [~] nenhum certificado sugere emissão por terceiros — nenhum template de certificado com "Yale"
       encontrado; verificação do gerador de certificado fica no backlog (P1).
-- [~] conteúdos externos identificados — manifesto criado; **falta** rótulo "Recurso externo" no
-      player de vídeo (`ModulePage`). → parcial.
+- [x] conteúdos externos identificados — manifesto criado; rótulo "Recurso externo" implementado
+      no player de vídeo (`ModulePage`, painel + modal) via `ExternalResourceNotice`.
 - [x] posicionamento comercial remunera valor próprio (planos/upgrade promovem funcionalidades
       próprias; sem venda de "acesso a vídeos de terceiros").
 - [x] aviso de independência institucional presente (Footer, site-wide).
@@ -20,17 +20,18 @@
 - [x] P0 original pode continuar sem nova auditoria integral.
 
 ## Estado do gate P0.0
-**PARCIALMENTE APROVADO.** Riscos de linguagem pública (aparência de oficial/endosso) corrigidos;
-aviso de independência publicado; proveniência inventariada. Pendências que impedem "aprovado
-pleno": (a) identificação "Recurso externo" no player de vídeo; (b) renomear domínio público com
-"yale"; (c) auditoria verbatim da base da IA; (d) bloqueio técnico de novo conteúdo externo.
+**APROVADO** (2026-07, após corte de identificação de recurso externo). Riscos de linguagem
+pública (aparência de oficial/endosso) corrigidos; aviso de independência publicado;
+proveniência inventariada; rótulo "Recurso externo" implementado no player de vídeo. Pendências
+menores seguem no backlog: (a) renomear domínio público com "yale" (ação manual); (b) auditoria
+verbatim da base da IA; (c) bloqueio técnico automatizado de novo conteúdo externo; (d) nome do
+canal/titular por vídeo (hoje só plataforma + link).
 
 ## Backlog priorizado (marca/PI/conteúdo externo)
 ### P0 (infra/manual — fora de código)
 - Renomear domínio público `...-yale.lovable.app` para domínio sem marca de terceiro (Lovable).
 
 ### P1
-- Rótulo "Recurso externo" (autor/plataforma/link oficial) no player de vídeo em `ModulePage`.
 - Auditar `KNOWLEDGE_BASE` da AlegrIA contra reprodução verbatim de material protegido.
 - Confirmar, por vídeo, titular e player oficial no inventário de proveniência.
 - Verificar template do certificado digital (não sugerir credencial de terceiros).

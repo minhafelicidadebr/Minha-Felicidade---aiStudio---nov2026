@@ -7,6 +7,7 @@ import { ArrowLeft, Clock, AlertTriangle, CheckCircle2, Info, Lightbulb, ArrowRi
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ALEGRIA_AVATAR_URL } from "@/components/AlegriaAvatar";
+import ExternalResourceNotice from "@/components/learning/ExternalResourceNotice";
 import { AlegriaFAB } from "@/components/AlegriaCTA";
 import InlineActivities from "@/components/learning/InlineActivities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -251,6 +252,11 @@ export default function ModulePage() {
                         allowFullScreen
                       />
                     </div>
+                    <ExternalResourceNotice
+                      title={selectedVideo.titlePt}
+                      platform="YouTube"
+                      sourceUrl={`https://www.youtube.com/watch?v=${activeVideoId}`}
+                    />
                     <details className="mt-3 rounded-2xl bg-gradient-to-r from-blue-500/10 via-primary/5 to-purple-500/10 border border-primary/10 group">
                       <summary className="cursor-pointer p-3 list-none flex items-center gap-2 text-xs font-semibold">
                         <span className="w-7 h-7 rounded-xl bg-primary/10 flex items-center justify-center text-sm">🌐</span>
@@ -502,6 +508,11 @@ export default function ModulePage() {
                     referrerPolicy="strict-origin-when-cross-origin" allowFullScreen
                   />
                 </div>
+                <ExternalResourceNotice
+                  title={selectedVideo.titlePt}
+                  platform="YouTube"
+                  sourceUrl={`https://www.youtube.com/watch?v=${selectedVideo.youtubeId}`}
+                />
               </div>
             </>
           )}

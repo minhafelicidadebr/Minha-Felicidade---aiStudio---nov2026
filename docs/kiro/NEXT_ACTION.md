@@ -1,14 +1,21 @@
 # NEXT_ACTION (uma única próxima ação)
 
-## Fechar a pendência crítica do P0.0 (conteúdo externo identificado)
-Implementar o rótulo **"Recurso externo"** no player de vídeo das aulas (`src/pages/ModulePage.tsx`,
-usando dados de `src/data/courseData.ts` → `videoLessons`): título, autor/canal, plataforma
-(YouTube), link "Abrir na fonte" e nota de que direitos permanecem dos titulares. Atualizar as
-linhas correspondentes em `CONTENT_PROVENANCE.md`.
+## P0.0: APROVADO (2026-07)
+Rótulo "Recurso externo" implementado no player de vídeo. Ver `COMMERCIAL_GATES.md` para o
+detalhe do gate e pendências menores registradas no backlog (não bloqueiam o P0 principal).
 
-Isso atende o critério P0.0 "conteúdos externos identificados" e eleva o gate para **aprovado**.
+> Ação manual pendente, fora de código: **renomear o domínio público** que contém "yale" no
+> painel do Lovable (Configurações → Domínios). Isso não bloqueia a ONDA 1.
 
-> Ação paralela (manual, fora de código): renomear o domínio público que contém "yale" no Lovable.
+## Próxima ação: ONDA 1 — Corte 1.1 (Entitlement canônico)
+Iniciar o P0 principal. Criar fonte única server-side para resolução de plano/feature:
+`plan_id`, `feature_key`, `daily_limit`, `monthly_limit`, `is_unlimited`, `seat_limit`,
+`ai_model_tier`, `status`. Verificar: resolução server-side, checagem de feature nas Edge
+Functions, bloqueio de rotas premium, bloqueio visual no frontend, mensagens de upgrade, testes
+por plano, comportamento seguro quando o plano não for reconhecido.
 
-Depois disso: **retomar o primeiro corte do P0 principal (entitlement canônico — ONDA 1),
-sem nova auditoria sistêmica.**
+Critério de aceite: nenhuma função premium pode ser usada apenas digitando sua URL.
+
+**Antes de editar:** localizar a RPC/hook atual (`get_my_plan`, `useSubscription`,
+`FeatureGate`) e mapear onde a checagem hoje é só client-side, sem reanalisar o repositório
+inteiro (usar buscas direcionadas).

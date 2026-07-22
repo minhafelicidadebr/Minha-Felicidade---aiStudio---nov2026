@@ -16,3 +16,9 @@
   `PROJECT_TRUTH.md`, `COMMERCIAL_GATES.md`, `DECISIONS.md`, `WORKLOG.md`, `NEXT_ACTION.md`.
 - NÃO tocado: prompts de IA, protocolo de crise, consentimento, planos, edge functions.
 - Gate: `npm run quality` (resultado registrado na entrega).
+
+## 2026-07 · Fechamento do P0.0 — rótulo "Recurso externo"
+- Criado `src/components/learning/ExternalResourceNotice.tsx`.
+- Aplicado em `src/pages/ModulePage.tsx`: painel persistente de vídeo + modal de fallback.
+- `CONTENT_PROVENANCE.md` e `COMMERCIAL_GATES.md` atualizados: pendência resolvida, gate P0.0 → **aprovado**.
+- `npm run quality`: 80 testes, lint, typecheck, build, security gate — verde.
