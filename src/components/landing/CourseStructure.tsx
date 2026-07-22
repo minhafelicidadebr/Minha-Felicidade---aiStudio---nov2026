@@ -81,7 +81,7 @@ export default function CourseStructure() {
             Estrutura do Curso — <span className="text-gradient">5 Semanas</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Da Dra. Laurie Santos para você — reformulado para adolescentes com gamificação e tutoria de IA.
+            Ciência do bem-estar reformulada para adolescentes brasileiros, com atividades autorais, gamificação e tutoria de IA.
           </p>
         </motion.div>
 

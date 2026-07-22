@@ -208,20 +208,20 @@ export default function ConstellationPage() {
               citation="Sweller (1988) — Cognitive Load Theory"
             />
             <InsightDialog
-              cta="Metodologia Yale"
+              cta="Base científica"
               emoji="🎓"
               variant="accent"
-              subtitle="Origem • PSYC 157"
-              title="Da sala de Yale para sua tela"
-              intro="O conteúdo desta constelação vem de 'The Science of Well-Being' (Yale, Prof. Laurie Santos), o curso mais popular da história da universidade."
+              subtitle="Referência acadêmica"
+              title="Da ciência do bem-estar para a sua tela"
+              intro="Esta constelação é um material autoral que organiza conceitos da ciência do bem-estar, com referências ao curso 'The Science of Well-Being' (Yale, Prof. Laurie Santos). Plataforma independente, não afiliada a Yale."
               steps={[
-                { icon: "📚", title: "5 Módulos = 5 Clusters", body: "Cada módulo do curso (Mentiras, Expectativas, Rewirements, Hacks, Hábitos) vira um cluster orbital ao redor do sol 'Bem-Estar'.", evidence: "Santos (Yale, 2018)" },
+                { icon: "📚", title: "5 Módulos = 5 Clusters", body: "Cada módulo (Mentiras, Expectativas, Rewirements, Hacks, Hábitos) vira um cluster orbital ao redor do sol 'Bem-Estar'.", evidence: "Referência: Santos (2018)" },
                 { icon: "🔬", title: "Só evidência peer-reviewed", body: "Todos os 16 nós citam estudos publicados (PNAS, Science, JPSP). Nada de pseudociência ou simplificações de neurotransmissores.", evidence: "Rigor científico absoluto" },
                 { icon: "🌎", title: "Adaptação cultural BR", body: "A linguagem foi traduzida com sensibilidade ao contexto brasileiro pelo Instituto Felicidade para Todos, sem distorcer evidência.", evidence: "Localização baseada em ciência" },
                 { icon: "♻️", title: "Espaçamento + Recuperação", body: "Voltar à constelação em dias diferentes ativa Spaced Repetition, o método mais eficaz documentado para retenção de longo prazo.", evidence: "Cepeda et al. (2006) meta-análise" },
               ]}
-              takeaway="Você está fazendo, em interface premium, o que alunos de Yale fazem em PDF estático."
-              citation="Yale OpenCourseWare + Instituto Felicidade para Todos"
+              takeaway="Você explora os conceitos de forma visual e interativa, em vez de um PDF estático."
+              citation="Referências acadêmicas selecionadas · Instituto Felicidade para Todos (material autoral independente)"
             />
             <NarrativeJourney />
             <InsightDialog

@@ -123,6 +123,11 @@ export default function Footer() {
           </div>
         </div>
 
+        <p className="text-[11px] opacity-40 leading-relaxed mb-6 max-w-3xl">
+          Plataforma independente desenvolvida pelo Instituto Felicidade para Todos. Não é afiliada, patrocinada,
+          certificada, licenciada ou endossada por Yale University, Coursera, YouTube ou outras instituições
+          eventualmente mencionadas. Marcas e conteúdos de terceiros pertencem aos seus respectivos titulares.
+        </p>
         <div className="border-t border-background/15 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs opacity-40 flex items-center gap-1">
             © 2025 Instituto Felicidade para Todos. Feito com <Heart className="w-3 h-3 text-destructive fill-destructive" /> para adolescentes.
@@ -158,7 +163,7 @@ export default function Footer() {
               </div>
             )}
             <p className="text-xs opacity-40">
-              Fontes auditáveis • WCAG 2.2 • Anti-alucinação • SDT
+              Fontes auditáveis • Anti-alucinação • SDT
             </p>
           </div>
         </div>
