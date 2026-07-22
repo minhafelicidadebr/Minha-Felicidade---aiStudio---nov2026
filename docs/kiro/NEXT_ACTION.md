@@ -1,21 +1,23 @@
 # NEXT_ACTION (uma única próxima ação)
 
-## P0.0: APROVADO (2026-07)
-Rótulo "Recurso externo" implementado no player de vídeo. Ver `COMMERCIAL_GATES.md` para o
-detalhe do gate e pendências menores registradas no backlog (não bloqueiam o P0 principal).
+## Concluído
+- P0.0 (marca/PI/independência): **APROVADO**.
+- ONDA 1 · Corte 1.1 (entitlement canônico): rotas premium agora exigem feature server-side;
+  fail-open corrigido em `FeatureGate`. Ver `COMMERCIAL_GATES.md`.
 
-> Ação manual pendente, fora de código: **renomear o domínio público** que contém "yale" no
-> painel do Lovable (Configurações → Domínios). Isso não bloqueia a ONDA 1.
+## Próxima ação recomendada: ONDA 1 — Corte 1.2 (Integridade da assinatura)
+Verificar (buscas direcionadas, sem reauditoria completa):
+- Confirmar que `user_subscriptions`/`organization_subscriptions` não têm policy de
+  INSERT/UPDATE para `authenticated` (contexto do produto diz que já foi removida em
+  2026-06-13 — **confirmar no schema atual**, não assumir).
+- Confirmar que a única escritora do estado de assinatura é
+  `activate_subscription_from_intent` (SECURITY DEFINER, service_role, chamada pelo
+  `mp-webhook`).
+- Testar (ou escrever teste) que uma tentativa de update direto pelo client (`authenticated`)
+  nessas tabelas falha por RLS.
+- Critério de aceite do corte: "usuário institucional não consegue alterar diretamente seu
+  plano, status, vigência ou número de licenças."
 
-## Próxima ação: ONDA 1 — Corte 1.1 (Entitlement canônico)
-Iniciar o P0 principal. Criar fonte única server-side para resolução de plano/feature:
-`plan_id`, `feature_key`, `daily_limit`, `monthly_limit`, `is_unlimited`, `seat_limit`,
-`ai_model_tier`, `status`. Verificar: resolução server-side, checagem de feature nas Edge
-Functions, bloqueio de rotas premium, bloqueio visual no frontend, mensagens de upgrade, testes
-por plano, comportamento seguro quando o plano não for reconhecido.
-
-Critério de aceite: nenhuma função premium pode ser usada apenas digitando sua URL.
-
-**Antes de editar:** localizar a RPC/hook atual (`get_my_plan`, `useSubscription`,
-`FeatureGate`) e mapear onde a checagem hoje é só client-side, sem reanalisar o repositório
-inteiro (usar buscas direcionadas).
+**Antes de editar:** ler `supabase/migrations/20260708120500_activate_subscription_from_intent.sql`
+e as migrations mais recentes de RLS em `user_subscriptions`/`organization_subscriptions`;
+não reabrir todo o histórico de migrations.

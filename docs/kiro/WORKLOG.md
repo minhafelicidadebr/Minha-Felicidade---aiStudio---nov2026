@@ -22,3 +22,14 @@
 - Aplicado em `src/pages/ModulePage.tsx`: painel persistente de vídeo + modal de fallback.
 - `CONTENT_PROVENANCE.md` e `COMMERCIAL_GATES.md` atualizados: pendência resolvida, gate P0.0 → **aprovado**.
 - `npm run quality`: 80 testes, lint, typecheck, build, security gate — verde.
+
+## 2026-07 · ONDA 1 Corte 1.1 — Entitlement canônico
+- Criado `src/components/routing/RequireFeature.tsx` + teste (3 casos).
+- `src/App.tsx`: campo `feature` em `PrivateRoute`; 9 rotas de ferramenta premium passam a exigir
+  a feature canônica (evidence, simulator, debate, poetry, codesign, mindmap, challenge21,
+  hypothesis, missions) antes de renderizar.
+- `src/components/FeatureGate.tsx`: corrigido fail-open durante loading (mostrava conteúdo antes
+  de resolver o plano).
+- Ajuste de segurança: primeira versão do App.tsx quebrou `scripts/security-gate.mjs` (checa
+  literal de `RequireRole`); corrigido preservando o literal exato.
+- `npm run quality`: 83 testes, lint, typecheck, build, security gate — verde.

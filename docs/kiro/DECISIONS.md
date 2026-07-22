@@ -23,3 +23,18 @@
   `courseData.ts` (`VideoLesson` não tem campo `channel`/`author`). Adicionar esse campo é P1
   (exigiria popular ~32 registros; fora do escopo deste corte pontual).
 - Gate P0.0 reclassificado de "parcialmente aprovado" para **aprovado**.
+
+## 2026-07 · ONDA 1 Corte 1.1 — Entitlement canônico
+- **D10.** `get_my_plan()` já era a fonte única correta (SECURITY DEFINER, REVOKE/GRANT ok). O
+  problema não era o RPC, era a ausência de enforcement nas rotas. Decisão: não recriar o RPC,
+  só consumir com um novo guard de rota.
+- **D11.** Criado `RequireFeature` (não reescrevi `FeatureGate`) porque `FeatureGate` é um padrão
+  de blur/upsell inline dentro de uma página, enquanto o problema era proteger a ROTA inteira
+  antes de montar o componente da ferramenta. São usos complementares, não duplicados.
+- **D12.** Preservei o literal exato exigido por `scripts/security-gate.mjs` para
+  `RequireRole` (`<RequireRole allowedRoles={route.roles}>{route.element}</RequireRole>`) —
+  primeira tentativa de refatorar com variável intermediária quebrou o gate; corrigido com
+  ternário aninhado em vez de reassignment.
+- **D13.** Não toquei no gate inline de `ModulePage` (`moduleAllowed`) nesta rodada — mesmo bug de
+  fail-open, mas é local e de menor risco (módulo gratuito real é só 1 de 5); registrado no
+  backlog para não ampliar o escopo do corte.

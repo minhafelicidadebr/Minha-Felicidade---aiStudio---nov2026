@@ -1,43 +1,56 @@
-# COMMERCIAL_GATES — gates comerciais e checklist P0.0
+# COMMERCIAL_GATES — gates comerciais
 
-## Checklist de aceite P0.0
-- [x] ocorrências críticas de marca/PI/conteúdo externo inventariadas (buscas direcionadas).
-- [x] nenhuma tela **pública** sugere parceria/certificação/produto oficial Yale (SEO, landing,
-      footer corrigidos).
-- [~] nenhum certificado sugere emissão por terceiros — nenhum template de certificado com "Yale"
-      encontrado; verificação do gerador de certificado fica no backlog (P1).
-- [x] conteúdos externos identificados — manifesto criado; rótulo "Recurso externo" implementado
-      no player de vídeo (`ModulePage`, painel + modal) via `ExternalResourceNotice`.
-- [x] posicionamento comercial remunera valor próprio (planos/upgrade promovem funcionalidades
-      próprias; sem venda de "acesso a vídeos de terceiros").
-- [x] aviso de independência institucional presente (Footer, site-wide).
-- [x] estrutura inicial de proveniência existe (`CONTENT_PROVENANCE.md`).
-- [~] novos conteúdos externos dependem de classificação — regra documentada; **não** há bloqueio
-      técnico automatizado ainda (P1).
-- [~] IA não usa corpus protegido não autorizado — prompts citam o currículo como referência;
-      auditoria de reprodução verbatim na `KNOWLEDGE_BASE` fica no backlog (P1).
-- [x] riscos não críticos registrados no backlog (abaixo).
-- [x] P0 original pode continuar sem nova auditoria integral.
+## P0.0 — Guardrails de marca/PI/conteúdo externo: **APROVADO** (2026-07)
+Ver histórico completo em DECISIONS.md. Rótulo "Recurso externo" implementado nos players de
+vídeo. Pendências menores no backlog (não bloqueiam o P0 principal): renomear domínio público
+com "yale" (manual), auditoria verbatim da base da IA, nome do canal por vídeo.
 
-## Estado do gate P0.0
-**APROVADO** (2026-07, após corte de identificação de recurso externo). Riscos de linguagem
-pública (aparência de oficial/endosso) corrigidos; aviso de independência publicado;
-proveniência inventariada; rótulo "Recurso externo" implementado no player de vídeo. Pendências
-menores seguem no backlog: (a) renomear domínio público com "yale" (ação manual); (b) auditoria
-verbatim da base da IA; (c) bloqueio técnico automatizado de novo conteúdo externo; (d) nome do
-canal/titular por vídeo (hoje só plataforma + link).
+## ONDA 1 — Corte 1.1: Entitlement canônico
 
-## Backlog priorizado (marca/PI/conteúdo externo)
-### P0 (infra/manual — fora de código)
-- Renomear domínio público `...-yale.lovable.app` para domínio sem marca de terceiro (Lovable).
+### Achado (evidência anterior)
+- `get_my_plan()` (RPC `SECURITY DEFINER`, `SET search_path=public`, REVOKE de
+  PUBLIC/anon/authenticated + GRANT a `authenticated`) já resolve plano individual → organização
+  → gratuito, com fonte única (`subscription_plans.features`/`limits`). **Isso já estava correto.**
+- **Gap real:** nada usava essa fonte para proteger rotas. `FeatureGate.tsx` existe mas não era
+  usado em NENHUMA página. As rotas premium (`/simulator`, `/debate`, `/poetry`, `/codesign`,
+  `/evidence`, `/mindmap`, `/challenge21`, `/hypothesis`, `/missions`) estavam em `privateRoutes`
+  protegidas só por `RequireAuth` + `RequireGuardianConsent` — **qualquer conta autenticada
+  digitando a URL acessava a ferramenta**, mesmo no plano gratuito.
+- Bug adicional: `FeatureGate` e o gate inline de `ModulePage` liberavam o conteúdo enquanto
+  `loading === true` (fail-open durante o carregamento do plano).
 
-### P1
-- Auditar `KNOWLEDGE_BASE` da AlegrIA contra reprodução verbatim de material protegido.
-- Confirmar, por vídeo, titular e player oficial no inventário de proveniência.
-- Verificar template do certificado digital (não sugerir credencial de terceiros).
-- Qualificar citação/quote de L. Santos em `WellbeingScrollStory` com nota de independência.
-- Bloqueio técnico: impedir adição de conteúdo externo sem linha de proveniência.
+### Implementado
+- `src/components/routing/RequireFeature.tsx` (novo): guarda de rota que usa `useSubscription()`
+  (→ `get_my_plan()` server-side) e substitui a rota inteira por redirect para `/subscription`
+  quando a feature não está no plano resolvido. Fail-closed durante loading (não desbloqueia).
+- `src/App.tsx`: `PrivateRoute` ganhou campo opcional `feature`; rotas de ferramenta premium
+  (`evidence`, `simulator`, `debate`, `poetry`, `codesign`, `mindmap`, `challenge21`,
+  `hypothesis`, `missions`) agora exigem a feature canônica correspondente do schema de planos
+  antes de renderizar. Literal exigido pelo `security-gate.mjs` para `RequireRole` preservado
+  intacto.
+- `src/components/FeatureGate.tsx`: corrigido fail-open — enquanto `loading`, mostra um spinner
+  neutro em vez de liberar o conteúdo.
 
-### P2
-- Renomear repositório GitHub (contém "yale") — baixo risco de exposição pública.
-- Páginas dedicadas Sobre / Metodologia / Termos com aviso de independência ampliado.
+### Critério de aceite
+"Nenhuma função premium pode ser usada apenas digitando sua URL." → **atendido** para as 9 rotas
+listadas acima. `dashboard`, `quiz`, `flashcards`, `breathing`, `lifewheel`, `gratitude`,
+`memory`, `emotions`, `alegria` permanecem abertas a qualquer conta autenticada por design (fazem
+parte do plano gratuito ou têm limite próprio, ex. `alegria_9`).
+
+### Testes
+`src/components/routing/RequireFeature.test.tsx` (novo, 3 casos): bloqueia sem a feature
+(redireciona `/subscription`), libera com a feature, fail-closed sem sessão. Comando:
+`npx vitest run src/components/routing/RequireFeature.test.tsx` → 3 passed.
+
+### Gate da onda
+`npm run quality`: 83 testes (13 arquivos), lint `--max-warnings 0`, typecheck, build, security
+gate — **verde**.
+
+### Riscos restantes (backlog)
+- `ModulePage.tsx` (`moduleAllowed`) tem o mesmo padrão de fail-open durante `subLoading` (evita
+  duplicar lógica — corrigir junto de um próximo corte no ModulePage, não incluído aqui para não
+  ampliar o escopo deste corte vertical).
+- `/module/:id` continua sem `RequireFeature` — o gate de "só Módulo 1 no gratuito" já existe
+  inline (`moduleAllowed`) e funciona; não migrado para `RequireFeature` nesta rodada.
+- Falta corte 1.2 (integridade de assinatura — proteção contra manipulação client-side de
+  status/vigência/assentos) e corte 1.3 (limites de IA centralizados) do plano master.

@@ -23,7 +23,15 @@ export default function FeatureGate({ feature, children, fallback }: FeatureGate
     if (blocked) void trackEvent("paywall_hit", { feature });
   }, [blocked, feature]);
 
-  if (loading) return <>{children}</>;
+  // Fail-closed: enquanto o plano ainda está carregando, não liberar o
+  // conteúdo (evita um "flash" de acesso premium antes da checagem real).
+  if (loading) {
+    return (
+      <div className="min-h-[120px] flex items-center justify-center" aria-busy="true">
+        <div className="w-6 h-6 rounded-full border-2 border-primary/25 border-t-primary animate-spin" />
+      </div>
+    );
+  }
 
   if (hasFeature(feature)) return <>{children}</>;
 

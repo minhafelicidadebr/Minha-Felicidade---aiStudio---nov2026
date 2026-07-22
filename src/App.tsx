@@ -9,6 +9,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import RequireAuth from "@/components/routing/RequireAuth";
 import RequireRole from "@/components/routing/RequireRole";
 import RequireGuardianConsent from "@/components/routing/RequireGuardianConsent";
+import RequireFeature from "@/components/routing/RequireFeature";
 
 const queryClient = new QueryClient();
 
@@ -55,18 +56,24 @@ type PrivateRoute = {
   path: string;
   element: ReactElement;
   roles?: AppRole[];
+  /** Canonical feature key (subscription_plans.features) required to access this route server-side. */
+  feature?: string;
 };
 
+// Ferramentas premium: exigem a feature "modules" (planos pagos liberam o
+// currículo completo) OU a feature específica listada no schema de planos.
+// Rotas sem `feature` continuam abertas a qualquer conta autenticada
+// (gratuitas por padrão: dashboard, quiz, flashcards, breathing, etc.)
 const privateRoutes: PrivateRoute[] = [
   { path: "/dashboard", element: <DashboardPage /> },
   { path: "/module/:id", element: <ModulePage /> },
   { path: "/quiz", element: <QuizPage /> },
   { path: "/flashcards", element: <FlashcardsPage /> },
-  { path: "/evidence", element: <EvidencePage /> },
-  { path: "/simulator", element: <SimulatorPage /> },
-  { path: "/debate", element: <DebatePage /> },
-  { path: "/poetry", element: <PoetryPage /> },
-  { path: "/codesign", element: <CoDesignPage /> },
+  { path: "/evidence", element: <EvidencePage />, feature: "evidence" },
+  { path: "/simulator", element: <SimulatorPage />, feature: "simulator" },
+  { path: "/debate", element: <DebatePage />, feature: "debate" },
+  { path: "/poetry", element: <PoetryPage />, feature: "poetry" },
+  { path: "/codesign", element: <CoDesignPage />, feature: "codesign" },
   { path: "/alegria", element: <AlegriaPage /> },
   { path: "/admin", element: <AdminPage />, roles: ["teacher", "manager"] },
   { path: "/profile", element: <ProfilePage /> },
@@ -74,11 +81,11 @@ const privateRoutes: PrivateRoute[] = [
   { path: "/lifewheel", element: <LifeWheelPage /> },
   { path: "/gratitude", element: <GratitudePage /> },
   { path: "/memory", element: <MemoryGamePage /> },
-  { path: "/mindmap", element: <MindMapPage /> },
+  { path: "/mindmap", element: <MindMapPage />, feature: "mindmap" },
   { path: "/emotions", element: <EmotionTrackerPage /> },
-  { path: "/challenge21", element: <Challenge21Page /> },
-  { path: "/hypothesis", element: <HypothesisLabPage /> },
-  { path: "/missions", element: <SocialMissionsPage /> },
+  { path: "/challenge21", element: <Challenge21Page />, feature: "challenge21" },
+  { path: "/hypothesis", element: <HypothesisLabPage />, feature: "hypothesis" },
+  { path: "/missions", element: <SocialMissionsPage />, feature: "missions" },
   { path: "/subscription", element: <SubscriptionPage /> },
   { path: "/constellation", element: <ConstellationPage /> },
   { path: "/mirror", element: <CognitiveMirrorPage /> },
@@ -145,6 +152,8 @@ const App = () => (
                       <RequireGuardianConsent>
                         {route.roles ? (
                           <RequireRole allowedRoles={route.roles}>{route.element}</RequireRole>
+                        ) : route.feature ? (
+                          <RequireFeature feature={route.feature}>{route.element}</RequireFeature>
                         ) : (
                           route.element
                         )}
