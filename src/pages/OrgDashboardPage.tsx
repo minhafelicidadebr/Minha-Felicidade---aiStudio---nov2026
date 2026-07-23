@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Building2, School, Users, UserPlus, Mail, Clock, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, Building2, School, Users, UserPlus, Mail, Clock, CheckCircle2, Loader2, Plus } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -18,6 +18,60 @@ export default function OrgDashboardPage() {
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteRole, setInviteRole] = useState("student");
     const [inviting, setInviting] = useState(false);
+
+    // School creation
+    const [showAddSchool, setShowAddSchool] = useState(false);
+    const [schoolName, setSchoolName] = useState("");
+    const [schoolMunicipality, setSchoolMunicipality] = useState("");
+    const [addingSchool, setAddingSchool] = useState(false);
+
+    // Class creation
+    const [addingClassForSchool, setAddingClassForSchool] = useState<string | null>(null);
+    const [className, setClassName] = useState("");
+    const [addingClass, setAddingClass] = useState(false);
+
+    const handleAddSchool = async () => {
+        if (!org || !schoolName.trim()) return;
+        setAddingSchool(true);
+        try {
+            const { error: err } = await supabase.from("schools").insert({
+                organization_id: org.id,
+                name: schoolName.trim(),
+                municipality: schoolMunicipality.trim() || null,
+            });
+            if (err) throw err;
+            toast({ title: "Escola criada!", description: schoolName.trim() });
+            setSchoolName("");
+            setSchoolMunicipality("");
+            setShowAddSchool(false);
+            refetch();
+        } catch (e) {
+            toast({ title: "Erro ao criar escola", description: e instanceof Error ? e.message : "Tente novamente.", variant: "destructive" });
+        } finally {
+            setAddingSchool(false);
+        }
+    };
+
+    const handleAddClass = async (schoolId: string) => {
+        if (!className.trim()) return;
+        setAddingClass(true);
+        try {
+            const { error: err } = await supabase.from("classes").insert({
+                school_id: schoolId,
+                name: className.trim(),
+                year: new Date().getFullYear(),
+            });
+            if (err) throw err;
+            toast({ title: "Turma criada!", description: className.trim() });
+            setClassName("");
+            setAddingClassForSchool(null);
+            refetch();
+        } catch (e) {
+            toast({ title: "Erro ao criar turma", description: e instanceof Error ? e.message : "Tente novamente.", variant: "destructive" });
+        } finally {
+            setAddingClass(false);
+        }
+    };
 
     const handleInvite = async () => {
         if (!org || !inviteEmail.trim()) return;
@@ -169,12 +223,26 @@ export default function OrgDashboardPage() {
 
                     {/* Schools */}
                     <section className="mb-8">
-                        <h2 className="text-lg font-display font-bold mb-3 flex items-center gap-2">
-                            <School className="w-5 h-5 text-primary" /> Escolas
-                        </h2>
+                        <div className="flex items-center justify-between mb-3">
+                            <h2 className="text-lg font-display font-bold flex items-center gap-2">
+                                <School className="w-5 h-5 text-primary" /> Escolas
+                            </h2>
+                            <button onClick={() => setShowAddSchool(!showAddSchool)} className="text-xs font-bold text-primary hover:underline flex items-center gap-1">
+                                <Plus className="w-3.5 h-3.5" /> Adicionar escola
+                            </button>
+                        </div>
+                        {showAddSchool && (
+                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mb-4 p-4 rounded-2xl glass-card border border-primary/20">
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <input value={schoolName} onChange={(e) => setSchoolName(e.target.value)} placeholder="Nome da escola" className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                                    <input value={schoolMunicipality} onChange={(e) => setSchoolMunicipality(e.target.value)} placeholder="Município (opcional)" className="px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 w-full sm:w-48" />
+                                    <button onClick={handleAddSchool} disabled={addingSchool || !schoolName.trim()} className="px-5 py-2.5 rounded-xl gradient-institute text-primary-foreground text-sm font-bold disabled:opacity-50">{addingSchool ? "Criando..." : "Criar"}</button>
+                                </div>
+                            </motion.div>
+                        )}
                         {schools.length === 0 ? (
                             <p className="text-sm text-muted-foreground p-4 rounded-xl bg-muted/30">
-                                Nenhuma escola cadastrada ainda. Use o SQL Editor ou aguarde a interface de criação.
+                                Nenhuma escola cadastrada ainda. Clique em "Adicionar escola" acima.
                             </p>
                         ) : (
                             <div className="space-y-3">
@@ -187,8 +255,16 @@ export default function OrgDashboardPage() {
                                                     <h3 className="font-bold text-sm">{s.name}</h3>
                                                     {s.municipality && <p className="text-xs text-muted-foreground">{s.municipality}{s.state_code ? ` — ${s.state_code}` : ""}</p>}
                                                 </div>
-                                                <span className="text-xs text-muted-foreground">{schoolClasses.length} turma(s)</span>
+                                                <button onClick={() => setAddingClassForSchool(addingClassForSchool === s.id ? null : s.id)} className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1">
+                                                    <Plus className="w-3 h-3" /> Turma
+                                                </button>
                                             </div>
+                                            {addingClassForSchool === s.id && (
+                                                <div className="mt-3 flex gap-2">
+                                                    <input value={className} onChange={(e) => setClassName(e.target.value)} placeholder="Nome da turma (ex: 9ºA)" className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                                                    <button onClick={() => handleAddClass(s.id)} disabled={addingClass || !className.trim()} className="px-4 py-2 rounded-lg gradient-institute text-primary-foreground text-xs font-bold disabled:opacity-50">{addingClass ? "..." : "Criar"}</button>
+                                                </div>
+                                            )}
                                             {schoolClasses.length > 0 && (
                                                 <div className="mt-3 flex flex-wrap gap-2">
                                                     {schoolClasses.map(c => (

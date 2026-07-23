@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Trophy, Crown, Sparkles } from "lucide-react";
+import { Menu, X, Trophy, Crown, Sparkles, Building2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -23,6 +23,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [totalXp, setTotalXp] = useState(0);
   const [scrolled, setScrolled] = useState(false);
+  const [hasOrg, setHasOrg] = useState(false);
   const location = useLocation();
   const { plan, isPremium } = useSubscription();
 
@@ -32,6 +33,9 @@ export default function Navbar() {
       if (session) {
         const { data } = await supabase.from("user_progress").select("xp_earned").eq("user_id", session.user.id);
         if (data) setTotalXp(data.reduce((s, r) => s + (r.xp_earned || 0), 0));
+        // Check if user has org membership (lightweight count)
+        const { count } = await supabase.from("institutional_memberships").select("id", { count: "exact", head: true }).eq("user_id", session.user.id).eq("status", "active");
+        setHasOrg((count ?? 0) > 0);
       }
     };
     fetchXp();
@@ -70,6 +74,18 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
+          {hasOrg && (
+            <Link
+              to="/org"
+              className={`px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${location.pathname === "/org"
+                ? "bg-primary/10 text-primary shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                }`}
+              aria-current={location.pathname === "/org" ? "page" : undefined}
+            >
+              <Building2 className="w-3.5 h-3.5" /> Escola
+            </Link>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
