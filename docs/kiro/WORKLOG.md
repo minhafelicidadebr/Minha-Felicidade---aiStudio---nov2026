@@ -70,3 +70,14 @@
   school_admin, educator, student, guardian).
 - Decisão: o plano master pede essas tabelas na ONDA 2. Preparar uma migration única (CREATE
   TABLE IF NOT EXISTS) com RLS, policies e grants mínimos para piloto.
+
+## 2026-07 · ONDA 2 — RPCs institucionais (criação/convite/aceite)
+- Migration `20260722230000_institutional_rpcs.sql`:
+  - `create_organization(name, slug)`: cria org + membership org_admin, idempotente.
+  - `invite_member(org_id, email, role, school_id, class_id)`: cria convite com token, valida
+    is_org_admin, enfileira notificação (best-effort), idempotente.
+  - `accept_invitation(token)`: valida token + email confirmado + expiração, cria membership
+    ON CONFLICT, marca convite aceito.
+- Todas: SECURITY DEFINER, search_path=public, auditadas, REVOKE/GRANT corretos.
+- Estende notification_outbox kind CHECK.
+- Runbook item 25.

@@ -76,3 +76,16 @@
   ela já estiver preenchida. Defesa em profundidade (funciona mesmo com service_role).
 - **D24.** Não alterei a policy de UPDATE de profiles para não quebrar edição de nome/avatar.
   O trigger é mais cirúrgico e protege a coluna específica.
+
+## 2026-07 · ONDA 2 — RPCs institucionais
+- **D25.** Decidi NÃO criar RPCs de "criar escola" e "criar turma" como RPCs dedicadas nesta
+  rodada. A policy de `schools`/`classes` já permite INSERT/UPDATE/DELETE para org_admin via RLS.
+  O org_admin pode usar diretamente `supabase.from('schools').insert(...)`. RPCs mais elaboradas
+  (com validação de max_schools_per_org, etc.) ficam pra quando houver regra de negócio real.
+- **D26.** `accept_invitation` exige `email_confirmed_at IS NOT NULL` — segue o mesmo padrão do
+  `claim_escolar_subscription` (segurança por construção). Não cria conta automaticamente.
+- **D27.** Idempotência em todas as RPCs: `create_organization` retorna a org existente se
+  o mesmo owner+name já existe; `invite_member` retorna o convite existente se pendente;
+  `accept_invitation` usa ON CONFLICT DO UPDATE (reativa se status=removed).
+- **D28.** notification_outbox: enqueue best-effort (EXCEPTION handler silencia se a tabela não
+  existir em ambiente de teste ou se o dedupe violar unique). Não bloqueia o fluxo principal.
