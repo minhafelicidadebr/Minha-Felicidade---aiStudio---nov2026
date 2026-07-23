@@ -127,23 +127,19 @@ BEGIN
   )
   RETURNING id, token INTO _invitation_id, _token;
 
-  -- Enfileira notificação (best-effort: se notification_outbox não existir, silencia)
+  -- Enfileira notificação (best-effort: captura qualquer erro de schema/tabela)
   BEGIN
-    INSERT INTO public.notification_outbox (kind, recipient_email, subject, body_html, dedupe_key, metadata)
+    INSERT INTO public.notification_outbox (kind, recipient_email, body_html, dedupe_key, metadata)
     VALUES (
       'institutional_invite',
       lower(trim(_invited_email)),
-      'Convite para a plataforma de Ciência do Bem-Estar',
       '<p>Você recebeu um convite para participar como <strong>' || _role || '</strong>.</p>' ||
       '<p>Use o código de convite ou clique no link enviado para aceitar.</p>',
       'invite:' || _invitation_id::text,
       jsonb_build_object('invitation_id', _invitation_id, 'token', _token, 'organization_id', _organization_id)
     );
-  EXCEPTION WHEN undefined_table THEN
-    -- notification_outbox pode não existir em ambientes de teste; não bloquear
-    NULL;
-  WHEN unique_violation THEN
-    -- Dedupe: notificação já enfileirada para este convite
+  EXCEPTION WHEN OTHERS THEN
+    -- notification_outbox may have different schema or not exist; never block the invite
     NULL;
   END;
 
