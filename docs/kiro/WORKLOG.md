@@ -58,3 +58,15 @@
 - Migration `20260722210000_protect_birth_date_immutable.sql`: trigger que impede alteração de
   `birth_date` uma vez preenchida. Runbook item 23.
 - `npm run quality`: verificar.
+
+## 2026-07 · ONDA 2 (início) — Mapeamento do estado atual de multitenancy
+- **organization_subscriptions** (existente): funciona como "a organização" de fato — tem
+  `organization_name`, `owner_id`, `plan_id`, `max_seats`, status. É a tabela "contrato escolar".
+- **organization_members** (existente): membros (user_id, invited_email, status), referenciados à
+  assinatura. Policy "Org owners can manage members" (FOR ALL) permite ao owner CRUD.
+- **NÃO existe** (precisa ser criado para piloto): `organizations` (entidade independente da
+  assinatura), `schools`, `classes`, `invitations` (convites com token/expiração/papel),
+  `enrollments` (matrícula aluno↔turma), papéis formais (platform_admin, org_admin,
+  school_admin, educator, student, guardian).
+- Decisão: o plano master pede essas tabelas na ONDA 2. Preparar uma migration única (CREATE
+  TABLE IF NOT EXISTS) com RLS, policies e grants mínimos para piloto.

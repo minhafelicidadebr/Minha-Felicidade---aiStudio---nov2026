@@ -8,19 +8,20 @@
 - ONDA 1 · Corte 1.4 (idade e consentimento): trigger protege `birth_date` como imutável;
   `guardian_consent_events` e RPCs de consentimento confirmados ok.
 
-## Próxima ação recomendada: Gate final da ONDA 1
-Todos os 4 cortes técnicos foram implementados:
-1. Entitlement canônico (rotas protegidas) ✅
-2. Integridade da assinatura (policy removida) ✅
-3. Limites de IA centralizados (lê do plano) ✅
-4. Idade e consentimento protegidos (trigger imutável) ✅
+## Próxima ação recomendada: ONDA 2 — Migration de multitenancy mínimo
+Criar uma **única** migration (`20260722220000_institutional_multitenancy.sql`) com:
+- `organizations` (id, name, slug, owner_id, status, created_at)
+- `schools` (id, organization_id, name, municipality, created_at)
+- `classes` (id, school_id, name, year, semester, created_at)
+- `memberships` (id, organization_id, user_id, role [org_admin|school_admin|educator|student|guardian], school_id nullable, class_id nullable, status, created_at)
+- `invitations` (id, organization_id, invited_email, role, token, expires_at, accepted_at, created_at)
 
-Restam os itens do gate final que o plano master define:
-- "Testes de autorização verdes" → 3 testes de RequireFeature já passam; considerar escrever
-  1 teste para o cenário "tentativa de UPDATE direto em profiles.birth_date" (pgTAP ou
-  integração). Isso requer um ambiente com banco local, fora do escopo desta sessão.
-- "Correção do acesso administrativo" → AdminPage já está protegida por `RequireRole
-  (['teacher','manager'])`. Confirmar se há algum endpoint de admin sem gate (buscas rápidas).
+RLS habilitada em todas. Policies mínimas:
+- SELECT: membership ativa na mesma org.
+- INSERT/UPDATE/DELETE: só org_admin (via membership).
+- Sem cross-org reads. Tenant obrigatório em toda consulta.
 
-Após confirmar esses dois itens, classificar o **gate final da ONDA 1 como aprovado** e
-avançar para a ONDA 2 (SaaS escolar piloto) na próxima sessão.
+Grants: nenhuma policy de DELETE/UPDATE direta para student. Convites: INSERT só por org_admin.
+
+**NÃO criar** nesta migration: dashboard, UI, RPCs de convite, onboarding. Apenas o schema + RLS.
+Isso é o "corte vertical de dados" sem frontend — o frontend vem no próximo corte.
