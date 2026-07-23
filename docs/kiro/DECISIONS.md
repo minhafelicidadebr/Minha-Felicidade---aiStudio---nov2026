@@ -63,3 +63,16 @@
 - **D20.** Não alterei a edge function em si — ela já chama `enforceAiUsageLimit()` antes do
   gateway. A mudança é só no RPC que ela invoca (banco); o deploy das functions não precisa ser
   refeito para este corte.
+
+## 2026-07 · ONDA 1 Corte 1.4 — Idade e consentimento
+- **D21.** `set_my_birth_date` confirmada single-fill: lança exceção se `birth_date IS NOT NULL`.
+- **D22.** `guardian_consent_events` confirmado como ledger imutável (sem UPDATE/DELETE para
+  authenticated). Estado derivado via RPC `get_my_guardian_consent_status` (SECURITY DEFINER,
+  self-scoped). Tudo ok.
+- **D23.** **GAP P0 real encontrado:** `profiles` tem policy "Users can update own profile"
+  FOR UPDATE sem restrição de colunas. Um adolescente podia alterar `birth_date` diretamente
+  via PostgREST para uma data de adulto, contornando o gate. Correção: trigger
+  `trg_protect_birth_date` (BEFORE UPDATE) que impede qualquer alteração de `birth_date` quando
+  ela já estiver preenchida. Defesa em profundidade (funciona mesmo com service_role).
+- **D24.** Não alterei a policy de UPDATE de profiles para não quebrar edição de nome/avatar.
+  O trigger é mais cirúrgico e protege a coluna específica.

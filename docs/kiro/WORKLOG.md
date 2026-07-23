@@ -49,3 +49,12 @@
   `get_my_plan()->'limits'->'alegria_daily'`. Se -1 = ilimitado (sem contar). Fallback = 9.
 - Runbook atualizado (item 22).
 - `npm run quality`: verificar.
+
+## 2026-07 · ONDA 1 Corte 1.4 — Idade e consentimento
+- `set_my_birth_date`: confirmada single-fill (ok).
+- `guardian_consent_events`: ledger imutável confirmado (ok).
+- `get_my_guardian_consent_status`: SECURITY DEFINER, self-scoped (ok).
+- **GAP:** policy "Users can update own profile" permitia alterar `birth_date` diretamente.
+- Migration `20260722210000_protect_birth_date_immutable.sql`: trigger que impede alteração de
+  `birth_date` uma vez preenchida. Runbook item 23.
+- `npm run quality`: verificar.
