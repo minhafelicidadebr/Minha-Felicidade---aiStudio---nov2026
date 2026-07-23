@@ -279,6 +279,7 @@ if (!existsSync(appRouter)) {
     "/mirror",
     "/future-self",
     "/strengths",
+    "/org",
   ];
 
   if (!text.includes('import RequireAuth from "@/components/routing/RequireAuth"')) {

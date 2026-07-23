@@ -43,6 +43,7 @@ const FutureSelfPage = lazy(() => import("./pages/FutureSelfPage"));
 const SignatureStrengthsPage = lazy(() => import("./pages/SignatureStrengthsPage"));
 const GuardianConsentPage = lazy(() => import("./pages/GuardianConsentPage"));
 const BirthDateCompletionPage = lazy(() => import("./pages/BirthDateCompletionPage"));
+const OrgDashboardPage = lazy(() => import("./pages/OrgDashboardPage"));
 const SubscriptionSuccessPage = lazy(() => import("./pages/SubscriptionSuccessPage"));
 const SubscriptionPendingPage = lazy(() => import("./pages/SubscriptionPendingPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -91,6 +92,7 @@ const privateRoutes: PrivateRoute[] = [
   { path: "/mirror", element: <CognitiveMirrorPage /> },
   { path: "/future-self", element: <FutureSelfPage /> },
   { path: "/strengths", element: <SignatureStrengthsPage /> },
+  { path: "/org", element: <OrgDashboardPage /> },
 ];
 
 const App = () => (
