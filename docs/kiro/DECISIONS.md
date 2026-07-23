@@ -49,3 +49,17 @@
   exige UPDATE direto pelo client — todas as escritas legítimas passam por RPCs SECURITY DEFINER.
 - **D16.** Não toquei em `request_subscription_cancellation` (é SECURITY DEFINER, self-scoped,
   só altera `cancel_at_period_end` — campo diferente de plan/status/vigência/seats). É legítima.
+
+## 2026-07 · ONDA 1 Corte 1.3 — Limites de IA centralizados
+- **D17.** `enforce_ai_usage_limit` tinha limites hardcoded (80 para aledria-chat, 30/20/20
+  para demais). Plano gratuito no schema e na landing promete 9/dia; premium promete ilimitado.
+  Inconsistência = violação do critério "todos exibem a mesma regra".
+- **D18.** Correção: aledria-chat agora lê `get_my_plan()->'limits'->'alegria_daily'` (fonte
+  canônica única = tabela subscription_plans.limits). Se -1, retorna allowed=true sem contar.
+  Se null, fallback conservador = 9.
+- **D19.** Demais funções de IA (cognitive-mirror, future-self, signature-strengths) mantêm
+  limites fixos porque não são feature comercializada com diferenciação por plano na landing.
+  Se um dia forem, migrar para o mesmo padrão.
+- **D20.** Não alterei a edge function em si — ela já chama `enforceAiUsageLimit()` antes do
+  gateway. A mudança é só no RPC que ela invoca (banco); o deploy das functions não precisa ser
+  refeito para este corte.

@@ -41,3 +41,11 @@
 - Migration `20260722190000_drop_org_subscriptions_update_policy.sql`: remove essa policy.
 - Runbook atualizado (item 21).
 - `npm run quality`: 83 testes, lint, typecheck, build, security gate — verde.
+
+## 2026-07 · ONDA 1 Corte 1.3 — Limites de IA centralizados
+- Achado: `enforce_ai_usage_limit` aplicava 80/dia pra TODOS (hardcoded), independente do plano.
+  Plano gratuito promete 9/dia; premium promete ilimitado. Inconsistência.
+- Migration `20260722200000_ai_limits_from_plan.sql`: aledria-chat agora lê
+  `get_my_plan()->'limits'->'alegria_daily'`. Se -1 = ilimitado (sem contar). Fallback = 9.
+- Runbook atualizado (item 22).
+- `npm run quality`: verificar.
