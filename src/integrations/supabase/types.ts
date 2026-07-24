@@ -41,6 +41,44 @@ export type Database = {
         }
         Relationships: []
       }
+      classes: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          name: string
+          school_id: string
+          semester: number | null
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          name: string
+          school_id: string
+          semester?: number | null
+          year?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          name?: string
+          school_id?: string
+          semester?: number | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classes_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       data_access_logs: {
         Row: {
           action: string
@@ -106,6 +144,128 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      institutional_invitations: {
+        Row: {
+          accepted_at: string | null
+          class_id: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          invited_by: string
+          invited_email: string
+          organization_id: string
+          role: string
+          school_id: string | null
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          class_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          invited_email: string
+          organization_id: string
+          role: string
+          school_id?: string | null
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          class_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          invited_email?: string
+          organization_id?: string
+          role?: string
+          school_id?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institutional_invitations_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institutional_invitations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institutional_invitations_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institutional_memberships: {
+        Row: {
+          class_id: string | null
+          created_at: string
+          id: string
+          organization_id: string
+          role: string
+          school_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          organization_id: string
+          role: string
+          school_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          organization_id?: string
+          role?: string
+          school_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institutional_memberships_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institutional_memberships_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institutional_memberships_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       landing_events: {
         Row: {
@@ -321,6 +481,39 @@ export type Database = {
           },
         ]
       }
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          name: string
+          owner_id: string
+          slug: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          name: string
+          owner_id: string
+          slug?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          name?: string
+          owner_id?: string
+          slug?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -410,6 +603,44 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      schools: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          municipality: string | null
+          name: string
+          organization_id: string
+          state_code: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          municipality?: string | null
+          name: string
+          organization_id: string
+          state_code?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          municipality?: string | null
+          name?: string
+          organization_id?: string
+          state_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schools_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscription_plans: {
         Row: {
@@ -577,6 +808,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invitation: { Args: { _token: string }; Returns: Json }
       activate_subscription_from_intent: {
         Args: {
           p_external_reference: string
@@ -587,6 +819,10 @@ export type Database = {
       }
       claim_escolar_subscription: { Args: never; Returns: Json }
       claim_escolar_with_token: { Args: { _token: string }; Returns: Json }
+      create_organization: {
+        Args: { _name: string; _slug?: string }
+        Returns: Json
+      }
       enforce_ai_usage_limit: {
         Args: { _function_name: string }
         Returns: Json
@@ -610,6 +846,10 @@ export type Database = {
       }
       get_my_plan: { Args: never; Returns: Json }
       get_my_profile: { Args: never; Returns: Json }
+      get_operational_metrics: {
+        Args: { _organization_id: string }
+        Returns: Json
+      }
       get_user_plan: { Args: { _user_id: string }; Returns: Json }
       has_my_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
@@ -622,6 +862,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      invite_member: {
+        Args: {
+          _class_id?: string
+          _invited_email: string
+          _organization_id: string
+          _role: string
+          _school_id?: string
+        }
+        Returns: Json
+      }
+      is_org_admin: { Args: { _org_id: string }; Returns: boolean }
+      is_org_member: { Args: { _org_id: string }; Returns: boolean }
       record_guardian_consent: {
         Args: {
           _guardian_email: string
