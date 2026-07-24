@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { Play, Sparkles, Heart, ArrowRight, ArrowDown, Shield, GraduationCap, Drama, Brain, Compass, Rocket } from "lucide-react";
 import heroYouth from "@/assets/hero-youth-2026.jpg";
 import logoIcon from "@/assets/logo-mf-icon.png";
-import logoWordmarkLight from "@/assets/logo-mf-wordmark-light.png";
 import DarkModeToggle from "@/components/DarkModeToggle";
 import youthConnection from "@/assets/youth-connection.jpg";
 import youthCelebration from "@/assets/youth-celebration.jpg";
@@ -53,7 +52,10 @@ export default function LandingPage() {
               <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/50 via-secondary/40 to-accent/20 blur-md opacity-80" aria-hidden />
               <img src={logoIcon} alt="Minha Felicidade" className="relative w-9 h-9 object-contain drop-shadow-[0_2px_6px_rgba(242,101,34,0.35)]" />
             </div>
-            <span className="font-display font-bold text-lg hidden sm:inline tracking-tight">Minha <span className="text-gradient">Felicidade</span></span>
+            <span className="hidden sm:flex flex-col leading-none">
+              <span className="font-display font-bold text-lg tracking-tight">Minha <span className="text-gradient">Felicidade</span></span>
+              <span className="text-[9px] uppercase tracking-[0.22em] text-muted-foreground mt-1">Floresce o nosso bem-estar</span>
+            </span>
           </div>
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
             <a href="#modulos" className="hover:text-foreground transition-colors">Módulos</a>
@@ -100,53 +102,6 @@ export default function LandingPage() {
 
         <div className="container relative max-w-5xl text-center pt-8 pb-32 flex-1 flex flex-col justify-center">
           <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}>
-            <div className="flex justify-center mb-6">
-              <motion.div
-                className="relative"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2, duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
-              >
-                <motion.div
-                  aria-hidden
-                  className="absolute inset-0 bg-gradient-to-br from-primary/30 via-secondary/25 to-accent/15 blur-2xl rounded-full scale-125"
-                  animate={{ opacity: [0.55, 0.9, 0.55], scale: [1.2, 1.34, 1.2] }}
-                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                />
-                <motion.div
-                  animate={{ y: [0, -4, 0] }}
-                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                  className="relative"
-                >
-                  {/* MODO CLARO: usa a logo-wordmark clara (que ficou boa) */}
-                  <img
-                    src={logoWordmarkLight}
-                    alt="Minha Felicidade — Floresce o nosso bem-estar"
-                    className="relative h-16 md:h-24 object-contain drop-shadow-[0_4px_18px_rgba(242,101,34,0.25)] block dark:hidden"
-                    loading="eager"
-                    fetchPriority="high"
-                  />
-                  {/* MODO ESCURO: composição ícone + texto (nítida, adapta ao tema, sem depender do PNG escuro de baixa qualidade) */}
-                  <div className="hidden dark:flex items-center justify-center gap-3">
-                    <img
-                      src={logoIcon}
-                      alt=""
-                      aria-hidden
-                      className="h-14 md:h-20 object-contain drop-shadow-[0_4px_16px_rgba(242,101,34,0.45)]"
-                      loading="eager"
-                      fetchPriority="high"
-                    />
-                    <span className="text-left leading-[0.95]">
-                      <span className="block font-display font-bold text-2xl md:text-4xl text-foreground/95">Minha</span>
-                      <span className="block font-display font-bold text-3xl md:text-5xl text-foreground drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]">Felicidade</span>
-                      <span className="block text-[8px] md:text-[10px] uppercase tracking-[0.32em] text-primary/80 mt-1.5">Floresce o nosso bem-estar</span>
-                    </span>
-                  </div>
-                </motion.div>
-              </motion.div>
-            </div>
-
-
             {/* SaaS conversion badge — clarifies positioning */}
             <motion.span
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass text-primary text-sm font-bold mb-6 shadow-warm"
