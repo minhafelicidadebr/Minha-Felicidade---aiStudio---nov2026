@@ -113,6 +113,9 @@ export default function LandingPage() {
                 />
               </motion.div>
             </div>
+
+            {/* SaaS conversion badge — clarifies positioning */}
+            <motion.span
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass text-primary text-sm font-bold mb-6 shadow-warm"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
