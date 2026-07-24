@@ -5,6 +5,7 @@ import { ArrowLeft, Building2, School, Users, UserPlus, Mail, Clock, CheckCircle
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useOrganization } from "@/hooks/useOrganization";
+import OnboardingWizard from "@/components/org/OnboardingWizard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -29,6 +30,9 @@ export default function OrgDashboardPage() {
     const [addingClassForSchool, setAddingClassForSchool] = useState<string | null>(null);
     const [className, setClassName] = useState("");
     const [addingClass, setAddingClass] = useState(false);
+
+    // Onboarding wizard dismissal
+    const [wizardDismissed, setWizardDismissed] = useState(false);
 
     const handleAddSchool = async () => {
         if (!org || !schoolName.trim()) return;
@@ -139,6 +143,25 @@ export default function OrgDashboardPage() {
         student: "Estudante",
         guardian: "Responsável",
     };
+
+    // Show onboarding wizard on first access (no schools yet)
+    const showWizard = schools.length === 0 && !wizardDismissed;
+
+    if (showWizard) {
+        return (
+            <div className="min-h-screen bg-background flex flex-col">
+                <Navbar />
+                <div className="flex-1 container pt-24 pb-16 max-w-5xl flex items-center justify-center">
+                    <OnboardingWizard
+                        organizationId={org.id}
+                        orgName={org.name}
+                        onComplete={() => { setWizardDismissed(true); refetch(); }}
+                    />
+                </div>
+                <Footer />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-background flex flex-col">
