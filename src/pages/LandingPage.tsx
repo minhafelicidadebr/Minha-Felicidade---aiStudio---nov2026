@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { Play, Sparkles, Heart, ArrowRight, ArrowDown, Shield, GraduationCap, Drama, Brain, Compass, Rocket } from "lucide-react";
 import heroYouth from "@/assets/hero-youth-2026.jpg";
 import logoIcon from "@/assets/logo-mf-icon.png";
-import logoWordmarkDark from "@/assets/logo-mf-wordmark-dark.png";
 import logoWordmarkLight from "@/assets/logo-mf-wordmark-light.png";
 import DarkModeToggle from "@/components/DarkModeToggle";
 import youthConnection from "@/assets/youth-connection.jpg";
@@ -114,19 +113,12 @@ export default function LandingPage() {
                   animate={{ opacity: [0.55, 0.9, 0.55], scale: [1.2, 1.34, 1.2] }}
                   transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
                 />
-                <motion.picture
+                <motion.div
                   animate={{ y: [0, -4, 0] }}
                   transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                  className="relative block"
+                  className="relative"
                 >
-                  {/* Tamanho contido (h-16/h-24) mantém a marca nítida mesmo com fonte de menor resolução */}
-                  <img
-                    src={logoWordmarkDark}
-                    alt="Minha Felicidade — Floresce o nosso bem-estar"
-                    className="relative h-16 md:h-24 object-contain drop-shadow-[0_6px_28px_rgba(242,101,34,0.4)] hidden dark:block"
-                    loading="eager"
-                    fetchPriority="high"
-                  />
+                  {/* MODO CLARO: usa a logo-wordmark clara (que ficou boa) */}
                   <img
                     src={logoWordmarkLight}
                     alt="Minha Felicidade — Floresce o nosso bem-estar"
@@ -134,7 +126,23 @@ export default function LandingPage() {
                     loading="eager"
                     fetchPriority="high"
                   />
-                </motion.picture>
+                  {/* MODO ESCURO: composição ícone + texto (nítida, adapta ao tema, sem depender do PNG escuro de baixa qualidade) */}
+                  <div className="hidden dark:flex items-center justify-center gap-3">
+                    <img
+                      src={logoIcon}
+                      alt=""
+                      aria-hidden
+                      className="h-14 md:h-20 object-contain drop-shadow-[0_4px_16px_rgba(242,101,34,0.45)]"
+                      loading="eager"
+                      fetchPriority="high"
+                    />
+                    <span className="text-left leading-[0.95]">
+                      <span className="block font-display font-bold text-2xl md:text-4xl text-foreground/95">Minha</span>
+                      <span className="block font-display font-bold text-3xl md:text-5xl text-foreground drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]">Felicidade</span>
+                      <span className="block text-[8px] md:text-[10px] uppercase tracking-[0.32em] text-primary/80 mt-1.5">Floresce o nosso bem-estar</span>
+                    </span>
+                  </div>
+                </motion.div>
               </motion.div>
             </div>
 
