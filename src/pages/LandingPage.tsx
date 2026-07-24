@@ -3,7 +3,9 @@ import { motion } from "framer-motion";
 import { Play, Sparkles, Heart, ArrowRight, ArrowDown, Shield, GraduationCap, Drama, Brain, Compass, Rocket } from "lucide-react";
 import heroYouth from "@/assets/hero-youth-2026.jpg";
 import logoIcon from "@/assets/logo-mf-icon.png";
-import logoWordmark from "@/assets/logo-mf-wordmark-dark.png";
+import logoWordmarkDark from "@/assets/logo-mf-wordmark-dark.png";
+import logoWordmarkLight from "@/assets/logo-mf-wordmark-light.png";
+import DarkModeToggle from "@/components/DarkModeToggle";
 import youthConnection from "@/assets/youth-connection.jpg";
 import youthCelebration from "@/assets/youth-celebration.jpg";
 import youthDiscovery from "@/assets/youth-discovery.jpg";
@@ -61,12 +63,15 @@ export default function LandingPage() {
             <a href="#sobre" className="hover:text-foreground transition-colors">Instituto</a>
             <a href="#planos" className="hover:text-foreground transition-colors">Planos</a>
           </div>
-          <button
-            onClick={() => navigate("/auth")}
-            className="px-5 py-2.5 rounded-xl gradient-institute text-primary-foreground text-sm font-semibold shadow-warm hover:shadow-glow transition-all hover:scale-[1.02]"
-          >
-            Começar Grátis
-          </button>
+          <div className="flex items-center gap-2">
+            <DarkModeToggle />
+            <button
+              onClick={() => navigate("/auth")}
+              className="px-5 py-2.5 rounded-xl gradient-institute text-primary-foreground text-sm font-semibold shadow-warm hover:shadow-glow transition-all hover:scale-[1.02]"
+            >
+              Começar Grátis
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -104,15 +109,25 @@ export default function LandingPage() {
                 transition={{ delay: 0.2, duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-secondary/25 to-accent/15 blur-2xl rounded-full scale-110" aria-hidden />
-                <motion.img
-                  src={logoWordmark}
-                  alt="Minha Felicidade — Floresce o nosso bem-estar"
-                  className="relative h-20 md:h-28 object-contain drop-shadow-[0_6px_24px_rgba(242,101,34,0.35)]"
+                <motion.picture
                   animate={{ y: [0, -4, 0] }}
                   transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                />
+                  className="relative block"
+                >
+                  <img
+                    src={logoWordmarkDark}
+                    alt="Minha Felicidade — Floresce o nosso bem-estar"
+                    className="relative h-20 md:h-28 object-contain drop-shadow-[0_6px_24px_rgba(242,101,34,0.35)] hidden dark:block"
+                  />
+                  <img
+                    src={logoWordmarkLight}
+                    alt="Minha Felicidade — Floresce o nosso bem-estar"
+                    className="relative h-20 md:h-28 object-contain drop-shadow-[0_4px_18px_rgba(242,101,34,0.25)] block dark:hidden"
+                  />
+                </motion.picture>
               </motion.div>
             </div>
+
 
             {/* SaaS conversion badge — clarifies positioning */}
             <motion.span
