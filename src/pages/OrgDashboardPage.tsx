@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useOrganization } from "@/hooks/useOrganization";
 import OnboardingWizard from "@/components/org/OnboardingWizard";
+import OperationalMetrics from "@/components/org/OperationalMetrics";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -407,6 +408,9 @@ export default function OrgDashboardPage() {
                             </div>
                         </section>
                     )}
+
+                    {/* Operational Metrics — ONDA 5 */}
+                    <OperationalMetrics organizationId={org.id} />
 
                     {error && (
                         <p className="mt-4 text-sm text-destructive">{error}</p>
