@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Building2, School, Users, UserPlus, Mail, Clock, CheckCircle2, Loader2, Plus } from "lucide-react";
+import { ArrowLeft, Building2, School, Users, UserPlus, Mail, Clock, CheckCircle2, Loader2, Plus, BarChart3 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -243,6 +243,60 @@ export default function OrgDashboardPage() {
                             </div>
                         ))}
                     </div>
+
+                    {/* Aggregated metrics — role distribution + activation rate */}
+                    {members.length > 0 && (
+                        <section className="mb-8">
+                            <h2 className="text-lg font-display font-bold mb-3 flex items-center gap-2">
+                                <BarChart3 className="w-5 h-5 text-primary" /> Indicadores agregados
+                            </h2>
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                {/* Role distribution */}
+                                <div className="p-5 rounded-2xl glass-card">
+                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Membros por papel</h3>
+                                    <div className="space-y-2">
+                                        {Object.entries(
+                                            members.reduce<Record<string, number>>((acc, m) => {
+                                                acc[m.role] = (acc[m.role] || 0) + 1;
+                                                return acc;
+                                            }, {})
+                                        ).sort((a, b) => b[1] - a[1]).map(([role, count]) => (
+                                            <div key={role} className="flex items-center justify-between">
+                                                <span className="text-sm">{roleLabel[role] || role}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-24 h-2 rounded-full bg-muted overflow-hidden">
+                                                        <div className="h-full rounded-full gradient-institute" style={{ width: `${(count / members.length) * 100}%` }} />
+                                                    </div>
+                                                    <span className="text-xs font-bold w-6 text-right">{count}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Activation rate */}
+                                <div className="p-5 rounded-2xl glass-card">
+                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Taxa de ativação</h3>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className="text-sm">Convites aceitos</span>
+                                                <span className="text-xs font-bold text-success">{members.length} de {members.length + invitations.length}</span>
+                                            </div>
+                                            <div className="w-full h-3 rounded-full bg-muted overflow-hidden">
+                                                <div className="h-full rounded-full bg-success" style={{ width: `${members.length + invitations.length > 0 ? (members.length / (members.length + invitations.length)) * 100 : 0}%` }} />
+                                            </div>
+                                        </div>
+                                        <div className="pt-3 border-t border-border/30">
+                                            <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                                📊 Indicadores mostram apenas dados agregados. Conversas com a IA, relatos pessoais e dados individuais dos estudantes não são acessíveis neste painel.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    )}
 
                     {/* Schools */}
                     <section className="mb-8">
