@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import logoIcon from "@/assets/logo-icon.png";
-import logoDarkBg from "@/assets/logo-dark-bg.png";
+import logoIcon from "@/assets/logo-mf-icon.png";
 import { Heart, ExternalLink, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -65,8 +64,14 @@ export default function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <div className="flex items-center gap-3 mb-4">
-              <img src={logoIcon} alt="Instituto" className="w-10 h-10 rounded-lg" />
-              <img src={logoDarkBg} alt="Instituto Felicidade Para Todos" className="h-7 object-contain" />
+              <div className="relative">
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/50 via-secondary/40 to-accent/20 blur-lg opacity-80" aria-hidden />
+                <img src={logoIcon} alt="Minha Felicidade" className="relative w-11 h-11 object-contain drop-shadow-[0_2px_8px_rgba(242,101,34,0.4)]" loading="lazy" />
+              </div>
+              <div className="flex flex-col leading-tight">
+                <span className="font-display font-bold text-xl tracking-tight">Minha Felicidade</span>
+                <span className="text-[11px] opacity-60 italic">Floresce o nosso bem-estar.</span>
+              </div>
             </div>
             <p className="text-sm opacity-60 leading-relaxed mb-4">
               Ativando ecossistemas sustentáveis de felicidade humana, socioambiental e organizacional.

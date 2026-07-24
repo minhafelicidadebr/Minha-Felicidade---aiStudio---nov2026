@@ -2,9 +2,10 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Play, Sparkles, Heart, ArrowRight, ArrowDown, Shield, GraduationCap, Drama, Brain, Compass, Rocket } from "lucide-react";
 import heroYouth from "@/assets/hero-youth-2026.jpg";
-import logoIcon from "@/assets/logo-icon.png";
-import logoLightBg from "@/assets/logo-light-bg.png";
-import logoDarkBg from "@/assets/logo-dark-bg.png";
+import logoIcon from "@/assets/logo-mf-icon.png";
+import logoWordmarkDark from "@/assets/logo-mf-wordmark-dark.png";
+import logoWordmarkLight from "@/assets/logo-mf-wordmark-light.png";
+import DarkModeToggle from "@/components/DarkModeToggle";
 import youthConnection from "@/assets/youth-connection.jpg";
 import youthCelebration from "@/assets/youth-celebration.jpg";
 import youthDiscovery from "@/assets/youth-discovery.jpg";
@@ -49,8 +50,11 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/30">
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-2.5">
-            <img src={logoIcon} alt="Instituto" className="w-9 h-9 rounded-lg" />
-            <span className="font-display font-bold text-lg hidden sm:inline">Ciência do <span className="text-primary">Bem-Estar</span></span>
+            <div className="relative">
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/50 via-secondary/40 to-accent/20 blur-md opacity-80" aria-hidden />
+              <img src={logoIcon} alt="Minha Felicidade" className="relative w-9 h-9 object-contain drop-shadow-[0_2px_6px_rgba(242,101,34,0.35)]" />
+            </div>
+            <span className="font-display font-bold text-lg hidden sm:inline tracking-tight">Minha <span className="text-gradient">Felicidade</span></span>
           </div>
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
             <a href="#modulos" className="hover:text-foreground transition-colors">Módulos</a>
@@ -59,12 +63,15 @@ export default function LandingPage() {
             <a href="#sobre" className="hover:text-foreground transition-colors">Instituto</a>
             <a href="#planos" className="hover:text-foreground transition-colors">Planos</a>
           </div>
-          <button
-            onClick={() => navigate("/auth")}
-            className="px-5 py-2.5 rounded-xl gradient-institute text-primary-foreground text-sm font-semibold shadow-warm hover:shadow-glow transition-all hover:scale-[1.02]"
-          >
-            Começar Grátis
-          </button>
+          <div className="flex items-center gap-2">
+            <DarkModeToggle />
+            <button
+              onClick={() => navigate("/auth")}
+              className="px-5 py-2.5 rounded-xl gradient-institute text-primary-foreground text-sm font-semibold shadow-warm hover:shadow-glow transition-all hover:scale-[1.02]"
+            >
+              Começar Grátis
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -94,35 +101,33 @@ export default function LandingPage() {
 
         <div className="container relative max-w-5xl text-center pt-8 pb-32 flex-1 flex flex-col justify-center">
           <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}>
-            <motion.div
-              className="relative flex justify-center mb-8"
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-            >
-              {/* Soft aurora halo behind the logo — premium glow */}
+            <div className="flex justify-center mb-6">
               <motion.div
-                aria-hidden
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-24 md:w-72 md:h-28 rounded-full bg-primary/25 blur-3xl pointer-events-none"
-                animate={{ opacity: [0.5, 0.85, 0.5], scale: [1, 1.08, 1] }}
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-              />
-              {/* Theme-aware logo: dark-bg version on dark mode, light-bg on light mode */}
-              <img
-                src={logoDarkBg}
-                alt="Instituto Felicidade Para Todos"
-                className="relative hidden dark:block h-16 md:h-20 object-contain drop-shadow-[0_4px_20px_rgba(0,0,0,0.35)] [image-rendering:auto]"
-                loading="eager"
-                fetchPriority="high"
-              />
-              <img
-                src={logoLightBg}
-                alt="Instituto Felicidade Para Todos"
-                className="relative block dark:hidden h-16 md:h-20 object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
-                loading="eager"
-                fetchPriority="high"
-              />
-            </motion.div>
+                className="relative"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2, duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-secondary/25 to-accent/15 blur-2xl rounded-full scale-110" aria-hidden />
+                <motion.picture
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                  className="relative block"
+                >
+                  <img
+                    src={logoWordmarkDark}
+                    alt="Minha Felicidade — Floresce o nosso bem-estar"
+                    className="relative h-20 md:h-28 object-contain drop-shadow-[0_6px_24px_rgba(242,101,34,0.35)] hidden dark:block"
+                  />
+                  <img
+                    src={logoWordmarkLight}
+                    alt="Minha Felicidade — Floresce o nosso bem-estar"
+                    className="relative h-20 md:h-28 object-contain drop-shadow-[0_4px_18px_rgba(242,101,34,0.25)] block dark:hidden"
+                  />
+                </motion.picture>
+              </motion.div>
+            </div>
+
 
             {/* SaaS conversion badge — clarifies positioning */}
             <motion.span

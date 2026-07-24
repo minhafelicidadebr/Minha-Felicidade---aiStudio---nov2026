@@ -4,7 +4,7 @@ import { Menu, X, Trophy, Crown, Sparkles, Building2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
-import logoIcon from "@/assets/logo-icon.png";
+import logoIcon from "@/assets/logo-mf-icon.png";
 import DarkModeToggle from "@/components/DarkModeToggle";
 
 const links = [
@@ -55,9 +55,15 @@ export default function Navbar() {
       aria-label="Navegação principal"
     >
       <div className="container flex items-center justify-between h-16">
-        <Link to="/dashboard" className="flex items-center gap-2.5 group" aria-label="Ir para Dashboard">
-          <img src={logoIcon} alt="Instituto Felicidade Para Todos" className="w-9 h-9 rounded-lg object-contain group-hover:scale-105 transition-transform" />
-          <span className="font-display font-bold text-lg hidden sm:inline">Ciência do <span className="text-primary">Bem-Estar</span></span>
+        <Link to="/dashboard" className="flex items-center gap-2.5 group" aria-label="Minha Felicidade — Ir para Dashboard">
+          <div className="relative">
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/40 via-secondary/30 to-accent/20 blur-md opacity-70 group-hover:opacity-100 transition-opacity" aria-hidden />
+            <img src={logoIcon} alt="Minha Felicidade" className="relative w-10 h-10 object-contain drop-shadow-[0_2px_6px_rgba(242,101,34,0.35)] group-hover:scale-105 transition-transform" />
+          </div>
+          <span className="hidden sm:flex flex-col leading-tight">
+            <span className="font-display font-bold text-lg tracking-tight">Minha <span className="text-gradient">Felicidade</span></span>
+            <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground/80 font-medium">Floresce o nosso bem-estar</span>
+          </span>
         </Link>
 
         <div className="hidden lg:flex items-center gap-0.5">
