@@ -14,6 +14,7 @@ import RequireFeature from "@/components/routing/RequireFeature";
 const queryClient = new QueryClient();
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
+const EscolasLandingPage = lazy(() => import("./pages/EscolasLandingPage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const ModulePage = lazy(() => import("./pages/ModulePage"));
@@ -106,6 +107,7 @@ const App = () => (
           <Suspense fallback={<RouteFallback />}>
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/escolas" element={<EscolasLandingPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route
                 path="/consentimento-responsavel"
