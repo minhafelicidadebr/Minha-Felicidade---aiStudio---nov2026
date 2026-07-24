@@ -4,6 +4,7 @@ import { Play, Sparkles, Heart, ArrowRight, ArrowDown, Shield, GraduationCap, Dr
 import heroYouth from "@/assets/hero-youth-2026.jpg";
 import logoIcon from "@/assets/logo-icon.png";
 import logoLightBg from "@/assets/logo-light-bg.png";
+import logoDarkBg from "@/assets/logo-dark-bg.png";
 import youthConnection from "@/assets/youth-connection.jpg";
 import youthCelebration from "@/assets/youth-celebration.jpg";
 import youthDiscovery from "@/assets/youth-discovery.jpg";
@@ -93,16 +94,35 @@ export default function LandingPage() {
 
         <div className="container relative max-w-5xl text-center pt-8 pb-32 flex-1 flex flex-col justify-center">
           <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}>
-            <div className="flex justify-center mb-6">
-              <motion.img
+            <motion.div
+              className="relative flex justify-center mb-8"
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+            >
+              {/* Soft aurora halo behind the logo — premium glow */}
+              <motion.div
+                aria-hidden
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-24 md:w-72 md:h-28 rounded-full bg-primary/25 blur-3xl pointer-events-none"
+                animate={{ opacity: [0.5, 0.85, 0.5], scale: [1, 1.08, 1] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              />
+              {/* Theme-aware logo: dark-bg version on dark mode, light-bg on light mode */}
+              <img
+                src={logoDarkBg}
+                alt="Instituto Felicidade Para Todos"
+                className="relative hidden dark:block h-16 md:h-20 object-contain drop-shadow-[0_4px_20px_rgba(0,0,0,0.35)] [image-rendering:auto]"
+                loading="eager"
+                fetchPriority="high"
+              />
+              <img
                 src={logoLightBg}
                 alt="Instituto Felicidade Para Todos"
-                className="h-12 md:h-14 object-contain"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2, duration: 0.8 }}
+                className="relative block dark:hidden h-16 md:h-20 object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
+                loading="eager"
+                fetchPriority="high"
               />
-            </div>
+            </motion.div>
 
             {/* SaaS conversion badge — clarifies positioning */}
             <motion.span
