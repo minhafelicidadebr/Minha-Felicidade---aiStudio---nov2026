@@ -108,21 +108,31 @@ export default function LandingPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2, duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-secondary/25 to-accent/15 blur-2xl rounded-full scale-110" aria-hidden />
+                <motion.div
+                  aria-hidden
+                  className="absolute inset-0 bg-gradient-to-br from-primary/30 via-secondary/25 to-accent/15 blur-2xl rounded-full scale-125"
+                  animate={{ opacity: [0.55, 0.9, 0.55], scale: [1.2, 1.34, 1.2] }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                />
                 <motion.picture
                   animate={{ y: [0, -4, 0] }}
                   transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
                   className="relative block"
                 >
+                  {/* Tamanho contido (h-16/h-24) mantém a marca nítida mesmo com fonte de menor resolução */}
                   <img
                     src={logoWordmarkDark}
                     alt="Minha Felicidade — Floresce o nosso bem-estar"
-                    className="relative h-20 md:h-28 object-contain drop-shadow-[0_6px_24px_rgba(242,101,34,0.35)] hidden dark:block"
+                    className="relative h-16 md:h-24 object-contain drop-shadow-[0_6px_28px_rgba(242,101,34,0.4)] hidden dark:block"
+                    loading="eager"
+                    fetchPriority="high"
                   />
                   <img
                     src={logoWordmarkLight}
                     alt="Minha Felicidade — Floresce o nosso bem-estar"
-                    className="relative h-20 md:h-28 object-contain drop-shadow-[0_4px_18px_rgba(242,101,34,0.25)] block dark:hidden"
+                    className="relative h-16 md:h-24 object-contain drop-shadow-[0_4px_18px_rgba(242,101,34,0.25)] block dark:hidden"
+                    loading="eager"
+                    fetchPriority="high"
                   />
                 </motion.picture>
               </motion.div>
