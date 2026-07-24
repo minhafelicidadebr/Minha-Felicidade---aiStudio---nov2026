@@ -2,8 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Play, Sparkles, Heart, ArrowRight, ArrowDown, Shield, GraduationCap, Drama, Brain, Compass, Rocket } from "lucide-react";
 import heroYouth from "@/assets/hero-youth-2026.jpg";
-import logoIcon from "@/assets/logo-icon.png";
-import logoLightBg from "@/assets/logo-light-bg.png";
+import logoIcon from "@/assets/logo-mf-icon.png";
+import logoWordmark from "@/assets/logo-mf-wordmark-dark.png";
 import youthConnection from "@/assets/youth-connection.jpg";
 import youthCelebration from "@/assets/youth-celebration.jpg";
 import youthDiscovery from "@/assets/youth-discovery.jpg";
@@ -48,8 +48,11 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/30">
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-2.5">
-            <img src={logoIcon} alt="Instituto" className="w-9 h-9 rounded-lg" />
-            <span className="font-display font-bold text-lg hidden sm:inline">Ciência do <span className="text-primary">Bem-Estar</span></span>
+            <div className="relative">
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/50 via-secondary/40 to-accent/20 blur-md opacity-80" aria-hidden />
+              <img src={logoIcon} alt="Minha Felicidade" className="relative w-9 h-9 object-contain drop-shadow-[0_2px_6px_rgba(242,101,34,0.35)]" />
+            </div>
+            <span className="font-display font-bold text-lg hidden sm:inline tracking-tight">Minha <span className="text-gradient">Felicidade</span></span>
           </div>
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
             <a href="#modulos" className="hover:text-foreground transition-colors">Módulos</a>
@@ -94,18 +97,22 @@ export default function LandingPage() {
         <div className="container relative max-w-5xl text-center pt-8 pb-32 flex-1 flex flex-col justify-center">
           <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}>
             <div className="flex justify-center mb-6">
-              <motion.img
-                src={logoLightBg}
-                alt="Instituto Felicidade Para Todos"
-                className="h-12 md:h-14 object-contain"
+              <motion.div
+                className="relative"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2, duration: 0.8 }}
-              />
+                transition={{ delay: 0.2, duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-secondary/25 to-accent/15 blur-2xl rounded-full scale-110" aria-hidden />
+                <motion.img
+                  src={logoWordmark}
+                  alt="Minha Felicidade — Floresce o nosso bem-estar"
+                  className="relative h-20 md:h-28 object-contain drop-shadow-[0_6px_24px_rgba(242,101,34,0.35)]"
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                />
+              </motion.div>
             </div>
-
-            {/* SaaS conversion badge — clarifies positioning */}
-            <motion.span
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass text-primary text-sm font-bold mb-6 shadow-warm"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
