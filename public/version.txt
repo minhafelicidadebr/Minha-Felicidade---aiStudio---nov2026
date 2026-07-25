@@ -1,1 +1,1 @@
-deployed: 2026-07-24 11:07
+deployed: 2026-07-25 · relatorio-piloto + tenant-demo + escolas
