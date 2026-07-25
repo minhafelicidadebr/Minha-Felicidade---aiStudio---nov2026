@@ -6,13 +6,15 @@
 - Vender pilotos: #7 tenant demo (migration criada), #6 relatório do piloto (commit `30ce2a3`),
   /escolas aprimorada (commit `80471fb`). Gate verde.
 
-## Próxima ação (usuário, no painel do Lovable)
-1. **Aplicar a migration do tenant demo** no SQL Editor do Lovable:
-   colar o conteúdo de `supabase/migrations/20260722250000_demo_tenant_seed.sql` e rodar.
-   (É INSERT direto como service_role — NÃO precisa do wrapper `SET LOCAL role/jwt`.)
-   Depois, entrar em `/org` com a conta demo → o painel aparece cheio para demonstrações.
-2. **Publish no Lovable** para o site atualizar (#6 relatório + /escolas). Se o botão estiver
-   inativo, forçar detecção com um commit trivial (ex.: editar `public/version.txt`).
+## Concluído agora
+- Tenant demo aplicado no SQL Editor ✓
+- Publicado no Lovable ✓
+- user_id real da conta demo (`minhafelicidadebr@gmail.com`) = `de0ccab6-27cb-4288-b5f6-3b3f3f5297d6`
+  (o antigo `2f44f897...` não é mais válido — membership adicionada para o id correto).
+- Painel `/org` funcionando com dados demo (2 escolas, 3 turmas, 28 membros).
+
+## Próxima ação sugerida
+Escolher próximo item do backlog ou iniciar vendas de piloto com o painel demonstrativo.
 
 ## Backlog conhecido (não urgente)
 - Migrar react-router v6→v7 (advisory de audit, não bloqueia com `--audit-level=high`).
