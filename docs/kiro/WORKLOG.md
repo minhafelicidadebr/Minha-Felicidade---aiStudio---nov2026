@@ -81,3 +81,19 @@
 - Todas: SECURITY DEFINER, search_path=public, auditadas, REVOKE/GRANT corretos.
 - Estende notification_outbox kind CHECK.
 - Runbook item 25.
+
+## 2026-07 · Vender pilotos — #7 tenant demo, #6 relatório, aprimoramento /escolas
+- **#7 Tenant demonstrativo** (`supabase/migrations/20260722250000_demo_tenant_seed.sql`):
+  org "Rede Exemplo de Bem-Estar (DEMONSTRAÇÃO)" (id `...d0`), 2 escolas, 3 turmas, 27 membros
+  (1 org_admin = conta demo + 2 educadores + 24 alunos fictícios) + 3 convites pendentes. Tudo
+  `metadata.is_demo=true`, IDs fixos, idempotente. Permite demonstrar o painel `/org` cheio sem
+  piloto real e sem PII verdadeira. **PENDENTE: aplicar no SQL Editor do Lovable.**
+- **#6 Relatório do piloto** (`src/pages/OrgDashboardPage.tsx`): botão "Relatório" no header gera
+  .txt client-side com estrutura (escolas/turmas), adesão AGREGADA (membros por papel, taxa de
+  ativação) e nota de privacidade. Sem PII, sem conversas de IA, sem relatos individuais. Fecha o
+  ciclo comercial (demonstração → proposta → devolutiva). Commit `30ce2a3`.
+- **/escolas aprimorada** (`src/pages/EscolasLandingPage.tsx`, commit `80471fb`): hero com foto
+  real (`hero-youth-2026.jpg`), headline de conversão, trust row honesto, seção problema com
+  `teacher-exhausted.jpg`, banda de transformação com `youth-connection.jpg`. Marca própria na nav.
+- Honestidade: NÃO gero imagens; usei fotos hiperrealistas já existentes em `src/assets/`.
+- `npm run quality`: 83 testes, lint, typecheck, build, security gate — verde (Exit 0).

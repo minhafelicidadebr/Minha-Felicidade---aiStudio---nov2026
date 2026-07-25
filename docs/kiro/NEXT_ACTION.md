@@ -1,27 +1,22 @@
 # NEXT_ACTION (uma única próxima ação)
 
-## Concluído
-- P0.0 (marca/PI/independência): **APROVADO**.
-- ONDA 1 · Corte 1.1 (entitlement canônico): rotas premium exigem feature server-side.
-- ONDA 1 · Corte 1.2 (integridade da assinatura): policy UPDATE removida de org_subscriptions.
-- ONDA 1 · Corte 1.3 (limites de IA centralizados): `enforce_ai_usage_limit` lê do plano.
-- ONDA 1 · Corte 1.4 (idade e consentimento): trigger protege `birth_date` como imutável;
-  `guardian_consent_events` e RPCs de consentimento confirmados ok.
+## Concluído (recente)
+- P0.0 (marca/PI/independência) + ONDA 1..5 mergeados (PRs #20–#35).
+- Ajustes UX pós-publicação: dark mode padrão, logo só no menu com slogan.
+- Vender pilotos: #7 tenant demo (migration criada), #6 relatório do piloto (commit `30ce2a3`),
+  /escolas aprimorada (commit `80471fb`). Gate verde.
 
-## Próxima ação recomendada: ONDA 2 — Migration de multitenancy mínimo
-Criar uma **única** migration (`20260722220000_institutional_multitenancy.sql`) com:
-- `organizations` (id, name, slug, owner_id, status, created_at)
-- `schools` (id, organization_id, name, municipality, created_at)
-- `classes` (id, school_id, name, year, semester, created_at)
-- `memberships` (id, organization_id, user_id, role [org_admin|school_admin|educator|student|guardian], school_id nullable, class_id nullable, status, created_at)
-- `invitations` (id, organization_id, invited_email, role, token, expires_at, accepted_at, created_at)
+## Próxima ação (usuário, no painel do Lovable)
+1. **Aplicar a migration do tenant demo** no SQL Editor do Lovable:
+   colar o conteúdo de `supabase/migrations/20260722250000_demo_tenant_seed.sql` e rodar.
+   (É INSERT direto como service_role — NÃO precisa do wrapper `SET LOCAL role/jwt`.)
+   Depois, entrar em `/org` com a conta demo → o painel aparece cheio para demonstrações.
+2. **Publish no Lovable** para o site atualizar (#6 relatório + /escolas). Se o botão estiver
+   inativo, forçar detecção com um commit trivial (ex.: editar `public/version.txt`).
 
-RLS habilitada em todas. Policies mínimas:
-- SELECT: membership ativa na mesma org.
-- INSERT/UPDATE/DELETE: só org_admin (via membership).
-- Sem cross-org reads. Tenant obrigatório em toda consulta.
-
-Grants: nenhuma policy de DELETE/UPDATE direta para student. Convites: INSERT só por org_admin.
-
-**NÃO criar** nesta migration: dashboard, UI, RPCs de convite, onboarding. Apenas o schema + RLS.
-Isso é o "corte vertical de dados" sem frontend — o frontend vem no próximo corte.
+## Backlog conhecido (não urgente)
+- Migrar react-router v6→v7 (advisory de audit, não bloqueia com `--audit-level=high`).
+- Auditar KNOWLEDGE_BASE da AlegrIA (reprodução verbatim).
+- Renomear domínio público que contém "yale".
+- Alertas operacionais por e-mail (ONDA 5).
+- ONDA 6: métricas de piloto real / NPS.
