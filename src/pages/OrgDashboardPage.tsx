@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Building2, School, Users, UserPlus, Mail, Clock, CheckCircle2, Loader2, Plus, BarChart3 } from "lucide-react";
+import { ArrowLeft, Building2, School, Users, UserPlus, Mail, Clock, CheckCircle2, Loader2, Plus, BarChart3, Download } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -34,6 +34,60 @@ export default function OrgDashboardPage() {
 
     // Onboarding wizard dismissal
     const [wizardDismissed, setWizardDismissed] = useState(false);
+
+    // Pilot report — aggregated only, no PII
+    const handleDownloadReport = () => {
+        if (!org) return;
+        const roleCounts = members.reduce<Record<string, number>>((acc, m) => {
+            acc[m.role] = (acc[m.role] || 0) + 1;
+            return acc;
+        }, {});
+        const students = roleCounts["student"] || 0;
+        const educators = (roleCounts["educator"] || 0) + (roleCounts["school_admin"] || 0);
+        const totalInvited = members.length + invitations.length;
+        const activationRate = totalInvited > 0 ? Math.round((members.length / totalInvited) * 100) : 0;
+        const lines = [
+            "═══════════════════════════════════════════",
+            "  RELATÓRIO DO PILOTO — CIÊNCIA DO BEM-ESTAR",
+            "  Instituto Felicidade Para Todos",
+            "═══════════════════════════════════════════",
+            "",
+            `Organização: ${org.name}`,
+            `Gerado em: ${new Date().toLocaleDateString("pt-BR")} ${new Date().toLocaleTimeString("pt-BR")}`,
+            "",
+            "─── ESTRUTURA ───",
+            `Escolas: ${schools.length}`,
+            `Turmas: ${classes.length}`,
+            ...schools.map((s) => {
+                const cc = classes.filter((c) => c.school_id === s.id).length;
+                return `  • ${s.name}${s.municipality ? ` (${s.municipality})` : ""} — ${cc} turma(s)`;
+            }),
+            "",
+            "─── ADESÃO (agregada) ───",
+            `Membros ativos: ${members.length}`,
+            `  • Estudantes: ${students}`,
+            `  • Educadores/Coordenadores: ${educators}`,
+            `Convites pendentes: ${invitations.length}`,
+            `Taxa de ativação: ${activationRate}% (${members.length}/${totalInvited} convidados aceitos)`,
+            "",
+            "─── PRIVACIDADE ───",
+            "Este relatório contém apenas indicadores AGREGADOS.",
+            "Nenhum dado pessoal, conversa com IA ou relato individual",
+            "de estudante é incluído (LGPD art. 14 · proteção de menores).",
+            "",
+            "═══════════════════════════════════════════",
+            "Relatório para devolutiva institucional.",
+            "Instituto Felicidade Para Todos",
+        ];
+        const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `relatorio_piloto_${(org.slug || "organizacao")}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast({ title: "Relatório baixado! 📄", description: "Indicadores agregados, sem dados pessoais." });
+    };
 
     const handleAddSchool = async () => {
         if (!org || !schoolName.trim()) return;
@@ -184,12 +238,21 @@ export default function OrgDashboardPage() {
                                 <p className="text-sm text-muted-foreground">Painel institucional</p>
                             </div>
                         </div>
-                        <button
-                            onClick={() => setShowInvite(!showInvite)}
-                            className="px-4 py-2.5 rounded-xl gradient-institute text-primary-foreground text-sm font-bold shadow-warm hover:shadow-glow transition-all flex items-center gap-2"
-                        >
-                            <UserPlus className="w-4 h-4" /> Convidar
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleDownloadReport}
+                                className="px-4 py-2.5 rounded-xl bg-muted hover:bg-muted/80 text-sm font-semibold transition-all flex items-center gap-2"
+                                title="Baixar relatório do piloto (dados agregados)"
+                            >
+                                <Download className="w-4 h-4" /> Relatório
+                            </button>
+                            <button
+                                onClick={() => setShowInvite(!showInvite)}
+                                className="px-4 py-2.5 rounded-xl gradient-institute text-primary-foreground text-sm font-bold shadow-warm hover:shadow-glow transition-all flex items-center gap-2"
+                            >
+                                <UserPlus className="w-4 h-4" /> Convidar
+                            </button>
+                        </div>
                     </div>
 
                     {/* Invite form */}
