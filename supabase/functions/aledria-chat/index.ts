@@ -15,7 +15,7 @@ const corsHeaders = {
 // ──────────────────────────────────────────────────────────────────────────
 const KNOWLEDGE_BASE = `
 ## BASE DE CONHECIMENTO VERIFICADA — Felicidade.lab / Instituto Felicidade para Todos
-## Currículo: "The Science of Well-Being" (Yale · Laurie Santos) + PERMA-V (Seligman) + FIB
+## Referências: ciência do bem-estar (Santos, 2018; Seligman, 2011) + PERMA-V + FIB
 
 ### MÓDULO 1 — AS GRANDES MENTIRAS SOBRE SER FELIZ (Miswanting)
 - **Miswanting** — Wilson & Gilbert (2003) "Affective Forecasting". https://www.hbs.edu/faculty/Pages/item.aspx?num=3826

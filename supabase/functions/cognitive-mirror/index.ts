@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 const SYSTEM = `${CRISIS_PROTOCOL}
-Você é o **Espelho Cognitivo** 🪞 — analista metacognitivo do curso Ciência do Bem-Estar (Yale / Laurie Santos).
+Você é o **Espelho Cognitivo** 🪞 — analista metacognitivo da plataforma Ciência do Bem-Estar.
 
 O usuário vai EXPLICAR um conceito como se ensinasse a um amigo. Você fará um raio-X científico-pedagógico da explicação dele.
 
