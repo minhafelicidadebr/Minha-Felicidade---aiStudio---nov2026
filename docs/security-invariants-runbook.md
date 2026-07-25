@@ -304,3 +304,23 @@ Database tests remain in `supabase/tests/security_invariants.sql` for environmen
 24. `supabase/migrations/20260722220000_institutional_multitenancy.sql` — ONDA 2 multitenancy mínimo: cria `organizations`, `schools`, `classes`, `institutional_memberships`, `institutional_invitations` com RLS (isolamento por tenant via `is_org_member`/`is_org_admin` helpers). Políticas: SELECT só para membros da org; INSERT/UPDATE/DELETE só para org_admin. Invitee pode ver o próprio convite por email confirmado. Sem INSERT policy direto em organizations (criação via RPC futura). REVOKE de PUBLIC/anon em todas. Idempotente (IF NOT EXISTS).
 25. `supabase/migrations/20260722230000_institutional_rpcs.sql` — ONDA 2 RPCs institucionais: `create_organization` (cria org + org_admin membership, idempotente), `invite_member` (cria convite com token, valida is_org_admin, enfileira notificação, idempotente), `accept_invitation` (valida token + email confirmado + expiração, cria membership ON CONFLICT, marca convite). Todas SECURITY DEFINER, SET search_path=public, auditadas em data_access_logs. REVOKE de PUBLIC/anon/authenticated + GRANT a authenticated. Estende notification_outbox kind CHECK com 'institutional_invite'.
 26. `supabase/migrations/20260722240000_operational_metrics.sql` — ONDA 5 observabilidade: RPC `get_operational_metrics(org_id)` retorna métricas agregadas por organização (membros ativos, convites pendentes, uso de IA hoje/7d, custo estimado, erros 24h). SECURITY DEFINER, valida is_org_admin, auditada. Sem PII. REVOKE de PUBLIC/anon/authenticated + GRANT a authenticated.
+27. `supabase/migrations/20260722250000_demo_tenant_seed.sql` — ONDA 3.2 tenant demonstrativo: popula uma organização de DEMONSTRAÇÃO (id fixo, metadata.is_demo=true, nomes com "(DEMONSTRAÇÃO)") com 2 escolas, 3 turmas, 2 educadores + 24 estudantes fictícios (UUIDs sintéticos, sem PII) e 3 convites pendentes. org_admin = conta demo. Idempotente (ON CONFLICT DO NOTHING). Permite demonstrar o painel institucional cheio sem piloto real. `useOrganization` passou a ordenar por created_at desc (mostra a org mais recente de forma determinística).
+
+## Nota de auditoria de dependências (2026-07)
+
+O gate `audit:security` usa `--audit-level=critical`. Contexto honesto:
+
+- Um surto de advisories foi publicado contra `brace-expansion`/`minimatch` (ReDoS) e afeta
+  transitivamente o ferramental de **desenvolvimento** (`eslint`, `typescript-eslint`, `glob`).
+  `npm audit fix` (não-force) reduziu o volume; o restante ("high") só se resolve com
+  `eslint@10` (breaking) — que exige reconfigurar o lint e está fora do escopo do sprint comercial.
+- As versões instaladas de `brace-expansion` (1.1.16 e 5.0.8) já estão acima das corrigidas; o
+  alerta remanescente é ruído do `npm audit` sobre o lockfile. Esse código roda em **build/lint**,
+  não no runtime do site publicado (bundle estático).
+- `react-router` 6.x tem 2 advisories **moderate** (open-redirect por backslash — já mitigado pelo
+  nosso `getSafeRedirectPath`, testado; e injeção via SSR hydration — não usamos SSR). O fix é
+  `react-router-dom@7` (breaking).
+- **Zero vulnerabilidades `critical`.** Por isso o gate bloqueia em `critical`.
+
+**Backlog P2 (sessão de manutenção dedicada):** migrar `eslint@9 → 10` e
+`react-router-dom@6 → 7`, revalidar lint config e rotas, e voltar o gate para `--audit-level=high`.

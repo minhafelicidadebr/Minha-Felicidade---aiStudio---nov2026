@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Building2, Users, Shield, BarChart3, BookOpen, Heart, ArrowRight, CheckCircle2, Sparkles, Clock, Mail } from "lucide-react";
-import logoIcon from "@/assets/logo-icon.png";
-import logoLightBg from "@/assets/logo-light-bg.png";
+import { Building2, Users, Shield, BarChart3, BookOpen, ArrowRight, CheckCircle2, Sparkles, Clock, Mail, TrendingUp, Lock } from "lucide-react";
+import logoIcon from "@/assets/logo-mf-icon.png";
+import heroYouth from "@/assets/hero-youth-2026.jpg";
+import teacherExhausted from "@/assets/teacher-exhausted.jpg";
+import youthConnection from "@/assets/youth-connection.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Footer from "@/components/Footer";
@@ -78,8 +80,8 @@ export default function EscolasLandingPage() {
             <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/30">
                 <div className="container flex items-center justify-between h-16">
                     <div className="flex items-center gap-2.5">
-                        <img src={logoIcon} alt="Instituto" className="w-9 h-9 rounded-lg" />
-                        <span className="font-display font-bold text-lg hidden sm:inline">Ciência do <span className="text-primary">Bem-Estar</span></span>
+                        <img src={logoIcon} alt="Minha Felicidade" className="w-9 h-9 rounded-lg object-contain" />
+                        <span className="font-display font-bold text-lg hidden sm:inline">Minha <span className="text-primary">Felicidade</span></span>
                     </div>
                     <div className="flex items-center gap-3">
                         <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -92,48 +94,121 @@ export default function EscolasLandingPage() {
                 </div>
             </nav>
 
-            {/* Hero */}
-            <section className="pt-28 pb-20 relative overflow-hidden">
-                <div className="absolute inset-0 gradient-aurora opacity-20" />
+            {/* Hero — foto real com blend orgânico + narrativa de conversão */}
+            <section className="pt-28 pb-24 relative overflow-hidden min-h-[85vh] flex items-center">
+                <div className="absolute inset-0">
+                    <img
+                        src={heroYouth}
+                        alt="Estudantes brasileiros vivenciando aprendizagem socioemocional"
+                        className="w-full h-full object-cover object-center opacity-45 dark:opacity-30"
+                        loading="eager"
+                        fetchPriority="high"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/88 to-background" />
+                    <div className="absolute inset-0 gradient-aurora opacity-25 mix-blend-soft-light" />
+                </div>
                 <div className="container max-w-5xl relative text-center">
-                    <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
-                        <img src={logoLightBg} alt="Instituto Felicidade Para Todos" className="h-10 mx-auto mb-6 object-contain" />
-                        <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-primary text-sm font-bold mb-6">
-                            <Building2 className="w-4 h-4" /> Programa Piloto Escolar Assistido
+                    <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9 }}>
+                        <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-primary text-sm font-bold mb-6 shadow-warm">
+                            <Building2 className="w-4 h-4" /> Programa Piloto Escolar Assistido · Vagas limitadas 2026
                         </span>
-                        <h1 className="text-4xl md:text-6xl font-display font-bold leading-[1.05] mb-6">
-                            Ciência do bem-estar<br />
-                            <span className="text-gradient-aurora">para a sua escola</span>
+                        <h1 className="text-4xl md:text-6xl lg:text-7xl font-display font-bold leading-[1.03] mb-6 tracking-tight">
+                            Alunos mais equilibrados.<br />
+                            <span className="text-gradient-aurora">Uma escola que se destaca.</span>
                         </h1>
-                        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed">
-                            Plataforma educacional independente que transforma evidências científicas em
-                            jornadas práticas de aprendizagem socioemocional para adolescentes — com
-                            acompanhamento institucional e implantação assistida.
+                        <p className="text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto mb-8 leading-relaxed">
+                            Leve para os seus adolescentes uma jornada de bem-estar baseada em ciência —
+                            com aulas curtas, prática guiada e uma tutora com IA. <strong className="text-foreground">Implantação
+                                acompanhada do começo ao fim</strong>, e você acompanha o engajamento por turma.
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <a href="#formulario" className="px-8 py-4 rounded-2xl gradient-institute text-primary-foreground font-bold text-lg shadow-warm hover:shadow-glow transition-all flex items-center gap-2 justify-center">
-                                Solicitar demonstração <ArrowRight className="w-5 h-5" />
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+                            <a href="#formulario" className="group px-8 py-4 rounded-2xl gradient-institute text-primary-foreground font-bold text-lg shadow-warm hover:shadow-glow hover:scale-[1.02] transition-all flex items-center gap-2 justify-center">
+                                Quero uma demonstração <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                             </a>
                             <a href="#como-funciona" className="px-8 py-4 rounded-2xl glass hover:bg-card/90 font-semibold text-lg transition-all flex items-center gap-2 justify-center border border-border/40">
                                 Como funciona
                             </a>
                         </div>
+                        {/* Trust row — honesto, sem métricas fabricadas */}
+                        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-muted-foreground">
+                            <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-success" /> Implantação acompanhada</span>
+                            <span className="flex items-center gap-1.5"><Lock className="w-4 h-4 text-success" /> Dados protegidos (LGPD art. 14)</span>
+                            <span className="flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-success" /> Informado por evidências</span>
+                        </div>
                     </motion.div>
                 </div>
             </section>
 
-            {/* Problema escolar */}
+            {/* Problema escolar — foto real + dores específicas */}
             <section className="py-20 bg-muted/30">
-                <div className="container max-w-4xl text-center">
-                    <h2 className="text-3xl md:text-4xl font-display font-bold mb-6">
-                        O desafio que gestores enfrentam
-                    </h2>
-                    <p className="text-lg text-muted-foreground leading-relaxed max-w-3xl mx-auto">
-                        Ansiedade, desmotivação e falta de propósito entre adolescentes são desafios crescentes
-                        nas escolas brasileiras. Programas estruturados de aprendizagem socioemocional mostram
-                        efeitos sustentados no engajamento e no clima escolar — mas implementar sem apoio é
-                        difícil e consome tempo que a equipe não tem.
-                    </p>
+                <div className="container max-w-6xl grid md:grid-cols-2 gap-10 lg:gap-14 items-center">
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.7 }}
+                        className="relative rounded-3xl overflow-hidden aspect-[4/3] shadow-float"
+                    >
+                        <img src={teacherExhausted} alt="Educadora sobrecarregada com as demandas do dia a dia escolar" className="w-full h-full object-cover" loading="lazy" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-background/50 to-transparent" />
+                    </motion.div>
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.7 }}
+                    >
+                        <h2 className="text-3xl md:text-4xl font-display font-bold mb-5 leading-tight">
+                            Você vê o problema todos os dias.
+                        </h2>
+                        <p className="text-base text-muted-foreground leading-relaxed mb-6">
+                            Ansiedade, desmotivação e falta de propósito entre adolescentes crescem — e chegam
+                            à sua escola. A equipe quer agir, mas falta tempo, método e material pronto.
+                        </p>
+                        <ul className="space-y-3">
+                            {[
+                                "Alunos ansiosos e desengajados afetam o clima da escola",
+                                "Programas socioemocionais existem, mas são difíceis de implementar sozinho",
+                                "Sem indicadores, é difícil mostrar resultado a famílias e mantenedores",
+                            ].map((pain) => (
+                                <li key={pain} className="flex items-start gap-3 text-sm">
+                                    <span className="w-5 h-5 rounded-full bg-destructive/15 flex items-center justify-center shrink-0 mt-0.5 text-destructive text-xs font-bold">!</span>
+                                    <span className="text-foreground/85">{pain}</span>
+                                </li>
+                            ))}
+                        </ul>
+                        <p className="mt-6 text-base font-semibold text-foreground">
+                            É por isso que criamos um piloto <span className="text-primary">acompanhado do início ao fim</span>.
+                        </p>
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* Banda de transformação — foto real full-width */}
+            <section className="relative overflow-hidden">
+                <div className="relative min-h-[420px] flex items-center">
+                    <img src={youthConnection} alt="Adolescentes conectados e engajados após a jornada de bem-estar" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/30" />
+                    <div className="container max-w-6xl relative">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.8 }}
+                            className="max-w-xl"
+                        >
+                            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-primary text-xs font-bold mb-4 uppercase tracking-wider">
+                                <TrendingUp className="w-3.5 h-3.5" /> A transformação possível
+                            </span>
+                            <h2 className="text-3xl md:text-5xl font-display font-bold leading-[1.08] mb-4">
+                                Adolescentes que aprendem a<br /><span className="text-gradient-aurora">cuidar do próprio bem-estar</span>
+                            </h2>
+                            <p className="text-base md:text-lg text-foreground/85 leading-relaxed">
+                                Em 5 semanas, seus alunos praticam autoconhecimento, regulação emocional e
+                                conexão — com uma metodologia leve, gamificada e feita para a linguagem deles.
+                            </p>
+                        </motion.div>
+                    </div>
                 </div>
             </section>
 

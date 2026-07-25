@@ -68,8 +68,9 @@ export function useOrganization() {
                 .from("organizations")
                 .select("*")
                 .eq("status", "active")
+                .order("created_at", { ascending: false })
                 .limit(1)
-                .single();
+                .maybeSingle();
 
             if (orgErr || !orgs) {
                 setOrg(null);
