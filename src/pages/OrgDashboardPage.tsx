@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import { useOrganization } from "@/hooks/useOrganization";
 import OnboardingWizard from "@/components/org/OnboardingWizard";
 import OperationalMetrics from "@/components/org/OperationalMetrics";
+import EngagementMetrics from "@/components/org/EngagementMetrics";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -471,6 +472,9 @@ export default function OrgDashboardPage() {
                             </div>
                         </section>
                     )}
+
+                    {/* Engagement Metrics — ONDA 6 */}
+                    <EngagementMetrics organizationId={org.id} />
 
                     {/* Operational Metrics — ONDA 5 */}
                     <OperationalMetrics organizationId={org.id} />

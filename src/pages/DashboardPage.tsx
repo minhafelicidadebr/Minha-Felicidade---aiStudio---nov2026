@@ -13,6 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/useSubscription";
 import { AlegriaHeroCard, AlegriaTag } from "@/components/AlegriaCTA";
 import { ALEGRIA_AVATAR_URL } from "@/components/AlegriaAvatar";
+import { useNpsTrigger } from "@/hooks/useNpsTrigger";
+import NpsSurvey from "@/components/NpsSurvey";
 
 type ProgressRecord = Tables<"user_progress">;
 type ProfileRecord = Tables<"profiles">;
@@ -62,6 +64,7 @@ export default function DashboardPage() {
   const [showPremiumTour, setShowPremiumTour] = useState(false);
   const { toast } = useToast();
   const { plan, isPremium } = useSubscription();
+  const { shouldShow: showNps, dismiss: dismissNps } = useNpsTrigger();
 
   // Feature discovery: destaca uma vez os recursos recém-desbloqueados a quem
   // virou premium, levando ao valor que acabou de pagar (Requirement 5.1).
@@ -493,6 +496,7 @@ export default function DashboardPage() {
           </div>
         </motion.div>
       </div>
+      {showNps && <NpsSurvey context="general" onDismiss={dismissNps} />}
       <Footer />
     </div>
   );
