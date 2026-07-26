@@ -11,6 +11,7 @@ import { modules } from "@/data/courseData";
 import BackToVideoBanner from "@/components/learning/BackToVideoBanner";
 import AlegriaAvatar, { ALEGRIA_AVATAR_URL } from "@/components/AlegriaAvatar";
 import { supabase } from "@/integrations/supabase/client";
+import { trackEngagement } from "@/lib/engagement";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -139,6 +140,8 @@ export default function AlegriaPage() {
 
   const send = async (text: string) => {
     if (!text.trim() || isLoading) return;
+    // Track AI interaction (engagement)
+    void trackEngagement("ai_interaction");
     const userMsg: Msg = { role: "user", content: text.trim() };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");

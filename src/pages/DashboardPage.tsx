@@ -17,6 +17,7 @@ import { useNpsTrigger } from "@/hooks/useNpsTrigger";
 import NpsSurvey from "@/components/NpsSurvey";
 import StreakCalendar from "@/components/StreakCalendar";
 import DailyChallenge from "@/components/DailyChallenge";
+import { trackEngagement } from "@/lib/engagement";
 
 type ProgressRecord = Tables<"user_progress">;
 type ProfileRecord = Tables<"profiles">;
@@ -98,6 +99,8 @@ export default function DashboardPage() {
         if (!shown) { setShowWelcome(true); localStorage.setItem("felicidade_welcome_shown", "1"); }
       }
       setLoading(false);
+      // Track session start (once per page load)
+      void trackEngagement("session_start");
     });
     supabase.auth.getSession().then(({ data: { session } }) => { if (!session) navigate("/auth"); });
     return () => subscription.unsubscribe();

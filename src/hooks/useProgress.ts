@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { trackEvent } from "@/lib/analytics";
+import { trackEngagement } from "@/lib/engagement";
 
 const XP_MAP: Record<string, number> = {
   video: 10,
@@ -69,6 +70,11 @@ export function useProgress() {
         // Instrumentação do funil (best-effort, sem PII).
         if (completed) {
           void trackEvent("lesson_completed", { module_id: moduleId, activity_type: activityType });
+          // Engagement tracking (feeds org dashboard metrics)
+          const engType = activityType === "quiz" ? "quiz_complete"
+            : activityType === "flashcard" ? "flashcard_session"
+              : "exercise_complete";
+          void trackEngagement(engType as import("@/lib/engagement").EngagementEventType, { module_id: moduleId, activity_type: activityType });
           // `activation` = PRIMEIRA atividade concluída da conta.
           void (async () => {
             const { count } = await supabase

@@ -13,6 +13,7 @@ import InlineActivities from "@/components/learning/InlineActivities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useProgress } from "@/hooks/useProgress";
 import { useSubscription } from "@/hooks/useSubscription";
+import { trackEngagement } from "@/lib/engagement";
 
 const statusIcon = {
   verificado: <CheckCircle2 className="w-4 h-4 text-success shrink-0" />,
@@ -71,6 +72,13 @@ export default function ModulePage() {
   // Planos pagos têm a feature "modules" que libera todos.
   const moduleAllowed =
     subLoading || hasFeature("modules") || (id === "mentiras" && hasFeature("module_1"));
+
+  // Track module view (engagement)
+  useEffect(() => {
+    if (id && moduleAllowed && !subLoading) {
+      void trackEngagement("module_view", { module_id: id });
+    }
+  }, [id, moduleAllowed, subLoading]);
 
   // Auto-open the panel when arriving back from an activity via ?video=<youtubeId>
   useEffect(() => {
