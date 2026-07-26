@@ -212,14 +212,16 @@ export default function InlineActivities({ moduleId, backHref, backLabel }: Prop
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
         <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-secondary" /> Aprender com o vídeo
         </h4>
         <Sheet>
           <SheetTrigger asChild>
-            <button className="text-[10px] font-bold uppercase tracking-wider text-primary hover:underline flex items-center gap-1">
-              <Layers className="w-3 h-3" /> Todas
+            <button className="group relative px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/30 hover:bg-primary/20 hover:border-primary/50 transition-all flex items-center gap-1.5">
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
+              <Layers className="w-3.5 h-3.5 text-primary group-hover:scale-110 transition-transform" />
+              <span className="text-[11px] font-bold text-primary uppercase tracking-wide">17 Ferramentas</span>
             </button>
           </SheetTrigger>
           <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
@@ -247,6 +249,56 @@ export default function InlineActivities({ moduleId, backHref, backLabel }: Prop
           </SheetContent>
         </Sheet>
       </div>
+
+      {/* Value proposition strip — ToT: destaque do método pedagógico */}
+      <motion.div
+        initial={{ opacity: 0, y: 5 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="mb-3 p-2.5 rounded-xl bg-gradient-to-r from-primary/8 via-secondary/5 to-violet-500/8 border border-primary/15"
+      >
+        <Sheet>
+          <SheetTrigger asChild>
+            <button className="w-full flex items-center gap-2.5 text-left group">
+              <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-bold text-foreground leading-tight">
+                  Aprenda fazendo, não só assistindo
+                </p>
+                <p className="text-[9px] text-muted-foreground leading-snug mt-0.5">
+                  17 ferramentas científicas · Retenção 75% maior · Tudo conectado a este vídeo
+                </p>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle className="font-display flex items-center gap-2"><Layers className="w-5 h-5 text-primary" /> Todas as ferramentas</SheetTitle>
+              <SheetDescription>17 ferramentas científicas. Tudo contextualizado para este módulo — você volta ao vídeo com 1 toque.</SheetDescription>
+            </SheetHeader>
+            <div className="grid grid-cols-2 gap-2 mt-5">
+              {ALL_TOOLS.map((t) => (
+                <button
+                  key={t.title + t.path}
+                  onClick={() => go(t.path)}
+                  className="p-3 rounded-2xl glass-card border border-border/30 hover:border-primary/40 hover:shadow-warm transition-all text-left"
+                >
+                  {t.title === "AlegrIA" ? (
+                    <img src={ALEGRIA_AVATAR_URL} alt="AlegrIA" className="w-10 h-10 rounded-xl object-cover mb-2 ring-1 ring-primary/30" />
+                  ) : (
+                    <span className={`icon-tile-premium w-10 h-10 rounded-xl flex items-center justify-center mb-2 ${t.accent}`}><t.Icon className="w-4 h-4" strokeWidth={1.75} /></span>
+                  )}
+                  <p className="font-display font-bold text-sm">{t.title}</p>
+                  <p className="text-[10px] text-muted-foreground">{t.desc}</p>
+                </button>
+              ))}
+            </div>
+          </SheetContent>
+        </Sheet>
+      </motion.div>
 
       <Tabs value={tab} onValueChange={setTab} className="flex flex-col flex-1">
         <TabsList className="grid grid-cols-3 h-9 mb-2">
