@@ -89,3 +89,64 @@
   `accept_invitation` usa ON CONFLICT DO UPDATE (reativa se status=removed).
 - **D28.** notification_outbox: enqueue best-effort (EXCEPTION handler silencia se a tabela não
   existir em ambiente de teste ou se o dedupe violar unique). Não bloqueia o fluxo principal.
+
+## 2026-07 · ONDA UX-1 — App Shell adaptativo e Design System
+
+- **D29.** O projeto tem DOIS vocabulários de papel (`profiles.roles` = student|teacher|manager e
+  `institutional_memberships.role` = platform_admin|org_admin|school_admin|educator|student|
+  guardian). Decidi NÃO unificar no banco nesta onda (seria migration de dados com risco alto e
+  fora do escopo UX-1). Em vez disso criei um terceiro vocabulário **derivado** e puro em
+  `src/lib/role-home.ts` (`DashboardRole`), com precedência explícita
+  (platform_admin > org_admin > school_admin > educator > student). Nenhuma tela precisa conhecer
+  as duas origens; a unificação no banco pode acontecer depois sem tocar na UI.
+- **D30.** `guardian` **não** virou papel de dashboard. Mapear responsável para a home do
+  estudante daria a um adulto a interface (e as expectativas) de um adolescente. Responsável
+  continua no fluxo de consentimento. Coberto por teste.
+- **D31.** Criada a entrada canônica `/inicio` (`RoleHomeRedirect`) em vez de espalhar
+  `if (role === ...) navigate(...)`. `/dashboard` **permanece funcionando** (e-mails, bookmarks,
+  testes, security-gate) — a migração para `/alunos` é da UX-4.
+- **D32.** `/alunos`, `/professores`, `/escolas/:schoolId` e `/admin/operacao` são criadas nas
+  ondas UX-2/3/4. Para não gerar 404 nem link morto agora, `role-home.ts` mantém DOIS mapas:
+  `CANONICAL_ROLE_HOME` (destino do contrato) e `IMPLEMENTED_ROLE_HOME` (destino navegável hoje).
+  Na navegação, itens da arquitetura-alvo estão marcados `future: true` e **não são renderizados**
+  (há teste que falha se um link `future` aparecer).
+- **D33. DÍVIDA/AMBIGUIDADE DO CONTRATO (precisa decisão na UX-2):** o DASHBOARD-ROUTE-MAP manda
+  `school_admin → /escolas`, mas `/escolas` é a landing **pública** de aquisição e o próprio
+  contrato diz que o dashboard escolar autenticado vive em `/escolas/:schoolId`. Não inventei a
+  resolução: `CANONICAL_ROLE_HOME` segue o literal do contrato, `IMPLEMENTED_ROLE_HOME` manda
+  school_admin para `/org` hoje, e o conflito está documentado no código e aqui.
+- **D34.** `RequireRole`: destino de acesso negado passou a ser coerente com o papel (um gestor
+  negado em `/admin` vai para `/org`, não para o painel do estudante). O literal `to="/dashboard"`
+  foi preservado como fallback porque `scripts/security-gate.mjs` o exige e ele continua sendo o
+  destino correto para quem é estudante.
+- **D35.** `getSafeRedirectPath` ganhou um segundo parâmetro `fallback` para permitir destino
+  role-aware. O fallback é **validado** por `isInternalPath` e, se inseguro, volta para
+  `/dashboard`: o fallback é escolhido pela aplicação, nunca pelo usuário — sem abrir open redirect.
+  Comportamento anterior preservado (testes originais seguem passando sem alteração).
+- **D36.** `useOrganization.ts` **não** foi alterado. O `.limit(1).maybeSingle()` continua lá
+  servindo `/org` intacto; o shell usa o novo `useDashboardContext` (React Query, múltiplas
+  organizações, contexto ativo persistido e validado). Migrar `/org` para o novo hook é UX-2 —
+  trocar os dois ao mesmo tempo misturaria refactor de dados com refactor de navegação.
+- **D37.** `useDashboardContext` usa `retry: false`. Resolver papel é pré-requisito do shell;
+  retry silencioso deixa a pessoa esperando sem explicação. Preferimos falhar rápido e oferecer
+  botão explícito de "tentar novamente" (contrato §4).
+- **D38.** O shell **não foi montado em nenhuma página existente** nesta onda, por instrução
+  explícita ("não redesenhe o conteúdo de /org, /admin ou /dashboard"). Consequência honesta:
+  a UX-1 entrega a infraestrutura testada, mas a verificação **visual** do shell só acontece
+  quando a UX-2 montar `/org` sobre ele. Registrado em NEXT_ACTION como primeiro passo da UX-2.
+- **D39.** `Navbar.tsx` recebeu apenas um cabeçalho de STATUS documentando que deixou de ser o
+  shell canônico do app autenticado. Zero mudança de comportamento — remover o Navbar das páginas
+  é o ato de migração de cada onda seguinte, não da UX-1.
+- **D40.** Nenhuma biblioteca nova. Sidebar/Sheet/Popover/Command(cmdk)/Skeleton do Radix+Shadcn,
+  React Query e Lucide já instalados. `ChartFrame` é uma **moldura** (título, descrição acessível,
+  freshness, privacidade e tabela alternativa) e não um componente de gráfico: cada dashboard passa
+  seu gráfico Recharts como `children`, evitando engessar a visualização.
+- **D41.** Tokens semânticos de dashboard (`--dashboard-*`, `--metric-*`, `--chart-1..5`) foram
+  adicionados como **papéis de cor para dado**, não como cores novas de marca. Os tokens de
+  `sidebar` foram realinhados do cinza genérico do template para a paleta do produto.
+- **D42.** Correções de causa raiz feitas durante a execução (encontradas pelos próprios testes,
+  não por inspeção): (a) `SidebarInset` já é o landmark `<main>` — o `<main>` extra criava dois
+  landmarks, agora `id`/`tabIndex` vão no próprio Inset; (b) o `ContextSwitcher` estava
+  renderizado duas vezes (uma por breakpoint), criando dois tab stops para a mesma ação — agora é
+  uma instância única que reflui; (c) `formatFreshness` e os rótulos de período saíram dos módulos
+  de componente para `src/lib/dashboard-format.ts` e `src/config/dashboard-filters.ts`.

@@ -97,3 +97,41 @@
   `teacher-exhausted.jpg`, banda de transformação com `youth-connection.jpg`. Marca própria na nav.
 - Honestidade: NÃO gero imagens; usei fotos hiperrealistas já existentes em `src/assets/`.
 - `npm run quality`: 83 testes, lint, typecheck, build, security gate — verde (Exit 0).
+
+## 2026-07 · ONDA UX-1 — App Shell adaptativo e Design System
+
+Escopo executado (só infraestrutura; nenhum dashboard redesenhado):
+
+- **Papel → home (puro/testável):** `src/lib/role-home.ts` unifica `profiles.roles` +
+  `institutional_memberships.role` em `DashboardRole` com precedência explícita; dois mapas de
+  destino (`CANONICAL_ROLE_HOME` do contrato e `IMPLEMENTED_ROLE_HOME` navegável hoje).
+- **Navegação por papel (fonte única):** `src/config/dashboard-navigation.ts` — itens agrupados,
+  bottom nav limitada a 5 destinos sem duplicar href, e flag `future` para a arquitetura-alvo que
+  ainda não tem rota (não renderiza link morto).
+- **Contexto compartilhado:** `src/hooks/useDashboardContext.ts` (React Query) resolve papéis,
+  organizações visíveis, organização ativa (persistida e validada contra o que a pessoa pode ver),
+  e `fetchedAt` para freshness. Resolve o `.limit(1)` que impedia context switcher.
+- **Shell:** `RoleAwareAppShell` + `RoleSidebar` + `RoleNavigation` + `MobileRoleNavigation` +
+  `DashboardHeader` + `ContextSwitcher` + `GlobalFilterBar`.
+- **Componentes-base:** `MetricCard` (contrato de métrica completo), `InsightCard`, `DecisionQueue`,
+  `ChartFrame` (com tabela alternativa real), `DashboardSkeleton`, `DashboardEmptyState`
+  (empty/denied/demo), `DashboardErrorState`, `PrivacyIndicator`.
+- **Rota canônica:** `/inicio` → `RoleHomeRedirect`. `/dashboard` preservado.
+- **Modificados:** `App.tsx` (rota `/inicio`), `redirect.ts` (fallback role-aware validado),
+  `RequireRole.tsx` (negação coerente com o papel), `index.css` + `tailwind.config.ts` (tokens),
+  `Navbar.tsx` (só cabeçalho de STATUS).
+- **Zero dependência nova.**
+
+Testes reais adicionados: **83** (`npm run quality`: 83 → **166** testes, 15 → 18 arquivos).
+- `role-home.test.ts` (12) · `dashboard-navigation.test.ts` (9) · `dashboard-states.test.tsx` (23)
+- `RoleAwareAppShell.test.tsx` (15) · `shell-viewports.test.tsx` (20) · `redirect.test.ts` (+4)
+
+Três defeitos encontrados pelos próprios testes e corrigidos na causa: landmark `main` duplicado
+(SidebarInset já é `main`), `ContextSwitcher` duplicado por breakpoint (dois tab stops para a mesma
+ação) e retry silencioso mascarando o estado de erro do contexto.
+
+Gate UX-1: `npm run quality` verde — audit, lint (0 warnings), typecheck, 146 testes, build,
+security gate.
+
+**Não homologado visualmente:** o shell ainda não está montado em nenhuma página (instrução da
+onda). A verificação de pixel/screenshot acontece quando a UX-2 montar `/org` sobre o shell.

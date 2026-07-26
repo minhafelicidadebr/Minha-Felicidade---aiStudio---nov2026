@@ -73,6 +73,24 @@ export default {
           blue: "hsl(var(--institute-blue))",
           gold: "hsl(var(--institute-gold))",
         },
+        // UX-1 — papéis de cor para dado (dashboards).
+        dashboard: {
+          surface: "hsl(var(--dashboard-surface))",
+          "surface-muted": "hsl(var(--dashboard-surface-muted))",
+          grid: "hsl(var(--dashboard-grid))",
+        },
+        metric: {
+          positive: "hsl(var(--metric-positive))",
+          negative: "hsl(var(--metric-negative))",
+          neutral: "hsl(var(--metric-neutral))",
+        },
+        chart: {
+          1: "hsl(var(--chart-1))",
+          2: "hsl(var(--chart-2))",
+          3: "hsl(var(--chart-3))",
+          4: "hsl(var(--chart-4))",
+          5: "hsl(var(--chart-5))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

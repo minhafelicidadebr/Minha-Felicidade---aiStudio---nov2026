@@ -46,6 +46,9 @@ const SignatureStrengthsPage = lazy(() => import("./pages/SignatureStrengthsPage
 const GuardianConsentPage = lazy(() => import("./pages/GuardianConsentPage"));
 const BirthDateCompletionPage = lazy(() => import("./pages/BirthDateCompletionPage"));
 const OrgDashboardPage = lazy(() => import("./pages/OrgDashboardPage"));
+// UX-1: entrada canônica autenticada. Resolve o painel do papel em um único
+// ponto (contrato DASHBOARD-ROUTE-MAP §"Redirecionamento canônico").
+const RoleHomeRedirect = lazy(() => import("./pages/RoleHomeRedirect"));
 const SubscriptionSuccessPage = lazy(() => import("./pages/SubscriptionSuccessPage"));
 const SubscriptionPendingPage = lazy(() => import("./pages/SubscriptionPendingPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -68,6 +71,9 @@ type PrivateRoute = {
 // Rotas sem `feature` continuam abertas a qualquer conta autenticada
 // (gratuitas por padrão: dashboard, quiz, flashcards, breathing, etc.)
 const privateRoutes: PrivateRoute[] = [
+  // Entrada canônica: redireciona para a home do papel. `/dashboard` segue
+  // válido por compatibilidade (e-mails, bookmarks, testes) até a UX-4.
+  { path: "/inicio", element: <RoleHomeRedirect /> },
   { path: "/dashboard", element: <DashboardPage /> },
   { path: "/module/:id", element: <ModulePage /> },
   { path: "/quiz", element: <QuizPage /> },

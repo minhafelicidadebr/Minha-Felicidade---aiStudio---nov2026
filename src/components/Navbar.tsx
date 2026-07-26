@@ -1,3 +1,14 @@
+// STATUS (UX-1 · DASHBOARD-COMPONENT-INVENTORY):
+// Este Navbar NÃO é mais o shell canônico do app autenticado. O shell por papel
+// é `src/components/dashboard/RoleAwareAppShell.tsx` (navegação role-aware,
+// bottom nav mobile e context switcher).
+//
+// Uso permitido a partir daqui:
+//   • superfícies públicas / de aquisição;
+//   • fallback temporário nas páginas ainda não migradas (as migrações
+//     acontecem nas ondas UX-2 /org, UX-3 /professores e UX-4 /alunos).
+// Não adicionar novos itens de ferramenta a `links`: a navegação por papel vive
+// em `src/config/dashboard-navigation.ts`.
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, Trophy, Crown, Sparkles, Building2 } from "lucide-react";
