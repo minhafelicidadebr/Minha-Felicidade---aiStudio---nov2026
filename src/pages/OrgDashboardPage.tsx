@@ -10,6 +10,7 @@ import OperationalMetrics from "@/components/org/OperationalMetrics";
 import EngagementMetrics from "@/components/org/EngagementMetrics";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { generatePilotReportPDF } from "@/lib/generate-pilot-report-pdf";
 
 export default function OrgDashboardPage() {
     const navigate = useNavigate();
@@ -36,8 +37,8 @@ export default function OrgDashboardPage() {
     // Onboarding wizard dismissal
     const [wizardDismissed, setWizardDismissed] = useState(false);
 
-    // Pilot report — aggregated only, no PII
-    const handleDownloadReport = () => {
+    // Pilot report — PDF with data visualization
+    const handleDownloadReport = async () => {
         if (!org) return;
         const roleCounts = members.reduce<Record<string, number>>((acc, m) => {
             acc[m.role] = (acc[m.role] || 0) + 1;
@@ -47,47 +48,45 @@ export default function OrgDashboardPage() {
         const educators = (roleCounts["educator"] || 0) + (roleCounts["school_admin"] || 0);
         const totalInvited = members.length + invitations.length;
         const activationRate = totalInvited > 0 ? Math.round((members.length / totalInvited) * 100) : 0;
-        const lines = [
-            "═══════════════════════════════════════════",
-            "  RELATÓRIO DO PILOTO — CIÊNCIA DO BEM-ESTAR",
-            "  Instituto Felicidade Para Todos",
-            "═══════════════════════════════════════════",
-            "",
-            `Organização: ${org.name}`,
-            `Gerado em: ${new Date().toLocaleDateString("pt-BR")} ${new Date().toLocaleTimeString("pt-BR")}`,
-            "",
-            "─── ESTRUTURA ───",
-            `Escolas: ${schools.length}`,
-            `Turmas: ${classes.length}`,
-            ...schools.map((s) => {
-                const cc = classes.filter((c) => c.school_id === s.id).length;
-                return `  • ${s.name}${s.municipality ? ` (${s.municipality})` : ""} — ${cc} turma(s)`;
-            }),
-            "",
-            "─── ADESÃO (agregada) ───",
-            `Membros ativos: ${members.length}`,
-            `  • Estudantes: ${students}`,
-            `  • Educadores/Coordenadores: ${educators}`,
-            `Convites pendentes: ${invitations.length}`,
-            `Taxa de ativação: ${activationRate}% (${members.length}/${totalInvited} convidados aceitos)`,
-            "",
-            "─── PRIVACIDADE ───",
-            "Este relatório contém apenas indicadores AGREGADOS.",
-            "Nenhum dado pessoal, conversa com IA ou relato individual",
-            "de estudante é incluído (LGPD art. 14 · proteção de menores).",
-            "",
-            "═══════════════════════════════════════════",
-            "Relatório para devolutiva institucional.",
-            "Instituto Felicidade Para Todos",
-        ];
-        const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `relatorio_piloto_${(org.slug || "organizacao")}.txt`;
-        a.click();
-        URL.revokeObjectURL(url);
-        toast({ title: "Relatório baixado! 📄", description: "Indicadores agregados, sem dados pessoais." });
+
+        // Try to fetch engagement data
+        let engagementData = undefined;
+        try {
+            const { data: eng } = await supabase.rpc("get_org_engagement_summary", { _org_id: org.id });
+            if (eng && typeof eng === "object") {
+                const e = eng as Record<string, unknown>;
+                engagementData = {
+                    totalSessions: (e.total_sessions as number) || 0,
+                    totalExercises: (e.total_exercises as number) || 0,
+                    totalAiInteractions: (e.total_ai_interactions as number) || 0,
+                    activeUsers7d: (e.active_users_7d as number) || 0,
+                    activeUsers30d: (e.active_users_30d as number) || 0,
+                    npsAvg: (e.nps_avg as number) || null,
+                    npsCount: (e.nps_count as number) || 0,
+                    npsPromotors: (e.nps_promoters as number) || 0,
+                    npsDetractors: (e.nps_detractors as number) || 0,
+                };
+            }
+        } catch { /* best-effort */ }
+
+        const doc = generatePilotReportPDF({
+            orgName: org.name,
+            generatedAt: new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }),
+            schools: schools.map((s) => ({
+                name: s.name,
+                municipality: s.municipality,
+                classCount: classes.filter((c) => c.school_id === s.id).length,
+            })),
+            totalMembers: members.length,
+            totalStudents: students,
+            totalEducators: educators,
+            totalInvitations: invitations.length,
+            activationRate,
+            engagementData,
+        });
+
+        doc.save(`relatorio_piloto_${org.slug || "organizacao"}.pdf`);
+        toast({ title: "Relatório PDF baixado! 📄", description: "Design premium com indicadores agregados." });
     };
 
     const handleAddSchool = async () => {

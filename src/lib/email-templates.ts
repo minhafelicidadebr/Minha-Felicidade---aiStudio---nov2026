@@ -13,7 +13,8 @@ export type NotificationKind =
     | "subscription_expired"
     | "subscription_canceled"
     | "escolar_claim"
-    | "institutional_invite";
+    | "institutional_invite"
+    | "engagement_reminder";
 
 export interface EmailTemplateInput {
     kind: NotificationKind;
@@ -153,5 +154,21 @@ export function renderEmail(input: EmailTemplateInput): RenderedEmail {
                 ),
             };
         }
+
+        case "engagement_reminder":
+            return {
+                subject: `Sua jornada de bem-estar sente sua falta 🌱`,
+                html: shell(
+                    `Faz tempo que não nos vemos!`,
+                    `<p>Sua streak de prática está esperando por você. Bastam <strong>2 minutos</strong> para manter o ritmo:</p>` +
+                    `<ul style="padding-left:20px;color:#374151">` +
+                    `<li>Complete a microação do dia</li>` +
+                    `<li>Converse com a AlegrIA sobre como está se sentindo</li>` +
+                    `<li>Revise um flashcard do último módulo</li>` +
+                    `</ul>` +
+                    `<p style="font-size:13px;color:#6b7280">A ciência mostra que consistência importa mais que intensidade (Lally et al., 2010).</p>`,
+                    input.appUrl,
+                ),
+            };
     }
 }
