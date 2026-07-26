@@ -29,6 +29,14 @@ interface OutboxRow {
         billing_interval?: string;
         period_end?: string;
         effective_until?: string;
+        claim_token?: string;
+    } | null;
+    metadata: {
+        invitation_id?: string;
+        token?: string;
+        organization_id?: string;
+        role?: string;
+        org_name?: string;
     } | null;
 }
 
@@ -57,7 +65,7 @@ serve(async (req) => {
 
         const { data, error } = await service
             .from("notification_outbox")
-            .select("id, kind, recipient_email, attempts, payload")
+            .select("id, kind, recipient_email, attempts, payload, metadata")
             .eq("status", "pending")
             .order("created_at", { ascending: true })
             .limit(25);
@@ -69,6 +77,7 @@ serve(async (req) => {
 
         for (const row of rows) {
             const p = row.payload ?? {};
+            const m = row.metadata ?? {};
             try {
                 const email = renderEmail({
                     kind: row.kind as NotificationKind,
@@ -76,6 +85,10 @@ serve(async (req) => {
                     billingInterval: p.billing_interval,
                     periodEnd: p.period_end ?? p.effective_until,
                     appUrl,
+                    claimToken: p.claim_token,
+                    inviteRole: m.role,
+                    inviteToken: m.token,
+                    orgName: m.org_name,
                 });
 
                 const resp = await fetch("https://api.resend.com/emails", {

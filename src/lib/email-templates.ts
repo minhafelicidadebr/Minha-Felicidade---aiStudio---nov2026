@@ -12,7 +12,8 @@ export type NotificationKind =
     | "payment_failed"
     | "subscription_expired"
     | "subscription_canceled"
-    | "escolar_claim";
+    | "escolar_claim"
+    | "institutional_invite";
 
 export interface EmailTemplateInput {
     kind: NotificationKind;
@@ -21,6 +22,9 @@ export interface EmailTemplateInput {
     periodEnd?: string; // ISO date
     appUrl?: string;
     claimToken?: string; // só para 'escolar_claim' (código de associação)
+    inviteRole?: string; // só para 'institutional_invite'
+    inviteToken?: string; // só para 'institutional_invite'
+    orgName?: string; // só para 'institutional_invite'
 }
 
 export interface RenderedEmail {
@@ -130,5 +134,24 @@ export function renderEmail(input: EmailTemplateInput): RenderedEmail {
                     input.appUrl,
                 ),
             };
+
+        case "institutional_invite": {
+            const role = input.inviteRole ?? "membro";
+            const org = input.orgName ?? "uma organização";
+            const acceptUrl = input.appUrl
+                ? `${input.appUrl}/aceitar-convite?token=${input.inviteToken ?? ""}`
+                : undefined;
+            return {
+                subject: `Convite para a plataforma Ciência do Bem-Estar`,
+                html: shell(
+                    `Você foi convidado(a)! 🌟`,
+                    `<p>Você recebeu um convite para participar de <strong>${org}</strong> como <strong>${role}</strong> na plataforma Ciência do Bem-Estar.</p>` +
+                    (acceptUrl
+                        ? `<p style="margin:24px 0"><a href="${acceptUrl}" style="background:#f97316;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:bold">Aceitar convite</a></p>`
+                        : `<p>Crie sua conta na plataforma para aceitar o convite.</p>`) +
+                    `<p style="font-size:13px;color:#6b7280">Se não reconhece este convite, ignore este e-mail.</p>`,
+                ),
+            };
+        }
     }
 }
