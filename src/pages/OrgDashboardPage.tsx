@@ -8,6 +8,8 @@ import { useOrganization } from "@/hooks/useOrganization";
 import OnboardingWizard from "@/components/org/OnboardingWizard";
 import OperationalMetrics from "@/components/org/OperationalMetrics";
 import EngagementMetrics from "@/components/org/EngagementMetrics";
+import EngagementChart from "@/components/org/EngagementChart";
+import NpsEvolution from "@/components/org/NpsEvolution";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { generatePilotReportPDF } from "@/lib/generate-pilot-report-pdf";
@@ -474,6 +476,10 @@ export default function OrgDashboardPage() {
 
                     {/* Engagement Metrics — ONDA 6 */}
                     <EngagementMetrics organizationId={org.id} />
+
+                    {/* Engagement Evolution Chart — ONDA 7 */}
+                    <EngagementChart organizationId={org.id} />
+                    <NpsEvolution organizationId={org.id} />
 
                     {/* Operational Metrics — ONDA 5 */}
                     <OperationalMetrics organizationId={org.id} />
