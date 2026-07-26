@@ -15,6 +15,8 @@ import { AlegriaHeroCard, AlegriaTag } from "@/components/AlegriaCTA";
 import { ALEGRIA_AVATAR_URL } from "@/components/AlegriaAvatar";
 import { useNpsTrigger } from "@/hooks/useNpsTrigger";
 import NpsSurvey from "@/components/NpsSurvey";
+import StreakCalendar from "@/components/StreakCalendar";
+import DailyChallenge from "@/components/DailyChallenge";
 
 type ProgressRecord = Tables<"user_progress">;
 type ProfileRecord = Tables<"profiles">;
@@ -327,6 +329,11 @@ export default function DashboardPage() {
             </motion.div>
           )}
 
+          {/* Daily Challenge — microação do dia */}
+          <div className="mb-6">
+            <DailyChallenge />
+          </div>
+
           {/* AlegrIA — cérebro do ecossistema */}
           <AlegriaHeroCard />
 
@@ -379,6 +386,14 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Streak Calendar — 28 days visual */}
+          <div className="mb-6">
+            <StreakCalendar
+              activityDates={progress.map(p => p.created_at || "")}
+              currentStreak={streak}
+            />
           </div>
 
           {/* Stats */}
