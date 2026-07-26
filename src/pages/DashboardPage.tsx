@@ -18,6 +18,7 @@ import NpsSurvey from "@/components/NpsSurvey";
 import StreakCalendar from "@/components/StreakCalendar";
 import DailyChallenge from "@/components/DailyChallenge";
 import { trackEngagement } from "@/lib/engagement";
+import Certificate from "@/components/Certificate";
 
 type ProgressRecord = Tables<"user_progress">;
 type ProfileRecord = Tables<"profiles">;
@@ -414,6 +415,18 @@ export default function DashboardPage() {
               </motion.div>
             ))}
           </div>
+
+          {/* Certificate — shows when all 5 modules have at least 1 activity */}
+          {new Set(progress.filter(p => p.completed).map(p => p.module_id)).size >= 5 && (
+            <div className="mb-10">
+              <Certificate
+                studentName={displayName}
+                completionDate={new Date().toLocaleDateString("pt-BR")}
+                totalXp={totalXp}
+                modulesCompleted={5}
+              />
+            </div>
+          )}
 
           {/* Achievements */}
           <h2 className="text-2xl font-display font-bold mb-4">🏅 Conquistas</h2>
