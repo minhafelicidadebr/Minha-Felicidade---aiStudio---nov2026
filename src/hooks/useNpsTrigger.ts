@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const NPS_COOLDOWN_KEY = "nps_last_shown";
-const NPS_COOLDOWN_DAYS = 14; // Don't show again within 14 days
+const NPS_COOLDOWN_DAYS = 0; // TEMP: 0 para teste — voltar para 14 depois
 
 /**
  * Controls when the NPS micro-survey should appear.
