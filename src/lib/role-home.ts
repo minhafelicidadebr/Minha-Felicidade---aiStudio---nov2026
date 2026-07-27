@@ -58,17 +58,16 @@ export const DASHBOARD_ROLE_LABEL: Record<DashboardRole, string> = {
 /**
  * Destino canônico por papel (DASHBOARD-ROUTE-MAP).
  *
- * ATENÇÃO (dívida registrada em DECISIONS.md · UX-1): `/escolas` hoje é a
- * landing pública de aquisição. O mapa canônico do contrato aponta
- * school_admin → `/escolas`, mas o próprio contrato diz que o dashboard
- * escolar autenticado vive em `/escolas/:schoolId`. A UX-2 precisa desfazer
- * essa ambiguidade; até lá `resolveRoleHomePath` NÃO usa este valor para
- * school_admin (ver IMPLEMENTED_ROLE_HOME).
+ * D33 RESOLVIDA (UX-2): `/escolas` **permanece** a landing pública de
+ * aquisição e NÃO é home de papel algum. O painel escolar autenticado é
+ * `/escola/:schoolId` (singular, para não colidir com a landing no plural).
+ * A rota ainda não existe — é criada na UX-3 —, por isso
+ * `IMPLEMENTED_ROLE_HOME` continua mandando school_admin para `/org`.
  */
 export const CANONICAL_ROLE_HOME: Record<DashboardRole, string> = {
     platform_admin: "/admin",
     org_admin: "/org",
-    school_admin: "/escolas",
+    school_admin: "/escola/:schoolId",
     educator: "/professores",
     student: "/alunos",
 };
@@ -76,11 +75,11 @@ export const CANONICAL_ROLE_HOME: Record<DashboardRole, string> = {
 /**
  * Destino realmente navegável nesta onda.
  *
- * `/alunos`, `/professores` e `/escolas/:schoolId` são criados nas ondas
- * UX-2/3/4. Redirecionar para eles agora produziria 404. A UX-1 entrega a
- * infraestrutura de redirect role-aware apontando para as páginas que já
- * existem — migração incremental autorizada pelo DASHBOARD-MASTER-PLAN
- * ("com feature flag ou migração incremental").
+ * `/alunos`, `/professores` e `/escola/:schoolId` são criados nas ondas
+ * UX-3/UX-4. Redirecionar para eles agora produziria 404. A infraestrutura de
+ * redirect role-aware aponta para as páginas que já existem — migração
+ * incremental autorizada pelo DASHBOARD-MASTER-PLAN ("com feature flag ou
+ * migração incremental").
  */
 export const IMPLEMENTED_ROLE_HOME: Record<DashboardRole, string> = {
     platform_admin: "/admin",

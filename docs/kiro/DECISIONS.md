@@ -150,3 +150,34 @@
   renderizado duas vezes (uma por breakpoint), criando dois tab stops para a mesma ação — agora é
   uma instância única que reflui; (c) `formatFreshness` e os rótulos de período saíram dos módulos
   de componente para `src/lib/dashboard-format.ts` e `src/config/dashboard-filters.ts`.
+
+## 2026-07 · ONDA UX-2 — /org sobre o App Shell
+
+- **D43. D33 RESOLVIDA (decisão do humano, 2026-07):** `/escolas` **permanece** a landing pública
+  de aquisição e deixa de figurar como home de qualquer papel. O painel escolar autenticado será
+  `/escola/:schoolId` — **singular**, escolhido justamente para não colidir com a landing no
+  plural nem depender de precedência de rota. `CANONICAL_ROLE_HOME.school_admin` passou de
+  `/escolas` para `/escola/:schoolId`; `IMPLEMENTED_ROLE_HOME.school_admin` continua `/org` porque
+  a rota ainda não existe (criá-la é UX-3). O item de navegação `org-schools` aponta para o novo
+  caminho e segue `future: true` — não renderiza link morto.
+- **D44.** `OrgDashboardPage` migrou de `useOrganization` para `useDashboardContext` +
+  novo `useOrganizationDetail(organizationId)`. Motivo: `useOrganization` fixa a organização em
+  `.limit(1).maybeSingle()`, o que tornava o ContextSwitcher do shell decorativo (trocava o rótulo
+  no cabeçalho sem trocar os dados). Agora o `organizationId` vem do contexto ativo e a query é
+  keyed por ele, então trocar de rede refaz a leitura. `useOrganization.ts` foi **preservado**
+  (não quebrar outros consumidores); remover é limpeza de uma onda futura.
+- **D45.** Os quatro `return null` de `EngagementMetrics`/`EngagementChart`/`NpsEvolution`/
+  `OperationalMetrics` viraram `DashboardSkeleton` (carregando) e `DashboardEmptyState` (sem dado).
+  Honestidade: quando a RPC falha, o texto diz que o dado **não pôde ser carregado** — não finge
+  que o valor é zero. Um zero inventado num painel de gestor é pior que um estado vazio explícito.
+- **D46.** `EngagementChart` saiu de SVG escrito à mão para Recharts dentro de `ChartFrame`.
+  Ganho real: tabela alternativa, descrição acessível, tooltip e indicador de privacidade vêm da
+  moldura canônica em vez de serem reimplementados (ou esquecidos) por gráfico.
+- **D47.** Os cards de Escolas/Membros/Convites/Turmas passaram a informar `formula`, `source` e
+  `limitation` no `MetricCard`. As limitações são declaradas de propósito (ex.: convites expirados
+  ainda contam até a limpeza; turmas não distinguem ativas de encerradas) — sem isso o número
+  parece mais preciso do que é.
+- **D48. Dívida assumida:** o chunk de `OrgDashboardPage` ficou em ~882 kB porque Recharts e jsPDF
+  entram nele. Não é regressão de segurança nem quebra o gate (é warning de tamanho do Vite), mas
+  está registrado: resolver com `import()` dinâmico do gráfico e do gerador de PDF é candidato a
+  uma onda de performance, não a um remendo agora.
