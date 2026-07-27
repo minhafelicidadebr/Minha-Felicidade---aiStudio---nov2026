@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 import {
     Building2,
     School,
@@ -17,7 +16,8 @@ import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 import DashboardEmptyState from "@/components/dashboard/DashboardEmptyState";
 import DashboardErrorState from "@/components/dashboard/DashboardErrorState";
 import MetricCard from "@/components/dashboard/MetricCard";
-import { useOrganization } from "@/hooks/useOrganization";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { useOrganizationDetail } from "@/hooks/useOrganizationDetail";
 import OnboardingWizard from "@/components/org/OnboardingWizard";
 import OperationalMetrics from "@/components/org/OperationalMetrics";
 import EngagementMetrics from "@/components/org/EngagementMetrics";
@@ -28,8 +28,10 @@ import { useToast } from "@/hooks/use-toast";
 import { generatePilotReportPDF } from "@/lib/generate-pilot-report-pdf";
 
 export default function OrgDashboardPage() {
-    const navigate = useNavigate();
-    const { org, schools, classes, members, invitations, loading, error, refetch } = useOrganization();
+    // Organização ativa vem do ContextSwitcher (shell) — reage à troca no switcher.
+    const { activeOrganization } = useDashboardContext();
+    const { org, schools, classes, members, invitations, loading, error, refetch } =
+        useOrganizationDetail(activeOrganization?.id);
     const { toast } = useToast();
 
     // Invite form state
