@@ -135,3 +135,39 @@ security gate.
 
 **Não homologado visualmente:** o shell ainda não está montado em nenhuma página (instrução da
 onda). A verificação de pixel/screenshot acontece quando a UX-2 montar `/org` sobre o shell.
+
+## 2026-07 · ONDA UX-2 — /org sobre o App Shell
+
+Escopo executado:
+
+- **Passo 1 — Shell verificável:** `OrgDashboardPage.tsx` envolvido com `<RoleAwareAppShell
+  title="Visão da rede" subtitle="Implantação, adesão e decisões">`. Removidos `<Navbar>` e
+  `<Footer>` locais. Loading usa `DashboardSkeleton variant=page`, erro usa
+  `DashboardErrorState` com retry, org não encontrada usa `DashboardEmptyState`.
+- **Passo 2 — return null eliminados (contrato §4):** `EngagementMetrics`, `EngagementChart`,
+  `NpsEvolution`, `OperationalMetrics` agora usam `DashboardSkeleton`/`DashboardEmptyState` em
+  vez de retornar `null` silenciosamente.
+- **Passo 3 — MetricCard canônico:** cards de Escolas/Membros/Convites/Turmas migrados para
+  `MetricCard` com formula, source, limitation, updatedAt.
+- **Passo 4 — Recharts + ChartFrame:** `EngagementChart.tsx` reescrito de SVG manual para
+  `ChartContainer` (Recharts) + `ChartFrame` (tabela alternativa acessível, PrivacyIndicator,
+  descrição).
+- **Multi-organização:** criado `useOrganizationDetail` (React Query, keyed por orgId). A página
+  agora lê `activeOrganization` de `useDashboardContext` e reage à troca no ContextSwitcher.
+  `useOrganization` preservado (outros consumidores).
+
+Arquivos alterados/criados:
+- `src/pages/OrgDashboardPage.tsx` (reescrito)
+- `src/hooks/useOrganizationDetail.ts` (novo)
+- `src/components/org/EngagementChart.tsx` (reescrito: SVG → Recharts)
+- `src/components/org/EngagementMetrics.tsx` (fix return null)
+- `src/components/org/NpsEvolution.tsx` (fix return null)
+- `src/components/org/OperationalMetrics.tsx` (fix return null)
+
+Gate UX-2: `npm run quality` verde — audit, lint (0 warnings), typecheck, 166 testes, build,
+security gate.
+
+Decisão pendente D33: school_admin → /escolas (landing) vs /escolas/:schoolId (dashboard
+autenticado). Mantido comportamento atual (school_admin → /org via IMPLEMENTED_ROLE_HOME).
+
+PR: #37 (ux-2-org-dashboard → main).

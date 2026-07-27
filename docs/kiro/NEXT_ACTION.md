@@ -1,44 +1,42 @@
 # NEXT_ACTION
 
-## Estado: ONDA UX-1 concluída — parada no gate, como instruído
+## Estado: ONDA UX-2 concluída — PR #37 aberto
 
-`npm run quality` verde: 18 arquivos de teste, 166 testes (83 novos), lint com 0 warnings,
-typecheck, build e security gate. Nenhuma biblioteca nova. Nenhum dashboard redesenhado.
+`npm run quality` verde: 18 arquivos de teste, 166 testes, lint 0 warnings, typecheck, build,
+security gate. Nenhuma biblioteca nova. Nenhuma migration criada.
 
-Entregue: papel→home canônico, navegação por papel, `/inicio` role-aware, contexto organizacional
-com switcher, componentes-base (MetricCard, InsightCard, DecisionQueue, ChartFrame com tabela
-alternativa), estados canônicos (loading/empty/denied/demo/erro) e responsividade homologada por
-teste em 320/375/390/768/1024/1280/1440.
+Entregue: OrgDashboardPage sobre RoleAwareAppShell, estados canônicos (Skeleton/Empty/Error),
+MetricCards com contrato completo, EngagementChart em Recharts + ChartFrame, eliminação de
+`return null` em 4 componentes, migração para useDashboardContext (multi-org via ContextSwitcher).
 
-## Próxima ação (ONDA UX-2 — /org + /escolas)
+## Decisão pendente (D33) — perguntar ao humano
 
-**Primeiro passo, obrigatório antes de qualquer redesign de conteúdo:** montar
-`src/pages/OrgDashboardPage.tsx` sobre `RoleAwareAppShell` (remover `Navbar`/`Footer` locais,
-manter a lógica de dados atual). Isso:
-1. torna o shell verificável visualmente (hoje ele não está montado em nenhuma rota);
-2. valida os estados canônicos com dados reais;
-3. só depois vale extrair `DecisionQueue`, funil e portfólio de escolas.
+O route map do contrato manda:
+- `school_admin` → `/escolas` (mas `/escolas` hoje é a landing pública de aquisição)
+- O dashboard autenticado deveria ser `/escolas/:schoolId`
 
-Em seguida, na UX-2:
-- Resolver a ambiguidade **D33**: `school_admin` → `/escolas` (landing pública) vs
-  `/escolas/:schoolId` (dashboard autenticado). Decidir e atualizar `role-home.ts` + contrato.
-- Migrar `/org` de `useOrganization` (`.limit(1)`) para `useDashboardContext` (multi-organização).
-- Substituir `EngagementChart.tsx` (SVG manual) por Recharts dentro de `ChartFrame`.
-- Reescrever os `return null` de `EngagementMetrics`/`NpsEvolution`/`OperationalMetrics` usando
-  `DashboardSkeleton`/`DashboardEmptyState`/`DashboardErrorState`.
-- RPCs agregadas por organização/escola com filtro de período e limiar de privacidade (N≥5).
+**Sugestão:** manter `/escolas` como landing pública, criar `/escola/:id` como painel autenticado
+na UX-3 (single school dashboard). Confirmar com o humano antes de implementar.
+
+## Próxima ação (ONDA UX-3 — escola + docente)
+
+Pendente de D33, mas o backlog da UX-3 inclui:
+1. Resolver D33 e atualizar `IMPLEMENTED_ROLE_HOME` para `school_admin`.
+2. Criar `/escola/:id` (single school dashboard) com o mesmo shell.
+3. Migrar `/admin` (educator) para o shell (hoje `AdminPage.tsx` ainda usa Navbar/Footer).
+4. Mover `/admin` para a rota que o contrato quer (requer atualizar `security-gate.mjs`).
+5. RPCs agregadas por escola com filtro de período e limiar de privacidade (N≥5).
+6. DecisionQueue integrada na /org com ações reais (aprovar convite, escalar alerta).
 
 ## Riscos e dívidas registrados
 
-- **Shell não homologado visualmente** (D38) — não há screenshot possível enquanto nenhuma página o
-  monta. Mitigação: 20 testes de viewport verificam o comportamento por breakpoint (drawer em
-  mobile, navegação persistente em ≥768, landmark único, espaço para bottom nav).
-- **D33** ambiguidade `/escolas` no contrato — pendente de decisão humana na UX-2.
-- **`/admin` continua servindo professor/gestor** — o contrato quer `/admin` reservado à plataforma,
-  mas `scripts/security-gate.mjs` exige o literal
-  `path: "/admin", element: <AdminPage />, roles: ["teacher", "manager"]`. Mover é UX-3 e requer
-  atualizar o security gate na mesma mudança.
-- `useOrganization` ainda com `.limit(1)` (intencional; migração UX-2).
+- **D33** ambiguidade `/escolas` no contrato — pendente decisão humana.
+- **Chunk grande** — OrgDashboardPage ~882 kB (Recharts inlined). Não bloqueante; pode ser
+  resolvido com dynamic import de Recharts numa onda futura.
+- **`/admin` continua servindo professor/gestor** — o contrato quer `/admin` reservado à
+  plataforma, mas `scripts/security-gate.mjs` exige o literal
+  `path: "/admin", element: <AdminPage />, roles: ["teacher", "manager"]`. Mover é UX-3.
+- `useOrganization` ainda existe (outros consumidores); remoção quando não for mais necessário.
 - Dois vocabulários de papel no banco (D29) — unificação opcional, não bloqueante.
 
 ## Backlog anterior (mantido)
