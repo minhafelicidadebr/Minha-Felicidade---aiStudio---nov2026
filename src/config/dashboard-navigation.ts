@@ -115,10 +115,12 @@ export const DASHBOARD_NAV_ITEMS: readonly DashboardNavItem[] = [
 
     // ── Gestão ───────────────────────────────────────────────────────────────
     {
+        // D33 (UX-2): `/escolas` é landing pública; o painel autenticado por
+        // escola é `/escola/:schoolId`, criado na UX-3. Segue `future` até lá.
         key: "org-schools",
         label: "Escolas",
         shortLabel: "Escolas",
-        href: "/escolas/:schoolId",
+        href: "/escola/:schoolId",
         icon: School,
         group: "gestao",
         roles: ALL_INSTITUTIONAL,

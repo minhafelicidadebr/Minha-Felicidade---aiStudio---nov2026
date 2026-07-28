@@ -37,6 +37,22 @@ describe("navegação por papel", () => {
         }
     });
 
+    // D33 (resolvida na UX-2): /escolas é landing pública de aquisição. Um item de
+    // navegação do app autenticado apontando para lá jogaria a pessoa fora do painel.
+    it("não aponta para a landing pública /escolas", () => {
+        for (const item of DASHBOARD_NAV_ITEMS) {
+            expect(item.href).not.toBe("/escolas");
+        }
+    });
+
+    it("nenhum item navegável hoje tem parâmetro de rota não resolvido", () => {
+        for (const role of ROLES) {
+            for (const item of getNavItemsForRole(role)) {
+                expect(item.href).not.toContain(":");
+            }
+        }
+    });
+
     it("bottom nav respeita o limite de itens e não duplica destino", () => {
         for (const role of ROLES) {
             const items = getMobileNavItemsForRole(role);

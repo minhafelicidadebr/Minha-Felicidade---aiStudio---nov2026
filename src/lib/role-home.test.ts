@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
     CANONICAL_ROLE_HOME,
+    IMPLEMENTED_ROLE_HOME,
     canSeeInstitutionalData,
     fromMembershipRoles,
     resolveDashboardRole,
@@ -65,6 +66,29 @@ describe("resolveRoleHomePath", () => {
         expect(resolveRoleHomePath(["educator"], { canonical: true })).toBe("/professores");
         expect(resolveRoleHomePath(["org_admin"], { canonical: true })).toBe("/org");
         expect(resolveRoleHomePath(["platform_admin"], { canonical: true })).toBe("/admin");
+    });
+
+    // D33 (resolvida na UX-2): /escolas é landing PÚBLICA de aquisição. Mandar um
+    // papel autenticado para lá o tiraria do app. O painel escolar é /escola/:schoolId.
+    it("não usa a landing pública /escolas como home de papel algum", () => {
+        for (const path of Object.values(CANONICAL_ROLE_HOME)) {
+            expect(path).not.toBe("/escolas");
+        }
+        for (const path of Object.values(IMPLEMENTED_ROLE_HOME)) {
+            expect(path).not.toBe("/escolas");
+        }
+    });
+
+    it("coordenação da escola tem /escola/:schoolId como destino canônico (D33)", () => {
+        expect(CANONICAL_ROLE_HOME.school_admin).toBe("/escola/:schoolId");
+    });
+
+    // Enquanto /escola/:schoolId não existir, o destino navegável não pode conter
+    // parâmetro — navegar para o literal ":schoolId" seria um 404.
+    it("nenhum destino navegável hoje contém parâmetro de rota não resolvido", () => {
+        for (const path of Object.values(IMPLEMENTED_ROLE_HOME)) {
+            expect(path).not.toContain(":");
+        }
     });
 
     it("todo destino resolvido é um caminho interno absoluto", () => {

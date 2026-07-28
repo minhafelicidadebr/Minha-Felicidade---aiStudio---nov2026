@@ -1,44 +1,46 @@
 # NEXT_ACTION
 
-## Estado: ONDA UX-1 concluída — parada no gate, como instruído
+## Estado: ONDA UX-2 concluída — PR #37 aberto
 
-`npm run quality` verde: 18 arquivos de teste, 166 testes (83 novos), lint com 0 warnings,
-typecheck, build e security gate. Nenhuma biblioteca nova. Nenhum dashboard redesenhado.
+`npm run quality` verde: 18 arquivos de teste, 166 testes, lint 0 warnings, typecheck, build,
+security gate. Nenhuma biblioteca nova. Nenhuma migration criada.
 
-Entregue: papel→home canônico, navegação por papel, `/inicio` role-aware, contexto organizacional
-com switcher, componentes-base (MetricCard, InsightCard, DecisionQueue, ChartFrame com tabela
-alternativa), estados canônicos (loading/empty/denied/demo/erro) e responsividade homologada por
-teste em 320/375/390/768/1024/1280/1440.
+Entregue: OrgDashboardPage sobre RoleAwareAppShell, estados canônicos (Skeleton/Empty/Error),
+MetricCards com contrato completo, EngagementChart em Recharts + ChartFrame, eliminação de
+`return null` em 4 componentes, migração para useDashboardContext (multi-org via ContextSwitcher).
 
-## Próxima ação (ONDA UX-2 — /org + /escolas)
+## D33 — RESOLVIDA (decisão do humano)
 
-**Primeiro passo, obrigatório antes de qualquer redesign de conteúdo:** montar
-`src/pages/OrgDashboardPage.tsx` sobre `RoleAwareAppShell` (remover `Navbar`/`Footer` locais,
-manter a lógica de dados atual). Isso:
-1. torna o shell verificável visualmente (hoje ele não está montado em nenhuma rota);
-2. valida os estados canônicos com dados reais;
-3. só depois vale extrair `DecisionQueue`, funil e portfólio de escolas.
+`/escolas` **permanece** a landing pública de aquisição. O painel escolar autenticado será
+`/escola/:schoolId` (singular, para não colidir com a landing no plural).
 
-Em seguida, na UX-2:
-- Resolver a ambiguidade **D33**: `school_admin` → `/escolas` (landing pública) vs
-  `/escolas/:schoolId` (dashboard autenticado). Decidir e atualizar `role-home.ts` + contrato.
-- Migrar `/org` de `useOrganization` (`.limit(1)`) para `useDashboardContext` (multi-organização).
-- Substituir `EngagementChart.tsx` (SVG manual) por Recharts dentro de `ChartFrame`.
-- Reescrever os `return null` de `EngagementMetrics`/`NpsEvolution`/`OperationalMetrics` usando
-  `DashboardSkeleton`/`DashboardEmptyState`/`DashboardErrorState`.
-- RPCs agregadas por organização/escola com filtro de período e limiar de privacidade (N≥5).
+Já aplicado nesta onda: `CANONICAL_ROLE_HOME.school_admin = "/escola/:schoolId"` e o item de
+navegação `org-schools` aponta para o novo caminho (segue `future: true`, sem link morto).
+`IMPLEMENTED_ROLE_HOME.school_admin` continua `/org` até a rota existir.
+
+## Próxima ação (ONDA UX-3 — escola + docente)
+
+1. **Criar a rota `/escola/:schoolId`** (painel escolar autenticado) sobre `RoleAwareAppShell`,
+   com `RequireRole` para school_admin/org_admin/platform_admin e verificação de que o
+   `schoolId` pertence a uma organização que a pessoa pode ver.
+2. Apontar `IMPLEMENTED_ROLE_HOME.school_admin` para `/escola/:schoolId` e remover
+   `future: true` do item `org-schools`.
+3. Migrar `/admin` (educator) para o shell (hoje `AdminPage.tsx` ainda usa Navbar/Footer).
+4. Mover `/admin` para a rota que o contrato quer (requer atualizar `security-gate.mjs` na
+   MESMA mudança — o gate exige o literal atual).
+5. RPCs agregadas por escola com filtro de período e limiar de privacidade (N≥5).
+6. DecisionQueue integrada na /org com ações reais (aprovar convite, escalar alerta).
 
 ## Riscos e dívidas registrados
 
-- **Shell não homologado visualmente** (D38) — não há screenshot possível enquanto nenhuma página o
-  monta. Mitigação: 20 testes de viewport verificam o comportamento por breakpoint (drawer em
-  mobile, navegação persistente em ≥768, landmark único, espaço para bottom nav).
-- **D33** ambiguidade `/escolas` no contrato — pendente de decisão humana na UX-2.
-- **`/admin` continua servindo professor/gestor** — o contrato quer `/admin` reservado à plataforma,
-  mas `scripts/security-gate.mjs` exige o literal
-  `path: "/admin", element: <AdminPage />, roles: ["teacher", "manager"]`. Mover é UX-3 e requer
-  atualizar o security gate na mesma mudança.
-- `useOrganization` ainda com `.limit(1)` (intencional; migração UX-2).
+- **`/escola/:schoolId` ainda não existe** — o mapa canônico já aponta para ela, mas quem tem só
+  `school_admin` continua caindo em `/org` (comportamento correto e testado; não é 404).
+- **Chunk grande** (D48) — OrgDashboardPage ~882 kB (Recharts + jsPDF inlined). Não bloqueante;
+  resolver com `import()` dinâmico numa onda de performance.
+- **`/admin` continua servindo professor/gestor** — o contrato quer `/admin` reservado à
+  plataforma, mas `scripts/security-gate.mjs` exige o literal
+  `path: "/admin", element: <AdminPage />, roles: ["teacher", "manager"]`. Mover é UX-3.
+- `useOrganization` ainda existe (outros consumidores); remoção quando não for mais necessário.
 - Dois vocabulários de papel no banco (D29) — unificação opcional, não bloqueante.
 
 ## Backlog anterior (mantido)

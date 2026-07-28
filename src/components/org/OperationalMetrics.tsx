@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Activity, Zap, AlertTriangle, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
+import DashboardEmptyState from "@/components/dashboard/DashboardEmptyState";
 
 interface Props {
     organizationId: string;
@@ -36,7 +38,32 @@ export default function OperationalMetrics({ organizationId }: Props) {
         fetch();
     }, [organizationId]);
 
-    if (loading || !metrics) return null;
+    if (loading) {
+        return (
+            <section className="mb-8">
+                <h2 className="text-lg font-display font-bold mb-3 flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-accent" /> Operação
+                </h2>
+                <DashboardSkeleton variant="metrics" count={4} label="Carregando métricas operacionais" />
+            </section>
+        );
+    }
+
+    if (!metrics) {
+        return (
+            <section className="mb-8">
+                <h2 className="text-lg font-display font-bold mb-3 flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-accent" /> Operação
+                </h2>
+                <DashboardEmptyState
+                    variant="empty"
+                    title="Métricas operacionais indisponíveis"
+                    description="Os dados operacionais não puderam ser carregados. A RPC pode não estar disponível ainda."
+                    icon={Activity}
+                />
+            </section>
+        );
+    }
 
     const items = [
         { icon: Zap, label: "IA hoje", value: metrics.ai_usage_today, suffix: "chamadas", color: "text-primary" },

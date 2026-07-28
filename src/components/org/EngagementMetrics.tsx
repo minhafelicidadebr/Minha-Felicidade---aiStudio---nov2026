@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Activity, Brain, Flame, Users, TrendingUp, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
+import DashboardEmptyState from "@/components/dashboard/DashboardEmptyState";
 
 interface EngagementData {
     organization_id: string;
@@ -47,8 +49,32 @@ export default function EngagementMetrics({ organizationId }: Props) {
         fetchMetrics();
     }, [organizationId]);
 
-    if (loading) return null;
-    if (!data) return null;
+    if (loading) {
+        return (
+            <section className="mt-8">
+                <h2 className="text-lg font-display font-bold mb-3 flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-primary" /> Engajamento do Piloto
+                </h2>
+                <DashboardSkeleton variant="metrics" count={4} label="Carregando métricas de engajamento" />
+            </section>
+        );
+    }
+
+    if (!data) {
+        return (
+            <section className="mt-8">
+                <h2 className="text-lg font-display font-bold mb-3 flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-primary" /> Engajamento do Piloto
+                </h2>
+                <DashboardEmptyState
+                    variant="empty"
+                    title="Métricas de engajamento indisponíveis"
+                    description="Os dados de engajamento não puderam ser carregados. A RPC pode não estar disponível ainda."
+                    icon={Activity}
+                />
+            </section>
+        );
+    }
 
     const npsScore = data.nps_count > 0
         ? Math.round(((data.nps_promoters - data.nps_detractors) / data.nps_count) * 100)

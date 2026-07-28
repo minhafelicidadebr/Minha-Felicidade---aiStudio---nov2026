@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import { TrendingUp } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
+import ChartFrame from "@/components/dashboard/ChartFrame";
+import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
+import DashboardEmptyState from "@/components/dashboard/DashboardEmptyState";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 
 interface WeeklyDataPoint {
     week: string; // "Sem 1", "Sem 2"...
@@ -13,9 +18,24 @@ interface Props {
     organizationId: string;
 }
 
+const chartConfig = {
+    sessions: {
+        label: "Sessões",
+        color: "#f97316",
+    },
+    exercises: {
+        label: "Exercícios",
+        color: "#34d399",
+    },
+    aiInteractions: {
+        label: "Interações IA",
+        color: "#8b5cf6",
+    },
+} satisfies ChartConfig;
+
 /**
  * Line chart showing weekly engagement evolution over the pilot period.
- * SVG-based (no external charting library). Progressive disclosure design.
+ * Uses Recharts + ChartFrame for accessibility (table alternative, description).
  */
 export default function EngagementChart({ organizationId }: Props) {
     const [data, setData] = useState<WeeklyDataPoint[]>([]);
@@ -73,123 +93,97 @@ export default function EngagementChart({ organizationId }: Props) {
         fetchWeeklyData();
     }, [organizationId]);
 
-    if (loading) return null;
-    if (data.length === 0 || data.every(d => d.sessions === 0 && d.exercises === 0 && d.aiInteractions === 0)) {
-        return null; // No data yet
+    if (loading) {
+        return (
+            <section className="mt-6">
+                <DashboardSkeleton variant="chart" label="Carregando gráfico de engajamento" />
+            </section>
+        );
     }
 
-    const maxVal = Math.max(
-        ...data.map(d => Math.max(d.sessions, d.exercises, d.aiInteractions)),
-        1
-    );
+    if (data.length === 0 || data.every(d => d.sessions === 0 && d.exercises === 0 && d.aiInteractions === 0)) {
+        return (
+            <section className="mt-6">
+                <DashboardEmptyState
+                    variant="empty"
+                    title="Sem dados de engajamento semanal"
+                    description="O gráfico de evolução aparecerá aqui quando houver atividade registrada nos últimos 56 dias."
+                    icon={TrendingUp}
+                />
+            </section>
+        );
+    }
 
-    const chartW = 320;
-    const chartH = 120;
-    const padX = 30;
-    const padY = 15;
-    const innerW = chartW - padX * 2;
-    const innerH = chartH - padY * 2;
-
-    const toX = (i: number) => padX + (i / (data.length - 1)) * innerW;
-    const toY = (val: number) => padY + innerH - (val / maxVal) * innerH;
-
-    const makePath = (key: keyof Pick<WeeklyDataPoint, "sessions" | "exercises" | "aiInteractions">) => {
-        return data.map((d, i) => `${i === 0 ? "M" : "L"} ${toX(i)} ${toY(d[key])}`).join(" ");
-    };
-
-    const lines = [
-        { key: "sessions" as const, color: "#f97316", label: "Sessões" },
-        { key: "exercises" as const, color: "#34d399", label: "Exercícios" },
-        { key: "aiInteractions" as const, color: "#8b5cf6", label: "IA" },
+    const tableColumns = [
+        { key: "week", label: "Semana" },
+        { key: "sessions", label: "Sessões", numeric: true },
+        { key: "exercises", label: "Exercícios", numeric: true },
+        { key: "aiInteractions", label: "Interações IA", numeric: true },
     ];
+
+    const tableRows = data.map(d => ({
+        week: d.week,
+        sessions: d.sessions,
+        exercises: d.exercises,
+        aiInteractions: d.aiInteractions,
+    }));
 
     return (
         <section className="mt-6">
-            <h3 className="text-sm font-display font-bold mb-3 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary" /> Evolução semanal
-            </h3>
-            <div className="p-5 rounded-2xl glass-card">
-                {/* Legend */}
-                <div className="flex items-center gap-4 mb-3">
-                    {lines.map((l) => (
-                        <div key={l.key} className="flex items-center gap-1.5">
-                            <span className="w-3 h-0.5 rounded-full" style={{ backgroundColor: l.color, display: "inline-block" }} />
-                            <span className="text-[10px] text-muted-foreground">{l.label}</span>
-                        </div>
-                    ))}
-                </div>
-
-                {/* SVG Chart */}
-                <svg viewBox={`0 0 ${chartW} ${chartH}`} className="w-full h-32" preserveAspectRatio="xMidYMid meet">
-                    {/* Grid lines */}
-                    {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
-                        <line
-                            key={ratio}
-                            x1={padX}
-                            y1={padY + innerH * (1 - ratio)}
-                            x2={padX + innerW}
-                            y2={padY + innerH * (1 - ratio)}
-                            stroke="currentColor"
-                            strokeOpacity={0.1}
-                            strokeDasharray="2,3"
+            <ChartFrame
+                title="Evolução semanal"
+                description="Sessões, exercícios e interações com IA por semana nas últimas 8 semanas. Dados agregados sem identificação individual."
+                columns={tableColumns}
+                rows={tableRows}
+                period="últimas 8 semanas"
+                privacyScope="aggregate"
+                footnote="Eventos contabilizados: session_start, exercise/quiz/dynamic/flashcard_complete, ai_interaction"
+            >
+                <ChartContainer config={chartConfig} className="h-[220px] w-full">
+                    <LineChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
+                        <XAxis
+                            dataKey="week"
+                            tick={{ fontSize: 11 }}
+                            tickLine={false}
+                            axisLine={false}
+                            className="fill-muted-foreground"
                         />
-                    ))}
-
-                    {/* Lines */}
-                    {lines.map((l) => (
-                        <path
-                            key={l.key}
-                            d={makePath(l.key)}
-                            fill="none"
-                            stroke={l.color}
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+                        <YAxis
+                            tick={{ fontSize: 11 }}
+                            tickLine={false}
+                            axisLine={false}
+                            width={32}
+                            className="fill-muted-foreground"
                         />
-                    ))}
-
-                    {/* Dots */}
-                    {lines.map((l) =>
-                        data.map((d, i) => (
-                            <circle
-                                key={`${l.key}-${i}`}
-                                cx={toX(i)}
-                                cy={toY(d[l.key])}
-                                r="3"
-                                fill={l.color}
-                                opacity={d[l.key] > 0 ? 1 : 0.3}
-                            />
-                        ))
-                    )}
-
-                    {/* X labels */}
-                    {data.map((d, i) => (
-                        <text
-                            key={i}
-                            x={toX(i)}
-                            y={chartH - 2}
-                            textAnchor="middle"
-                            fontSize="7"
-                            fill="currentColor"
-                            opacity={0.4}
-                        >
-                            {d.week}
-                        </text>
-                    ))}
-
-                    {/* Y max label */}
-                    <text x={padX - 4} y={padY + 3} textAnchor="end" fontSize="7" fill="currentColor" opacity={0.4}>
-                        {maxVal}
-                    </text>
-                    <text x={padX - 4} y={padY + innerH + 3} textAnchor="end" fontSize="7" fill="currentColor" opacity={0.4}>
-                        0
-                    </text>
-                </svg>
-
-                <p className="text-[10px] text-muted-foreground mt-2">
-                    Últimas 8 semanas · Dados agregados sem identificação individual
-                </p>
-            </div>
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Line
+                            type="monotone"
+                            dataKey="sessions"
+                            stroke="var(--color-sessions)"
+                            strokeWidth={2}
+                            dot={{ r: 3 }}
+                            activeDot={{ r: 5 }}
+                        />
+                        <Line
+                            type="monotone"
+                            dataKey="exercises"
+                            stroke="var(--color-exercises)"
+                            strokeWidth={2}
+                            dot={{ r: 3 }}
+                            activeDot={{ r: 5 }}
+                        />
+                        <Line
+                            type="monotone"
+                            dataKey="aiInteractions"
+                            stroke="var(--color-aiInteractions)"
+                            strokeWidth={2}
+                            dot={{ r: 3 }}
+                            activeDot={{ r: 5 }}
+                        />
+                    </LineChart>
+                </ChartContainer>
+            </ChartFrame>
         </section>
     );
 }

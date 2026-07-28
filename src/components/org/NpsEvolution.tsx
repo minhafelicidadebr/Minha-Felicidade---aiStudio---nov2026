@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
+import DashboardEmptyState from "@/components/dashboard/DashboardEmptyState";
 
 interface WeeklyNps {
     week: string;
@@ -65,8 +67,26 @@ export default function NpsEvolution({ organizationId }: Props) {
         fetch();
     }, [organizationId]);
 
-    if (loading) return null;
-    if (data.every(d => d.count === 0)) return null;
+    if (loading) {
+        return (
+            <section className="mt-4">
+                <DashboardSkeleton variant="chart" label="Carregando evolução NPS" />
+            </section>
+        );
+    }
+
+    if (data.every(d => d.count === 0)) {
+        return (
+            <section className="mt-4">
+                <DashboardEmptyState
+                    variant="empty"
+                    title="Sem dados de NPS"
+                    description="As respostas NPS aparecerão aqui quando os alunos avaliarem a plataforma."
+                    icon={Star}
+                />
+            </section>
+        );
+    }
 
     const filledWeeks = data.filter(d => d.count > 0);
     const trend = filledWeeks.length >= 2
