@@ -1,10 +1,24 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+// UX-3 — Painel docente sobre a casca compartilhada, servido em `/professores`.
+//
+// Saiu de `/admin` (que passou a ser a Landing Administrativa, §D3/D51) e
+// deixou de usar `Navbar`/`Footer`: a navegação agora é a do papel.
+//
+// Três correções de contrato feitas aqui:
+//   • 401 e 403 eram o mesmo estado ("Acesso negado"); agora são distintos,
+//     porque as ações da pessoa são diferentes (entrar vs. pedir permissão);
+//   • `return null` silencioso foi substituído por estado explicado;
+//   • amostra insuficiente não mostra `0` — mostra o motivo.
+
+import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { modules } from "@/data/courseData";
-import Navbar from "@/components/Navbar";
-import { Activity, ArrowLeft, BarChart3, Lock, Shield, Trophy, Users } from "lucide-react";
+import RoleAwareAppShell from "@/components/dashboard/RoleAwareAppShell";
+import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
+import DashboardEmptyState from "@/components/dashboard/DashboardEmptyState";
+import DashboardErrorState from "@/components/dashboard/DashboardErrorState";
+import PrivacyIndicator from "@/components/dashboard/PrivacyIndicator";
+import { Activity, BarChart3, Lock, Shield, Trophy, Users } from "lucide-react";
 
 interface AdminData {
   role: string;
@@ -49,20 +63,30 @@ const ACTIVITY_LABELS: Record<string, string> = {
   evidence: "Evidencias",
 };
 
+/** Falha classificada: 401 e 403 pedem ações diferentes da pessoa. */
+type AdminFailure =
+  | { kind: "unauthenticated" }
+  | { kind: "forbidden"; message: string }
+  | { kind: "technical"; message: string };
+
+const TITLE = "Painel pedagógico";
+const SUBTITLE = "Indicadores agregados, sem identificação de estudante";
+
 export default function AdminPage() {
   const [data, setData] = useState<AdminData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
+  const [failure, setFailure] = useState<AdminFailure | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setFailure(null);
+    try {
       const {
         data: { session },
       } = await supabase.auth.getSession();
 
       if (!session) {
-        navigate("/auth");
+        setFailure({ kind: "unauthenticated" });
         return;
       }
 
@@ -75,70 +99,104 @@ export default function AdminPage() {
 
       if (!resp.ok) {
         const body = await resp.json().catch(() => ({}));
-        setError(body.error || "Acesso negado");
-        setLoading(false);
+        const message = typeof body.error === "string" ? body.error : "";
+        if (resp.status === 401) {
+          setFailure({ kind: "unauthenticated" });
+        } else if (resp.status === 403) {
+          setFailure({ kind: "forbidden", message });
+        } else {
+          setFailure({ kind: "technical", message: message || `Falha ${resp.status} na leitura.` });
+        }
         return;
       }
 
-      setData(await resp.json());
+      setData((await resp.json()) as AdminData);
+    } catch (caught) {
+      setFailure({
+        kind: "technical",
+        message: caught instanceof Error ? caught.message : "Falha de rede.",
+      });
+    } finally {
       setLoading(false);
-    };
+    }
+  }, []);
 
-    fetchData();
-  }, [navigate]);
+  useEffect(() => {
+    void fetchData();
+  }, [fetchData]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-10 h-10 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
-      </div>
+      <RoleAwareAppShell title={TITLE} subtitle="Carregando…">
+        <DashboardSkeleton variant="page" label="Carregando indicadores pedagógicos agregados" />
+      </RoleAwareAppShell>
     );
   }
 
-  if (error) {
+  // 401 — a pessoa precisa entrar. Não é falta de permissão.
+  if (failure?.kind === "unauthenticated") {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container pt-24 text-center">
-          <Shield className="w-16 h-16 text-destructive mx-auto mb-4" />
-          <h1 className="text-2xl font-display font-bold mb-2">Acesso restrito</h1>
-          <p className="text-muted-foreground mb-6">{error}</p>
-          <button onClick={() => navigate("/dashboard")} className="text-primary hover:underline">
-            Voltar ao Dashboard
-          </button>
-        </div>
-      </div>
+      <RoleAwareAppShell title={TITLE} subtitle={SUBTITLE}>
+        <DashboardEmptyState
+          variant="denied"
+          title="Sua sessão expirou"
+          description="Entre novamente para ver os indicadores pedagógicos."
+          icon={Lock}
+          action={{ label: "Entrar", to: "/auth" }}
+        />
+      </RoleAwareAppShell>
     );
   }
 
-  if (!data) return null;
+  // 403 — a pessoa está autenticada, mas o papel não alcança este painel.
+  if (failure?.kind === "forbidden") {
+    return (
+      <RoleAwareAppShell title={TITLE} subtitle={SUBTITLE}>
+        <DashboardEmptyState
+          variant="denied"
+          title="Este painel exige papel de docente ou gestor"
+          description={
+            failure.message ||
+            "Sua conta está autenticada, mas não tem o papel exigido para ler indicadores agregados."
+          }
+          hint="Se você deveria ter acesso, peça à gestão da rede para ajustar o papel da sua conta."
+          icon={Shield}
+        />
+      </RoleAwareAppShell>
+    );
+  }
+
+  if (failure?.kind === "technical") {
+    return (
+      <RoleAwareAppShell title={TITLE} subtitle={SUBTITLE}>
+        <DashboardErrorState
+          title="Não conseguimos carregar os indicadores"
+          description="A falha é na leitura dos indicadores. Nada foi alterado."
+          detail={failure.message}
+          onRetry={() => void fetchData()}
+        />
+      </RoleAwareAppShell>
+    );
+  }
+
+  // Sem dado e sem falha classificada: estado explicado, nunca `return null`.
+  if (!data) {
+    return (
+      <RoleAwareAppShell title={TITLE} subtitle={SUBTITLE}>
+        <DashboardEmptyState
+          variant="empty"
+          title="Sem indicadores para exibir"
+          description="A leitura foi concluída, mas não veio nenhum indicador. Isso acontece quando ainda não há atividade registrada no escopo da sua conta."
+          icon={BarChart3}
+        />
+      </RoleAwareAppShell>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container pt-24 pb-16 max-w-6xl">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
-          >
-            <ArrowLeft className="w-4 h-4" /> Voltar
-          </button>
-
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-2xl gradient-warm flex items-center justify-center">
-              <BarChart3 className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-display font-bold">
-                Painel {data.role === "manager" ? "do Gestor" : "do Professor"}
-              </h1>
-              <p className="text-muted-foreground text-sm">
-                Dados agregados, com N minimo e sem exposicao nominal de estudantes
-              </p>
-            </div>
-          </div>
-
+    <RoleAwareAppShell title={TITLE} subtitle={SUBTITLE}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+        <>
           {data.insufficientSample && (
             <div className="p-5 rounded-2xl bg-card border border-border mb-8 flex gap-3">
               <Lock className="w-5 h-5 text-primary shrink-0 mt-0.5" />
@@ -152,28 +210,48 @@ export default function AdminPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-            <div className="p-5 rounded-2xl bg-card border border-border">
-              <Users className="w-5 h-5 text-primary mb-2" />
-              <div className="text-2xl font-display font-bold">{data.global.totalStudents}</div>
-              <div className="text-xs text-muted-foreground">Participantes</div>
-            </div>
-            <div className="p-5 rounded-2xl bg-card border border-border">
-              <Trophy className="w-5 h-5 text-secondary mb-2" />
-              <div className="text-2xl font-display font-bold">{data.global.totalXp.toLocaleString()}</div>
-              <div className="text-xs text-muted-foreground">XP coletivo</div>
-            </div>
-            <div className="p-5 rounded-2xl bg-card border border-border">
-              <Activity className="w-5 h-5 text-success mb-2" />
-              <div className="text-2xl font-display font-bold">{data.global.totalActivitiesCompleted}</div>
-              <div className="text-xs text-muted-foreground">Atividades</div>
-            </div>
-            <div className="p-5 rounded-2xl bg-card border border-border">
-              <BarChart3 className="w-5 h-5 text-primary mb-2" />
-              <div className="text-2xl font-display font-bold">{data.global.averageXpPerStudent}</div>
-              <div className="text-xs text-muted-foreground">XP medio</div>
-            </div>
+          {/* Amostra insuficiente NÃO exibe `0`: exibe o motivo. Um zero aqui
+              faria o docente concluir "ninguém participou" quando a verdade é
+              "há gente, mas são poucas para divulgar com segurança". */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            {[
+              { icon: Users, tone: "text-primary", label: "Participantes", value: data.global.totalStudents },
+              { icon: Trophy, tone: "text-secondary", label: "XP coletivo", value: data.global.totalXp },
+              { icon: Activity, tone: "text-success", label: "Atividades", value: data.global.totalActivitiesCompleted },
+              { icon: BarChart3, tone: "text-primary", label: "XP medio", value: data.global.averageXpPerStudent },
+            ].map((card) => {
+              const Icon = card.icon;
+              return (
+                <div key={card.label} className="p-5 rounded-2xl bg-card border border-border">
+                  <Icon className={`w-5 h-5 ${card.tone} mb-2`} aria-hidden="true" />
+                  {data.insufficientSample ? (
+                    <div
+                      className="flex items-start gap-1.5 text-xs text-muted-foreground"
+                      data-testid="admin-suppressed-value"
+                    >
+                      <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                      <span>Amostra insuficiente para exibição segura.</span>
+                    </div>
+                  ) : (
+                    <div className="text-2xl font-display font-bold">
+                      {card.value.toLocaleString("pt-BR")}
+                    </div>
+                  )}
+                  <div className="text-xs text-muted-foreground">{card.label}</div>
+                  <div className="mt-1 text-[10px] text-muted-foreground/80">
+                    Fonte: <code>admin-dashboard</code> · Limitação: mede uso, não bem-estar.
+                  </div>
+                </div>
+              );
+            })}
           </div>
+
+          <PrivacyIndicator
+            scope="threshold"
+            minimumGroupSize={data.minimumSample}
+            period="acumulado"
+            className="mb-10"
+          />
 
           <h2 className="text-2xl font-display font-bold mb-4">Engajamento por modulo</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-10">
@@ -243,18 +321,22 @@ export default function AdminPage() {
 
           <div className="p-5 rounded-2xl bg-card border border-border">
             <div className="flex items-start gap-3">
-              <Shield className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <Shield className="w-5 h-5 text-primary shrink-0 mt-0.5" aria-hidden="true" />
               <div>
                 <h2 className="text-lg font-display font-bold mb-1">Invariante de privacidade ativa</h2>
                 <p className="text-sm text-muted-foreground">
                   Este painel nao retorna nome, email, user_id ou relatorio individual de estudante. As leituras passam
                   por RPC agregada, aplicam N minimo e registram acesso em auditoria.
                 </p>
+                <p className="mt-2 text-[11px] text-muted-foreground/80">
+                  A descrição acima é do mecanismo técnico aplicado. Não constitui afirmação de
+                  conformidade legal.
+                </p>
               </div>
             </div>
           </div>
-        </motion.div>
-      </div>
-    </div>
+        </>
+      </motion.div>
+    </RoleAwareAppShell>
   );
 }

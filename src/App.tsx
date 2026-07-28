@@ -46,6 +46,12 @@ const SignatureStrengthsPage = lazy(() => import("./pages/SignatureStrengthsPage
 const GuardianConsentPage = lazy(() => import("./pages/GuardianConsentPage"));
 const BirthDateCompletionPage = lazy(() => import("./pages/BirthDateCompletionPage"));
 const OrgDashboardPage = lazy(() => import("./pages/OrgDashboardPage"));
+// UX-3: painel escolar autenticado (D33/D43 — singular, para não colidir com a
+// landing pública `/escolas`).
+const SchoolDashboardPage = lazy(() => import("./pages/SchoolDashboardPage"));
+// UX-3 (§D3/D51): `/admin` deixou de ser o painel docente e passou a ser a
+// Landing Administrativa da plataforma.
+const AdminOperacaoPage = lazy(() => import("./pages/AdminOperacaoPage"));
 // UX-1: entrada canônica autenticada. Resolve o painel do papel em um único
 // ponto (contrato DASHBOARD-ROUTE-MAP §"Redirecionamento canônico").
 const RoleHomeRedirect = lazy(() => import("./pages/RoleHomeRedirect"));
@@ -84,7 +90,12 @@ const privateRoutes: PrivateRoute[] = [
   { path: "/poetry", element: <PoetryPage />, feature: "poetry" },
   { path: "/codesign", element: <CoDesignPage />, feature: "codesign" },
   { path: "/alegria", element: <AlegriaPage /> },
-  { path: "/admin", element: <AdminPage />, roles: ["teacher", "manager"] },
+  // UX-3 (§D3/D51): `/admin` é a Landing Administrativa da plataforma. A
+  // checagem de papel acontece dentro da página, porque `platform_admin` só
+  // existe em institutional_memberships e não é expressável em RequireRole
+  // (que conhece apenas os papéis de aplicação student/teacher/manager).
+  { path: "/admin", element: <AdminOperacaoPage /> },
+  { path: "/professores", element: <AdminPage />, roles: ["teacher", "manager"] },
   { path: "/profile", element: <ProfilePage /> },
   { path: "/breathing", element: <BreathingPage /> },
   { path: "/lifewheel", element: <LifeWheelPage /> },
@@ -101,6 +112,7 @@ const privateRoutes: PrivateRoute[] = [
   { path: "/future-self", element: <FutureSelfPage /> },
   { path: "/strengths", element: <SignatureStrengthsPage /> },
   { path: "/org", element: <OrgDashboardPage /> },
+  { path: "/escola/:schoolId", element: <SchoolDashboardPage /> },
 ];
 
 const App = () => (

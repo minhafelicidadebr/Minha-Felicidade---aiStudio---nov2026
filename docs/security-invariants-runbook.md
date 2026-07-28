@@ -288,6 +288,73 @@ Configurar no Lovable/Supabase dois disparos agendados, enviando o header
 - `admin-dashboard` inclui `funnel` na resposta (best-effort: se a RPC/tabela
   ainda não existirem, retorna `null` e o painel não quebra).
 
+## Onda UX-3 — Painel escolar, limiar canônico e governança
+
+Migration: `supabase/migrations/20260727120000_ux3_school_metrics_and_governance.sql`
+(aplicar por último, após todas as anteriores).
+
+Contrato: `docs/kiro/DASHBOARD_PRODUCT_CONTRACT.md` §D2, §D5–§D8 ·
+Privacidade: `docs/kiro/METRIC_PRIVACY_POLICY.md` · Decisões: D50, D53–D56.
+
+- **`metric_minimum_group_size()`** — limiar mínimo canônico (N = 5). Fonte
+  **única** do número. Antes desta onda o 5 estava repetido dentro de
+  `get_learning_progress_overview` e `get_funnel_overview`; repetir a constante é
+  como o limiar se degrada em silêncio. O cliente nunca define nem aplica o
+  limiar: só exibe o que a resposta informou.
+  Verificação: `SELECT has_function_privilege('anon', 'public.metric_minimum_group_size()', 'EXECUTE');`
+  → esperado `false`.
+- **`institutional_decision_events`** — ledger append-only de governança
+  (§D2/D50). Sem policy de `UPDATE`/`DELETE` para `authenticated`, `REVOKE
+  UPDATE, DELETE` explícito e **triggers** `trg_decision_events_no_update` /
+  `trg_decision_events_no_delete` que barram mutação até para `service_role`
+  (defesa em profundidade — `REVOKE` não alcança `service_role` nem função
+  `SECURITY DEFINER` com bug). `reason` é vocabulário fechado por CHECK, não
+  texto livre, e o destinatário de convite entra como **hash sha256**, nunca em
+  claro: o ledger é lido por qualquer `org_admin`.
+  Verificação:
+  `SELECT has_table_privilege('authenticated', 'public.institutional_decision_events', 'UPDATE');`
+  → esperado `false` (idem para `DELETE`).
+- **`can_read_school(uuid)`** — escopo visível derivado de `auth.uid()` e de
+  `institutional_memberships` com `status = 'active'`. `school_admin` com
+  `school_id` **nulo** não autoriza escola alguma; `org_admin` vale para a
+  organização da escola; `platform_admin` vale para qualquer escola. Nenhum
+  identificador de organização, escola ou papel enviado pelo cliente participa da
+  autorização.
+- **`get_school_metrics(uuid, text)`** — indicadores agregados da escola com
+  supressão aplicada **no servidor** (§D5–§D7). Um grupo com 1 a 4 participantes
+  devolve apenas `{suppressed, reason, minimumGroupSize}` — sem `value`, sem
+  `count`, sem porcentagem. Grupo com zero pessoas devolve zero real com marcador
+  próprio, porque grupo vazio não expõe ninguém. Escola com universo elegível
+  abaixo do limiar mantém `analytics_suppressed = true` e **continua existindo**
+  como entidade operacional (§D5/D53). Erro de autorização é **indistinguível**
+  de escola inexistente e de sessão ausente, para que a resposta não sirva de
+  sonda de quais ids existem. Registra leitura autorizada **e** tentativa negada
+  em `data_access_logs`.
+  Verificação: `SELECT has_function_privilege('anon', 'public.get_school_metrics(uuid, text)', 'EXECUTE');`
+  → esperado `false`.
+- **Supressão complementar** (§D6/D54) — com exatamente uma turma suprimida e o
+  total divulgado, o valor suprimido é recuperável por subtração (aritmética de
+  primeiro grau feita na própria tela). Regra determinística: sobrando duas ou
+  mais turmas divulgadas, suprime a menor; sobrando uma só, suprime o total.
+  Empate de valor resolve pela chave, para que a mesma entrada dê sempre a mesma
+  saída. A mesma regra está espelhada em `src/lib/metric-privacy.ts` para que
+  servidor e cliente concordem, com teste comparando os dois.
+- **`resend_invitation(uuid)`** — até 3 reenvios além do envio inicial, 24 h de
+  intervalo (§D8/D56). A contagem é feita **no ledger, por organização +
+  destinatário (hash)**, não na linha do convite: `invite_member` é idempotente
+  por `(email, org, role)`, então um contador por linha seria zerado cancelando e
+  recriando o convite. Bloqueios também são gravados (`resend_limit_reached`,
+  `resend_cooldown`), não só os sucessos.
+- **`escalate_indicator(uuid, uuid, text, text)`** — escopo verificado contra o
+  banco; alvo em organização diferente é negado **e a negativa é registrada**.
+  Escola informada precisa pertencer à organização informada, senão um
+  `org_admin` legítimo poderia escalar apontando para escola de outra rede.
+
+> **Ainda não aplicada no ambiente.** Como as anteriores, esta migration precisa
+> ser aplicada manualmente no SQL Editor do Lovable. Enquanto não for, o painel
+> escolar mostra o estado de erro explícito (não um zero fabricado), porque a
+> RPC não existe.
+
 ## Quality Gate
 
 Run locally before shipping:

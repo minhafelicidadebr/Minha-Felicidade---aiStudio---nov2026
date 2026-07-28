@@ -264,6 +264,10 @@ if (!existsSync(appRouter)) {
     "/codesign",
     "/alegria",
     "/admin",
+    // UX-3: painel docente saiu de /admin para /professores; /admin passou a ser
+    // a Landing Administrativa. Ambas seguem obrigatórias na tabela privada.
+    "/professores",
+    "/escola/:schoolId",
     "/profile",
     "/breathing",
     "/lifewheel",
@@ -291,8 +295,18 @@ if (!existsSync(appRouter)) {
   if (!text.includes("const privateRoutes: PrivateRoute[] = [") || !text.includes("<RequireAuth>")) {
     fail("App router must render privateRoutes through RequireAuth");
   }
-  if (!text.includes('path: "/admin", element: <AdminPage />, roles: ["teacher", "manager"]')) {
-    fail("Admin route must be protected by the teacher/manager RequireRole gate");
+  // UX-3 (§D3/D51): a asserção do literal foi SUBSTITUÍDA, não removida. O painel
+  // docente mudou de /admin para /professores e continua exigindo teacher/manager.
+  if (!text.includes('path: "/professores", element: <AdminPage />, roles: ["teacher", "manager"]')) {
+    fail("Educator dashboard route (/professores) must be protected by the teacher/manager RequireRole gate");
+  }
+  // /admin deixou de servir o painel docente. Se voltar a servi-lo, dois papéis
+  // com expectativas diferentes disputariam a mesma rota.
+  if (/path:\s*"\/admin",\s*element:\s*<AdminPage\s*\/>/.test(text)) {
+    fail("/admin must not serve the educator dashboard: it is the platform administration landing");
+  }
+  if (!text.includes('path: "/admin", element: <AdminOperacaoPage />')) {
+    fail("/admin must serve the platform administration landing (AdminOperacaoPage)");
   }
   if (!text.includes("<RequireRole allowedRoles={route.roles}>{route.element}</RequireRole>")) {
     fail("Role-scoped routes must render through RequireRole");
@@ -466,6 +480,101 @@ if (!existsSync(adminPage)) {
   if (/data\.students|students\.map|student\.full_name|student\.email|student\.user_id|download.*student/i.test(text)) {
     fail("AdminPage must not render nominal student records or individual report actions");
   }
+}
+
+// ── UX-3: painel escolar, papel→home e governança ────────────────────────────
+
+const schoolPage = "src/pages/SchoolDashboardPage.tsx";
+if (!existsSync(schoolPage)) {
+  fail(`Missing school dashboard page: ${schoolPage}`);
+} else {
+  const text = readIfExists(schoolPage);
+  if (/student\.full_name|student\.email|student\.user_id|data\.students/i.test(text)) {
+    fail("SchoolDashboardPage must not render nominal student fields");
+  }
+  // Id malformado não pode virar chamada de rede.
+  if (!text.includes("isValidSchoolId")) {
+    fail("SchoolDashboardPage must validate schoolId before querying");
+  }
+}
+
+const roleHomeModule = "src/lib/role-home.ts";
+if (!existsSync(roleHomeModule)) {
+  fail(`Missing role home resolver: ${roleHomeModule}`);
+} else {
+  const text = readIfExists(roleHomeModule);
+  // Anti-laço (§D3/D51): mandar platform_admin para /org foi reprovado, e um
+  // papel apontando para uma rota que redireciona de volta nunca chega.
+  if (/platform_admin:\s*"\/org"/.test(text)) {
+    fail("platform_admin must not resolve to the organization manager experience (/org)");
+  }
+  // /escolas é landing pública de aquisição: não é home de papel algum (D33/D43).
+  if (/(CANONICAL_ROLE_HOME|IMPLEMENTED_ROLE_HOME)[\s\S]{0,400}?:\s*"\/escolas"/.test(text)) {
+    fail("/escolas is the public acquisition landing and must not be any role home");
+  }
+}
+
+const ux3Migration = "supabase/migrations/20260727120000_ux3_school_metrics_and_governance.sql";
+if (!existsSync(ux3Migration)) {
+  fail(`Missing UX-3 migration: ${ux3Migration}`);
+} else {
+  const text = readIfExists(ux3Migration);
+
+  // Limiar canônico único (§D5/D53).
+  if (!text.includes("CREATE OR REPLACE FUNCTION public.metric_minimum_group_size()")) {
+    fail("UX-3 migration must define the canonical minimum group size function");
+  }
+
+  // Ledger append-only (§D2/D50): sem UPDATE/DELETE para authenticated.
+  if (!text.includes("REVOKE UPDATE, DELETE ON TABLE public.institutional_decision_events")) {
+    fail("institutional_decision_events must revoke UPDATE/DELETE from authenticated (append-only)");
+  }
+  if (/CREATE POLICY[^;]*institutional_decision_events[^;]*FOR\s+(UPDATE|DELETE)/i.test(text)) {
+    fail("institutional_decision_events must not have UPDATE/DELETE policies");
+  }
+  if (!text.includes("trg_decision_events_no_update") || !text.includes("trg_decision_events_no_delete")) {
+    fail("institutional_decision_events must block mutation with triggers (defence in depth)");
+  }
+
+  // RPCs novas seguem a doutrina de privilégio mínimo.
+  for (const fn of [
+    "public.get_school_metrics(uuid, text)",
+    "public.resend_invitation(uuid)",
+    "public.escalate_indicator(uuid, uuid, text, text)",
+  ]) {
+    if (!text.includes(`REVOKE EXECUTE ON FUNCTION ${fn} FROM PUBLIC, anon, authenticated`)) {
+      fail(`UX-3 migration must revoke EXECUTE on ${fn} from PUBLIC/anon/authenticated before granting`);
+    }
+  }
+  if ((text.match(/SET search_path = public/g) ?? []).length < 6) {
+    fail("Every SECURITY DEFINER function in the UX-3 migration must pin search_path = public");
+  }
+
+  // Supressão aplicada no servidor (§D6/D54) — não só escondida na tela.
+  if (!text.includes("'reason', 'complementary'")) {
+    fail("UX-3 migration must apply complementary suppression against subtraction inference");
+  }
+
+  // Antiburla do reenvio (§D8/D56): contagem por organização + destinatário.
+  if (!text.includes("recipient_hash")) {
+    fail("resend_invitation must count resends per organization and recipient, not per invitation row");
+  }
+}
+
+const metricPrivacyModule = "src/lib/metric-privacy.ts";
+if (!existsSync(metricPrivacyModule)) {
+  fail(`Missing metric privacy helpers: ${metricPrivacyModule}`);
+} else {
+  const text = readIfExists(metricPrivacyModule);
+  // §D5/D53: o limiar vive numa única configuração server-side. Um literal no
+  // cliente cria uma segunda fonte da verdade que vai ficar para trás.
+  if (/(MINIMUM_GROUP_SIZE|MIN_SAMPLE|LIMIAR)\s*=\s*\d/.test(text)) {
+    fail("Client must not hardcode the minimum group size: it comes from the server response");
+  }
+}
+
+if (!existsSync("src/lib/metric-privacy.test.ts")) {
+  fail("Missing metric privacy unit tests: src/lib/metric-privacy.test.ts");
 }
 
 const dashboardPage = "src/pages/DashboardPage.tsx";
