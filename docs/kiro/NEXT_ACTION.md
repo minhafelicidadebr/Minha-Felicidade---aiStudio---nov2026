@@ -6,8 +6,7 @@
 (eram 171), lint 0 warnings, typecheck, build, security gate. Nenhuma biblioteca
 nova.
 
-Branch: `ux-3-escola-docente` (empilhada sobre `ux-2-org-dashboard`, cujo PR #37
-ainda não foi mergeado).
+Branch: `ux-3-escola-docente` — PR #38 aberto (base: main com PR #37 mergeado).
 
 As oito decisões de contrato (D49–D57) foram fechadas **antes** do design e estão
 versionadas em `DASHBOARD_PRODUCT_CONTRACT.md` e `METRIC_PRIVACY_POLICY.md`.
@@ -68,8 +67,7 @@ abaixo (duas delas parciais em relação ao contrato).
 
 ## Próxima ação sugerida
 
-1. **Mergear PR #37 (UX-2)** antes de abrir o PR da UX-3, ou rebasear — senão o
-   diff da UX-3 mostra as duas ondas juntas.
+1. **Mergear PR #38 (UX-3)** — já rebaseado sobre main com PR #37 mergeado.
 2. **Aplicar a migration** e rodar as queries de verificação de privilégio.
 3. Decidir sobre as duas entregas parciais acima (histórico de leituras do
    indicador; controle escondido por papel).
