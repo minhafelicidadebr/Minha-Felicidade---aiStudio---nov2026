@@ -112,6 +112,41 @@ export type Database = {
         }
         Relationships: []
       }
+      engagement_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          organization_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engagement_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guardian_consent_events: {
         Row: {
           created_at: string
@@ -386,6 +421,44 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      nps_responses: {
+        Row: {
+          context: string | null
+          created_at: string
+          feedback: string | null
+          id: string
+          organization_id: string | null
+          score: number
+          user_id: string
+        }
+        Insert: {
+          context?: string | null
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          organization_id?: string | null
+          score: number
+          user_id: string
+        }
+        Update: {
+          context?: string | null
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          organization_id?: string | null
+          score?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nps_responses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       organization_members: {
         Row: {
@@ -850,6 +923,7 @@ export type Database = {
         Args: { _organization_id: string }
         Returns: Json
       }
+      get_org_engagement_summary: { Args: { _org_id: string }; Returns: Json }
       get_user_plan: { Args: { _user_id: string }; Returns: Json }
       has_my_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
