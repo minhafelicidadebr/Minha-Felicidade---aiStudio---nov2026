@@ -19,7 +19,16 @@ import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 import DashboardEmptyState from "@/components/dashboard/DashboardEmptyState";
 import DashboardErrorState from "@/components/dashboard/DashboardErrorState";
 import MetricCard from "@/components/dashboard/MetricCard";
+import DecisionQueue, { type DecisionItem } from "@/components/dashboard/DecisionQueue";
+import {
+    ACTIVATION_EXPECTED_RANGE,
+    buildInvitationDecisionItems,
+    buildInvitationSources,
+    describeRange,
+    isOutOfRange,
+} from "@/lib/decision-queue-items";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { useDecisionActions } from "@/hooks/useDecisionActions";
 import { useOrganizationDetail } from "@/hooks/useOrganizationDetail";
 import OnboardingWizard from "@/components/org/OnboardingWizard";
 import OperationalMetrics from "@/components/org/OperationalMetrics";
@@ -35,6 +44,7 @@ export default function OrgDashboardPage() {
     const { activeOrganization } = useDashboardContext();
     const { org, schools, classes, members, invitations, loading, error, refetch } =
         useOrganizationDetail(activeOrganization?.id);
+    const { resendInvitations, escalateIndicator } = useDecisionActions();
     const { toast } = useToast();
 
     // Invite form state
@@ -251,6 +261,42 @@ export default function OrgDashboardPage() {
     const totalInvited = members.length + invitations.length;
     const activationRate = totalInvited > 0 ? Math.round((members.length / totalInvited) * 100) : 0;
     const now = new Date().toISOString();
+
+    // ── Fila de decisões ─────────────────────────────────────────────────────
+    // Cada item nasce de um dado observado. Nada é inventado para preencher a
+    // fila: fila vazia é boa notícia, não falta de dado.
+    const invitationSources = buildInvitationSources(invitations, schools);
+    const decisionItems: DecisionItem[] = [
+        ...buildInvitationDecisionItems({
+            sources: invitationSources,
+            // `useOrganizationDetail` só devolve dados de organização que a
+            // pessoa administra, então quem chega aqui já passou pela RLS. A
+            // autoridade final continua no servidor, que nega e registra.
+            canResend: true,
+            resend: resendInvitations,
+        }),
+    ];
+
+    if (totalInvited > 0 && isOutOfRange(activationRate, ACTIVATION_EXPECTED_RANGE)) {
+        decisionItems.push({
+            id: "indicator:activation_rate",
+            title: "Taxa de ativação abaixo do esperado",
+            reason: `Ativação em ${activationRate}% (${describeRange(ACTIVATION_EXPECTED_RANGE)}), com ${members.length} de ${totalInvited} convites aceitos.`,
+            priority: activationRate < ACTIVATION_EXPECTED_RANGE.min / 2 ? "high" : "medium",
+            owner: "gestão da rede",
+            due: "esta semana",
+            mutation: {
+                label: "Escalar pendência",
+                pendingLabel: "Registrando…",
+                run: () =>
+                    escalateIndicator({
+                        organizationId: org.id,
+                        indicator: "activation_rate",
+                        severity: activationRate < ACTIVATION_EXPECTED_RANGE.min / 2 ? "critical" : "warning",
+                    }),
+            },
+        });
+    }
 
     // ── Action slot for the shell header ─────────────────────────────────────
     const headerActions = (
@@ -549,6 +595,18 @@ export default function OrgDashboardPage() {
                         </div>
                     </section>
                 )}
+
+                {/* Fila de decisões — ações que ALTERAM dados (UX-3, §D1/D49).
+            Só reenvio e escalonamento: o fluxo de "solicitar entrada e aguardar
+            aprovação" não existe no produto, e rótulo de ação inexistente é
+            overclaim. */}
+                <DecisionQueue
+                    items={decisionItems}
+                    onResolved={refetch}
+                    emptyTitle="Nenhuma decisão pendente"
+                    emptyDescription="Nenhum convite está parado há uma semana e a taxa de ativação está na faixa esperada. Quando algo sair do esperado, aparece aqui com o motivo."
+                    className="mb-8"
+                />
 
                 {/* Engagement Metrics */}
                 <EngagementMetrics organizationId={org.id} />

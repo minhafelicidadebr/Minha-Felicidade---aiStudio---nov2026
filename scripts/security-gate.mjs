@@ -577,6 +577,28 @@ if (!existsSync("src/lib/metric-privacy.test.ts")) {
   fail("Missing metric privacy unit tests: src/lib/metric-privacy.test.ts");
 }
 
+// §D1/D49: o produto não tem etapa de aprovação de convite. Um rótulo dessa ação
+// prometeria à gestão da rede um poder que ela não tem — overclaim de interface.
+// A verificação exclui arquivos de teste, que citam o termo para provar a ausência.
+{
+  const uiFiles = [
+    "src/components/dashboard/DecisionQueue.tsx",
+    "src/lib/decision-queue-items.ts",
+    "src/hooks/useDecisionActions.ts",
+    "src/pages/OrgDashboardPage.tsx",
+  ];
+  for (const file of uiFiles) {
+    if (!existsSync(file)) continue;
+    if (/aprovar\s+convite/i.test(readIfExists(file))) {
+      fail(`${file} must not offer an "Aprovar convite" action: the product has no approval step`);
+    }
+  }
+}
+
+if (!existsSync("src/components/dashboard/DecisionQueue.test.tsx")) {
+  fail("Missing decision queue behaviour tests: src/components/dashboard/DecisionQueue.test.tsx");
+}
+
 const dashboardPage = "src/pages/DashboardPage.tsx";
 if (!existsSync(dashboardPage)) {
   fail(`Missing dashboard page: ${dashboardPage}`);

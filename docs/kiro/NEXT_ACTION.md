@@ -1,9 +1,10 @@
 # NEXT_ACTION
 
-## Estado: ONDA UX-3 parcialmente entregue — gate verde, um item de escopo aberto
+## Estado: ONDA UX-3 entregue — gate verde
 
-`npm run quality` verde: 21 arquivos de teste, **245 testes** (eram 171), lint 0
-warnings, typecheck, build, security gate. Nenhuma biblioteca nova.
+`npm run quality` verde nas seis etapas: 24 arquivos de teste, **276 testes**
+(eram 171), lint 0 warnings, typecheck, build, security gate. Nenhuma biblioteca
+nova.
 
 Branch: `ux-3-escola-docente` (empilhada sobre `ux-2-org-dashboard`, cujo PR #37
 ainda não foi mergeado).
@@ -11,18 +12,22 @@ ainda não foi mergeado).
 As oito decisões de contrato (D49–D57) foram fechadas **antes** do design e estão
 versionadas em `DASHBOARD_PRODUCT_CONTRACT.md` e `METRIC_PRIVACY_POLICY.md`.
 
-## Pendência de escopo desta onda
+Todos os requisitos da onda foram implementados, com três limitações declaradas
+abaixo (duas delas parciais em relação ao contrato).
 
-**`DecisionQueue` com ações reais (Requirement 9) não foi ligada à interface.**
+## Requisitos entregues parcialmente (precisam decisão ou trabalho extra)
 
-O que existe: `resend_invitation` e `escalate_indicator` no banco, com limite de
-3 reenvios / 24 h contados por organização + destinatário, negação de alvo fora da
-organização, e tudo gravado no ledger append-only. A política de reenvio também
-está no cliente (`src/lib/invitation-resend.ts`), testada.
-
-O que falta: `/org` renderizar a fila com os botões, chamar as RPCs e tratar os
-três desfechos (sucesso, falha técnica, permissão negada) com textos distintos.
-É fiação de UI sobre peças que já existem e estão testadas.
+1. **Escalonamento dispara na primeira leitura fora da faixa, não na segunda.**
+   O contrato (R9 item 16) pede 2 leituras consecutivas fora do esperado, para
+   não escalar por oscilação. Isso exige **histórico de leituras do indicador**,
+   que não existe: não há onde guardar a leitura anterior. Opções: gravar
+   snapshots periódicos do indicador, ou derivar a segunda leitura do próprio
+   ledger de decisões. Decisão de produto pendente.
+2. **`canResend` é sempre `true` no cliente.** A RLS já restringe os dados às
+   organizações que a pessoa administra, e o servidor nega e registra quem não
+   pode. Mas R9 item 15 prevê **esconder o controle** para papel sem permissão, e
+   hoje quem não pode vê o botão e só descobre ao clicar. Fechar isso exige o
+   cliente distinguir `org_admin` de `school_admin` para essa decisão.
 
 ## Ações manuais bloqueantes
 
@@ -63,9 +68,12 @@ três desfechos (sucesso, falha técnica, permissão negada) com textos distinto
 
 ## Próxima ação sugerida
 
-1. Fiar a `DecisionQueue` em `/org` (fecha o Requirement 9 e a onda).
-2. Aplicar a migration e conferir os privilégios.
-3. Mergear PR #37 (UX-2) antes de abrir o PR da UX-3, ou rebasear.
+1. **Mergear PR #37 (UX-2)** antes de abrir o PR da UX-3, ou rebasear — senão o
+   diff da UX-3 mostra as duas ondas juntas.
+2. **Aplicar a migration** e rodar as queries de verificação de privilégio.
+3. Decidir sobre as duas entregas parciais acima (histórico de leituras do
+   indicador; controle escondido por papel).
+4. Onda UX-4: `/alunos` como home do estudante e `/admin/operacao` de verdade.
 
 ## Backlog anterior (mantido)
 

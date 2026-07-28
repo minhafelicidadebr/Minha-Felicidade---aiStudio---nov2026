@@ -234,13 +234,51 @@ mínimo das RPCs e proibição de limiar hardcoded no cliente.
 Um falso positivo próprio: a asserção nova de "limiar hardcoded" pegou um
 comentário que citava o padrão proibido. Corrigido o comentário, não a asserção.
 
-### Não entregue nesta onda (honestidade > overclaim)
+### Fiação da DecisionQueue (fecha o Requirement 9)
 
-- **`DecisionQueue` com ações reais (R9) não foi ligada à interface.** As RPCs
-  (`resend_invitation`, `escalate_indicator`) existem e estão testadas, e a
-  política de reenvio está em `src/lib/invitation-resend.ts`, mas `/org` ainda
-  não renderiza a fila com botões. Falta a fiação de UI.
+- `DecisionQueue` deixou de ser lista decorativa: ganhou `mutation` por item, com
+  execução única por vez em toda a fila, controle desabilitado durante a ação e
+  os **três desfechos textualmente distintos** — sucesso, permissão negada e
+  falha técnica. Falha declara explicitamente que **nada foi alterado** e mantém
+  o item na fila.
+- `useDecisionActions` traduz o erro do Postgres nos três desfechos. O detalhe
+  que importa: `42501` (sem privilégio) e `22023` (regra recusou — limite,
+  janela, convite expirado) viram **"negado"**, não "falhou". Colapsar os dois
+  faria o gestor repetir um reenvio que nunca vai passar.
+- `decision-queue-items.ts` deriva os itens do dado observado, com a evidência no
+  texto. Convite de **estudante** é agregado por escola, com contagem e **sem
+  e-mail** — estudante é adolescente, e o e-mail dele numa fila lida por qualquer
+  gestor é exposição desnecessária. Convite de adulto da equipe aparece
+  individual, porque o reenvio é por convite e o e-mail institucional é o
+  identificador natural do trabalho.
+- Reenvio em lote relata resultado **parcial** ("3 reenviados; 2 recusados pelo
+  limite ou pela janela") em vez de esconder recusas atrás de um "ok" genérico.
+  Cada convite é avaliado pelo servidor separadamente, porque o limite vale por
+  destinatário.
+- Convite expirado não oferece reenvio: a ação correta é reemitir, e o botão
+  explica isso em vez de falhar no servidor.
+- Escalonamento entra na fila quando a taxa de ativação sai da faixa esperada
+  (60%–100%), declarada no próprio item.
+- Gate ganhou asserção proibindo o rótulo "Aprovar convite" no código de UI
+  (§D1/D49 — rótulo de ação inexistente é overclaim).
+
+Testes: **245 → 276** (24 arquivos), incluindo dupla submissão bloqueada, runner
+que lança tratado como falha, e ausência do rótulo de aprovação.
+
+### Não entregue / limitações registradas (honestidade > overclaim)
+
 - **Migration não aplicada** no ambiente Lovable (SQL Editor manual).
 - **Testes de banco são estruturais**, não de execução: `ux3-migration-invariants.test.ts`
   lê o SQL e verifica que as proteções estão escritas. Não prova comportamento em
   Postgres — falta banco de teste.
+- **Escalonamento dispara na primeira leitura fora da faixa, não na segunda.** O
+  contrato (R9 item 16) pede 2 leituras consecutivas fora do esperado. Isso exige
+  histórico de leituras do indicador, que não existe hoje — não há onde guardar a
+  leitura anterior. Entregue com uma leitura; fechar o requisito depende de
+  persistir séries de indicador.
+- **`canResend` é sempre `true` no cliente.** A RLS de `useOrganizationDetail` já
+  restringe os dados a organizações que a pessoa administra, e o servidor nega e
+  registra quem não pode. Mas o contrato (R9 item 15) prevê esconder o controle
+  para papel sem permissão, e hoje o cliente não distingue `org_admin` de
+  `school_admin` para essa decisão — quem não pode vê o botão e recebe "permissão
+  negada" ao clicar. Funciona, mas não é o comportamento pedido.
