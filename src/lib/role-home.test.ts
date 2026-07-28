@@ -57,10 +57,8 @@ describe("resolveDashboardRole", () => {
 });
 
 describe("resolveRoleHomePath", () => {
-    // UX-3: `educator` saiu de `/admin` para `/professores` e `/admin` passou a
-    // ser a Landing Administrativa da plataforma (§D3/D51).
     it("resolve destinos navegáveis nesta onda (sem 404)", () => {
-        expect(resolveRoleHomePath(["student"])).toBe("/dashboard");
+        expect(resolveRoleHomePath(["student"])).toBe("/alunos");
         expect(resolveRoleHomePath(["educator"])).toBe("/professores");
         expect(resolveRoleHomePath(["school_admin"])).toBe("/org");
         expect(resolveRoleHomePath(["org_admin"])).toBe("/org");
@@ -105,7 +103,7 @@ describe("resolveRoleHomePath", () => {
     });
 
     it("sem papel algum manda para a home do estudante (menor privilégio)", () => {
-        expect(resolveRoleHomePath([])).toBe("/dashboard");
+        expect(resolveRoleHomePath([])).toBe("/alunos");
     });
 });
 

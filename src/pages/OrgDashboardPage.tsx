@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -33,11 +33,18 @@ import { useOrganizationDetail } from "@/hooks/useOrganizationDetail";
 import OnboardingWizard from "@/components/org/OnboardingWizard";
 import OperationalMetrics from "@/components/org/OperationalMetrics";
 import EngagementMetrics from "@/components/org/EngagementMetrics";
-import EngagementChart from "@/components/org/EngagementChart";
-import NpsEvolution from "@/components/org/NpsEvolution";
+// UX-4: EngagementChart e NpsEvolution importados com lazy para code-split.
+// São os que puxam Recharts inteiro para dentro deste chunk (D48).
+const EngagementChart = lazy(() => import("@/components/org/EngagementChart"));
+const NpsEvolution = lazy(() => import("@/components/org/NpsEvolution"));
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { generatePilotReportPDF } from "@/lib/generate-pilot-report-pdf";
+
+// UX-4: jsPDF é lazy-imported no handler para não carregar 200 kB sincronamente.
+async function loadPdfGenerator() {
+    const { generatePilotReportPDF } = await import("@/lib/generate-pilot-report-pdf");
+    return generatePilotReportPDF;
+}
 
 export default function OrgDashboardPage() {
     // Organização ativa vem do ContextSwitcher (shell) — reage à troca no switcher.
@@ -99,6 +106,7 @@ export default function OrgDashboardPage() {
             }
         } catch { /* best-effort */ }
 
+        const generatePilotReportPDF = await loadPdfGenerator();
         const doc = generatePilotReportPDF({
             orgName: org.name,
             generatedAt: new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }),
@@ -611,9 +619,11 @@ export default function OrgDashboardPage() {
                 {/* Engagement Metrics */}
                 <EngagementMetrics organizationId={org.id} />
 
-                {/* Engagement Evolution Chart */}
-                <EngagementChart organizationId={org.id} />
-                <NpsEvolution organizationId={org.id} />
+                {/* Engagement Evolution Chart — lazy loaded para code-split (D48) */}
+                <Suspense fallback={null}>
+                    <EngagementChart organizationId={org.id} />
+                    <NpsEvolution organizationId={org.id} />
+                </Suspense>
 
                 {/* Operational Metrics */}
                 <OperationalMetrics organizationId={org.id} />

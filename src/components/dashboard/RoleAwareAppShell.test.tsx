@@ -91,7 +91,8 @@ function renderRoleHome() {
             <MemoryRouter initialEntries={["/inicio"]}>
                 <Routes>
                     <Route path="/inicio" element={<RoleHomeRedirect />} />
-                    <Route path="/dashboard" element={<p>HOME ESTUDANTE</p>} />
+                    <Route path="/alunos" element={<p>HOME ESTUDANTE</p>} />
+                    <Route path="/dashboard" element={<RoleHomeRedirect />} />
                     <Route path="/org" element={<p>HOME REDE</p>} />
                     <Route path="/admin" element={<p>HOME ADMIN</p>} />
                 </Routes>

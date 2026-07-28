@@ -96,7 +96,7 @@ export const IMPLEMENTED_ROLE_HOME: Record<DashboardRole, string> = {
     // de constantes não pode carregar um uuid.
     school_admin: "/org",
     educator: "/professores",
-    student: "/dashboard",
+    student: "/alunos",
 };
 
 /** Caminho do painel de uma escola específica. Único lugar que monta esta URL. */
