@@ -1,52 +1,78 @@
 # NEXT_ACTION
 
-## Estado: ONDA UX-2 concluída — PR #37 aberto
+## Estado: ONDA UX-3 parcialmente entregue — gate verde, um item de escopo aberto
 
-`npm run quality` verde: 18 arquivos de teste, 166 testes, lint 0 warnings, typecheck, build,
-security gate. Nenhuma biblioteca nova. Nenhuma migration criada.
+`npm run quality` verde: 21 arquivos de teste, **245 testes** (eram 171), lint 0
+warnings, typecheck, build, security gate. Nenhuma biblioteca nova.
 
-Entregue: OrgDashboardPage sobre RoleAwareAppShell, estados canônicos (Skeleton/Empty/Error),
-MetricCards com contrato completo, EngagementChart em Recharts + ChartFrame, eliminação de
-`return null` em 4 componentes, migração para useDashboardContext (multi-org via ContextSwitcher).
+Branch: `ux-3-escola-docente` (empilhada sobre `ux-2-org-dashboard`, cujo PR #37
+ainda não foi mergeado).
 
-## D33 — RESOLVIDA (decisão do humano)
+As oito decisões de contrato (D49–D57) foram fechadas **antes** do design e estão
+versionadas em `DASHBOARD_PRODUCT_CONTRACT.md` e `METRIC_PRIVACY_POLICY.md`.
 
-`/escolas` **permanece** a landing pública de aquisição. O painel escolar autenticado será
-`/escola/:schoolId` (singular, para não colidir com a landing no plural).
+## Pendência de escopo desta onda
 
-Já aplicado nesta onda: `CANONICAL_ROLE_HOME.school_admin = "/escola/:schoolId"` e o item de
-navegação `org-schools` aponta para o novo caminho (segue `future: true`, sem link morto).
-`IMPLEMENTED_ROLE_HOME.school_admin` continua `/org` até a rota existir.
+**`DecisionQueue` com ações reais (Requirement 9) não foi ligada à interface.**
 
-## Próxima ação (ONDA UX-3 — escola + docente)
+O que existe: `resend_invitation` e `escalate_indicator` no banco, com limite de
+3 reenvios / 24 h contados por organização + destinatário, negação de alvo fora da
+organização, e tudo gravado no ledger append-only. A política de reenvio também
+está no cliente (`src/lib/invitation-resend.ts`), testada.
 
-1. **Criar a rota `/escola/:schoolId`** (painel escolar autenticado) sobre `RoleAwareAppShell`,
-   com `RequireRole` para school_admin/org_admin/platform_admin e verificação de que o
-   `schoolId` pertence a uma organização que a pessoa pode ver.
-2. Apontar `IMPLEMENTED_ROLE_HOME.school_admin` para `/escola/:schoolId` e remover
-   `future: true` do item `org-schools`.
-3. Migrar `/admin` (educator) para o shell (hoje `AdminPage.tsx` ainda usa Navbar/Footer).
-4. Mover `/admin` para a rota que o contrato quer (requer atualizar `security-gate.mjs` na
-   MESMA mudança — o gate exige o literal atual).
-5. RPCs agregadas por escola com filtro de período e limiar de privacidade (N≥5).
-6. DecisionQueue integrada na /org com ações reais (aprovar convite, escalar alerta).
+O que falta: `/org` renderizar a fila com os botões, chamar as RPCs e tratar os
+três desfechos (sucesso, falha técnica, permissão negada) com textos distintos.
+É fiação de UI sobre peças que já existem e estão testadas.
+
+## Ações manuais bloqueantes
+
+1. **Aplicar a migration** `20260727120000_ux3_school_metrics_and_governance.sql`
+   no SQL Editor do Lovable. Enquanto não for aplicada, `/escola/:schoolId` mostra
+   o estado de erro explícito (por design — não um zero fabricado).
+2. Rodar as queries de verificação de privilégio que estão comentadas na
+   migration e registradas no runbook.
 
 ## Riscos e dívidas registrados
 
-- **`/escola/:schoolId` ainda não existe** — o mapa canônico já aponta para ela, mas quem tem só
-  `school_admin` continua caindo em `/org` (comportamento correto e testado; não é 404).
-- **Chunk grande** (D48) — OrgDashboardPage ~882 kB (Recharts + jsPDF inlined). Não bloqueante;
-  resolver com `import()` dinâmico numa onda de performance.
-- **`/admin` continua servindo professor/gestor** — o contrato quer `/admin` reservado à
-  plataforma, mas `scripts/security-gate.mjs` exige o literal
-  `path: "/admin", element: <AdminPage />, roles: ["teacher", "manager"]`. Mover é UX-3.
-- `useOrganization` ainda existe (outros consumidores); remoção quando não for mais necessário.
-- Dois vocabulários de papel no banco (D29) — unificação opcional, não bloqueante.
+- **Testes de banco são estruturais.** `ux3-migration-invariants.test.ts` lê o SQL
+  e verifica que as proteções **estão escritas**; não executa Postgres, então não
+  prova que funcionam em tempo de execução. Pegam o modo de falha realista aqui
+  (regressão por edição futura), não semântica sutil do Postgres. Fechar isso
+  exige um banco de teste, que o projeto não tem.
+- **`platform_admin` não é expressável em `RequireRole`.** O guard conhece só os
+  papéis de aplicação (`student`/`teacher`/`manager`); `platform_admin` existe
+  apenas em `institutional_memberships`. Por isso `/admin` é protegida por
+  `RequireAuth` e a checagem de papel acontece **dentro** da página, sobre o papel
+  derivado no servidor. Um guard que entenda papéis institucionais seria mais
+  limpo e é candidato a onda própria.
+- **`/admin/operacao` ainda não existe.** A Landing Administrativa foi entregue em
+  `/admin` (opção 2 de §D3). `CANONICAL_ROLE_HOME.platform_admin` já aponta para
+  `/admin/operacao`; o item de navegação `platform-home` segue `future`.
+- **Item de navegação de escolas segue `future`.** `org-schools` precisaria de um
+  uuid no `href`, e a configuração de navegação é estática. O painel escolar é
+  alcançável pela lista de escolas de `/org`. Resolver exige navegação com href
+  dinâmico por papel.
+- **Duplicação de destino na navegação:** `org-home` e `org-people` apontam ambos
+  para `/org`, o que deixa o estado "ativo" da sidebar ambíguo. É a mesma classe
+  de problema que §D4/D52 eliminou em `org-reports`, mas resolver exige decidir
+  onde "Pessoas e convites" passa a morar — decisão de produto. Há teste fixando
+  o tamanho atual da dívida (3) para que ela não cresça.
+- **`useOrganization` ainda existe** (outros consumidores).
+- **Chunk grande** (D48) — `OrgDashboardPage` com Recharts + jsPDF.
+- Dois vocabulários de papel no banco (D29).
+
+## Próxima ação sugerida
+
+1. Fiar a `DecisionQueue` em `/org` (fecha o Requirement 9 e a onda).
+2. Aplicar a migration e conferir os privilégios.
+3. Mergear PR #37 (UX-2) antes de abrir o PR da UX-3, ou rebasear.
 
 ## Backlog anterior (mantido)
 
-- Configurar `RESEND_API_KEY` + `PUBLIC_SITE_URL` nos secrets (e-mails de convite/lembrete).
+- Configurar `RESEND_API_KEY` + `PUBLIC_SITE_URL` nos secrets. Sem isso o
+  reenvio de convite grava o evento e enfileira, mas o e-mail não sai.
 - Domínio: migrar para minhafelicidade.com.br.
-- Migrar react-router v6→v7 (advisory de audit; não bloqueia com `--audit-level=critical`).
+- Migrar react-router v6→v7 (advisory de audit; não bloqueia com
+  `--audit-level=critical`).
 - Instrumentar mais ações de engajamento (debate, poesia, co-design).
 - Cron para `enqueue_engagement_reminders`.

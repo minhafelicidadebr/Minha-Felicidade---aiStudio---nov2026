@@ -171,3 +171,76 @@ Decisão pendente D33: school_admin → /escolas (landing) vs /escolas/:schoolId
 autenticado). Mantido comportamento atual (school_admin → /org via IMPLEMENTED_ROLE_HOME).
 
 PR: #37 (ux-2-org-dashboard → main).
+
+## 2026-07 · ONDA UX-3 — Painel escolar, limiar canônico e governança
+
+Antes do código, as oito decisões de contrato foram fechadas pelo humano e
+versionadas (D49–D57). Duas **reprovaram** propostas minhas, e o motivo importa:
+
+- **D51** — eu propus redirecionar `platform_admin` para `/org` provisoriamente.
+  Reprovado: confunde papel, pode mascarar falha de autorização e cria dívida
+  que tende a durar. **Ampliou o escopo da onda**: passou a exigir uma landing
+  administrativa mínima.
+- **D53** — eu tratei "esconder a escola inteira" como opção defensável. O
+  ajuste separou dado de **implantação** (turmas, convites — sobre a escola) de
+  dado de **atividade de estudante** (sobre um adolescente). Só o segundo é
+  suprimido; esconder o primeiro quebraria a operação do piloto sem ganho de
+  privacidade.
+
+### Documentos criados (achado D57)
+
+Os contratos `DASHBOARD-*.md` citados por UX-1 e UX-2 **nunca existiram no
+repositório** — circularam apenas no chat. Duas ondas rodaram contra um contrato
+não auditável. Criados agora, versionados:
+`docs/kiro/DASHBOARD_PRODUCT_CONTRACT.md` e `docs/kiro/METRIC_PRIVACY_POLICY.md`.
+
+### Servidor (`20260727120000_ux3_school_metrics_and_governance.sql`)
+
+- `metric_minimum_group_size()` — limiar canônico N=5, fonte única. Antes o 5
+  estava repetido em duas RPCs.
+- `institutional_decision_events` — ledger append-only. `REVOKE UPDATE, DELETE`
+  **mais** triggers que barram mutação até para `service_role` (o REVOKE não
+  alcança `service_role` nem função DEFINER com bug). `reason` é vocabulário
+  fechado; destinatário entra como hash sha256, porque o ledger é lido por
+  qualquer `org_admin`.
+- `can_read_school()` — escopo de `auth.uid()` + vínculos ativos. `school_admin`
+  com `school_id` nulo autoriza zero escolas.
+- `get_school_metrics()` — supressão no servidor. Grupo de 1 a 4 devolve só o
+  marcador, sem valor e sem contagem. Negação é indistinguível de escola
+  inexistente (anti-enumeração). Registra leitura autorizada **e** negada.
+- Supressão complementar determinística contra subtração.
+- `resend_invitation()` — 3 reenvios / 24 h, contados por organização +
+  destinatário. Contar na linha do convite seria derrotado cancelando e
+  recriando, porque `invite_member` é idempotente por (email, org, role).
+- `escalate_indicator()` — alvo fora da organização negado e registrado.
+
+### Cliente
+
+- `/escola/:schoolId` novo, sobre a casca, alcançável pela lista de escolas de
+  `/org` (que é a seleção explícita, com nome e município).
+- `/admin` virou Landing Administrativa; `/professores` recebeu o painel docente
+  migrado para a casca, com 401 e 403 agora distintos.
+- `src/lib/metric-privacy.ts` — regras puras, sem limiar hardcoded no cliente.
+- `SuppressedValue` — três estados textualmente distintos (suprimido, vazio,
+  falha), nunca `0` fabricado.
+
+### Gate
+
+`npm run quality` verde. Testes: **171 → 245** (21 arquivos). A asserção do
+literal de rota no gate foi **substituída**, não removida, e o gate ganhou
+asserções novas: anti-laço do `platform_admin`, ledger append-only, privilégio
+mínimo das RPCs e proibição de limiar hardcoded no cliente.
+
+Um falso positivo próprio: a asserção nova de "limiar hardcoded" pegou um
+comentário que citava o padrão proibido. Corrigido o comentário, não a asserção.
+
+### Não entregue nesta onda (honestidade > overclaim)
+
+- **`DecisionQueue` com ações reais (R9) não foi ligada à interface.** As RPCs
+  (`resend_invitation`, `escalate_indicator`) existem e estão testadas, e a
+  política de reenvio está em `src/lib/invitation-resend.ts`, mas `/org` ainda
+  não renderiza a fila com botões. Falta a fiação de UI.
+- **Migration não aplicada** no ambiente Lovable (SQL Editor manual).
+- **Testes de banco são estruturais**, não de execução: `ux3-migration-invariants.test.ts`
+  lê o SQL e verifica que as proteções estão escritas. Não prova comportamento em
+  Postgres — falta banco de teste.
