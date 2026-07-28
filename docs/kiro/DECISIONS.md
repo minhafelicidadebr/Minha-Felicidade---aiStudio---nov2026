@@ -181,3 +181,91 @@
   entram nele. Não é regressão de segurança nem quebra o gate (é warning de tamanho do Vite), mas
   está registrado: resolver com `import()` dinâmico do gráfico e do gerador de PDF é candidato a
   uma onda de performance, não a um remendo agora.
+
+## 2026-07 · ONDA UX-3 — contrato de produto decidido pelo humano ANTES do design
+
+As oito decisões abaixo foram tomadas pelo humano em resposta aos pontos que a
+fase de requisitos levantou em vez de resolver sozinha. Estão registradas em
+`DASHBOARD_PRODUCT_CONTRACT.md` (§D1–§D8) e, no que toca privacidade, em
+`METRIC_PRIVACY_POLICY.md`. São **vinculantes** para a UX-3.
+
+- **D49. Fluxo de convite: só reenvio e escalonamento.** A fila de decisões
+  oferece nesta onda apenas *reenviar convite* e *escalar pendência*. O fluxo de
+  "solicitar entrada e aguardar aprovação" **não** é implementado agora, porque
+  criaria outra jornada, com tabelas, RPCs, estados e telas novos. Poderá virar
+  onda própria somente se o piloto demonstrar necessidade concreta.
+  Obrigação adicional: **remover qualquer rótulo "Aprovar convite" da
+  interface** — a ação não existe no produto, e rótulo de ação inexistente é
+  overclaim (doutrina §1).
+- **D50. Escalonamento em ledger próprio, append-only.** Reutilizar
+  `notification_outbox` foi **reprovado**: envio de comunicação e histórico de
+  decisões têm responsabilidades diferentes, e misturá-los deixaria o histórico
+  de governança sujeito à limpeza da fila de e-mails. Criar
+  `institutional_decision_events` (alternativa aceita: `governance_events`) com,
+  no mínimo: organização; escola ou turma; tipo do evento; entidade de origem;
+  severidade; motivo; ator; data; metadados mínimos; identificador de
+  idempotência quando aplicável. Somente inserção, auditável, protegido por
+  RLS/RPC, estado derivado dos eventos — nunca edição retroativa. Sem texto
+  livre sensível e sem dado pessoal desnecessário.
+- **D51. `platform_admin` NÃO vai para `/org`.** Minha proposta de redirecionar
+  provisoriamente foi **reprovada**, com motivo: confunde papel, pode mascarar
+  falha de autorização e cria dívida que tende a durar mais que o previsto.
+  Solução mínima obrigatória nesta onda: criar `/admin/operacao` como landing
+  provisória do administrador **ou** manter `/admin` como landing
+  administrativa até `/admin/operacao` existir. A página pode ser simples, mas
+  identifica "Administração da Plataforma", mostra estado operacional básico,
+  linka as áreas administrativas existentes e avisa o que está em construção.
+  Aceite: zero loop, zero 404, zero administrador de plataforma caindo em
+  painel de organização.
+- **D52. Item "Indicadores agregados" removido do menu do gestor.** O item
+  `org-reports` (hoje `href: "/admin"`) sai da navegação de `org_admin`: os
+  indicadores agregados já estão em `/org`, e um segundo item apontando para
+  outro painel gera duplicidade e carga cognitiva. O item **não** é
+  reaproveitado para `platform_admin`; a navegação administrativa terá itens
+  próprios em onda futura (Operação, Tenants, Segurança, IA e custos, Conteúdos
+  e claims).
+- **D53. Escola com `n < 5` continua visível; só o analytics é suprimido.**
+  Esconder a escola inteira foi **reprovado**. A escola permanece como entidade
+  operacional (nome, situação da implantação, gestor responsável, turmas
+  configuradas, convites e pendências, ações administrativas permitidas), e o
+  que se suprime são os indicadores derivados da atividade dos estudantes,
+  substituídos por "Amostra insuficiente para exibição segura". Racional: dado
+  de implantação é sobre a escola, não sobre o comportamento de um adolescente;
+  esconder tudo quebraria a operação do piloto sem ganho de privacidade.
+  Regra: `n < 5` sem métricas de estudante; `n ≥ 5` agregados no nível da
+  escola; subdivisões por turma sob o mesmo limiar; nunca expor a contagem
+  exata do grupo suprimido. O valor 5 vive em **configuração canônica
+  server-side**, não repetido em componentes.
+- **D54. Supressão complementar contra inferência por subtração.** Aprovada.
+  Quando uma única turma está suprimida e o total da escola permite deduzir seu
+  valor, suprimir também a **segunda menor turma** ou o **total agregado**,
+  escolhendo a alternativa que preserva mais utilidade, por regra
+  **determinística e documentada**. A proteção vale igualmente em API, RPC,
+  cards, gráficos, tooltips, labels de acessibilidade, PDF, CSV e exports —
+  esconder só o número na interface não cumpre a política, porque o valor real
+  continuaria no payload.
+- **D55. Privacidade prevalece sobre uniformidade do formato.** Para grupo
+  abaixo do limiar, a resposta não devolve valor, contagem, porcentagem,
+  intervalo que permita inferência, tooltip, campo oculto no payload nem
+  metadado acessível por exportação. Devolve apenas: dado suprimido; motivo da
+  supressão; limiar aplicado. Consequência aceita: um grupo suprimido tem menos
+  campos que um grupo divulgado, e os consumidores tratam campo ausente como
+  suprimido, nunca como zero.
+- **D56. Reenvio de convite: 3 além do envio inicial, 24 h de intervalo.**
+  Aplicável só quando o convite está pendente, não aceito, não revogado e
+  dentro da validade. Esgotado o limite, o gestor aguarda a expiração, cancela
+  e emite novo convite quando permitido, ou usa outro canal institucional. Cada
+  tentativa é registrada com ator, data, convite, resultado e motivo de bloqueio
+  quando houver. **Antiburla:** a proteção vale por **organização e
+  destinatário**, não apenas por registro de convite — recriar convites
+  idênticos em curto intervalo para o mesmo destinatário não contorna o limite.
+  Motivo do rigor: o reenvio dispara e-mail que pode chegar a adolescente.
+- **D57. `DASHBOARD_PRODUCT_CONTRACT.md` passa a ser versionado.** Achado
+  incidental desta rodada: os documentos de contrato citados pelas ondas UX-1 e
+  UX-2 (`DASHBOARD-PRODUCT-CONTRACT.md`, `DASHBOARD-METRIC-REGISTRY.md`,
+  `DASHBOARD-ROUTE-MAP.md`, `DASHBOARD-COMPONENT-INVENTORY.md`,
+  `DASHBOARD-MASTER-PLAN.md`) **nunca existiram no repositório** — circularam
+  apenas no chat. Duas ondas foram executadas contra um contrato não auditável.
+  Criados agora `docs/kiro/DASHBOARD_PRODUCT_CONTRACT.md` e
+  `docs/kiro/METRIC_PRIVACY_POLICY.md` como fonte versionada. Os demais
+  documentos originais seguem ausentes e são reconstruídos sob demanda.
