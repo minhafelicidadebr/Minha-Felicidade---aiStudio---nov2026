@@ -254,6 +254,7 @@ if (!existsSync(appRouter)) {
   const text = readIfExists(appRouter);
   const requiredPrivateRoutes = [
     "/dashboard",
+    "/alunos",
     "/module/:id",
     "/quiz",
     "/flashcards",

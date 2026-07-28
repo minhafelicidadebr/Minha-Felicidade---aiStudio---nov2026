@@ -77,10 +77,12 @@ type PrivateRoute = {
 // Rotas sem `feature` continuam abertas a qualquer conta autenticada
 // (gratuitas por padrão: dashboard, quiz, flashcards, breathing, etc.)
 const privateRoutes: PrivateRoute[] = [
-  // Entrada canônica: redireciona para a home do papel. `/dashboard` segue
-  // válido por compatibilidade (e-mails, bookmarks, testes) até a UX-4.
+  // Entrada canônica: redireciona para a home do papel.
   { path: "/inicio", element: <RoleHomeRedirect /> },
-  { path: "/dashboard", element: <DashboardPage /> },
+  // UX-4: `/alunos` é a home canônica do estudante. `/dashboard` permanece como
+  // redirecionador por compatibilidade (e-mails, bookmarks, testes existentes).
+  { path: "/alunos", element: <DashboardPage /> },
+  { path: "/dashboard", element: <RoleHomeRedirect /> },
   { path: "/module/:id", element: <ModulePage /> },
   { path: "/quiz", element: <QuizPage /> },
   { path: "/flashcards", element: <FlashcardsPage /> },
