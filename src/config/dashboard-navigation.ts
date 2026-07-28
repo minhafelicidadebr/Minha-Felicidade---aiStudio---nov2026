@@ -80,10 +80,12 @@ export const DASHBOARD_NAV_ITEMS: readonly DashboardNavItem[] = [
         description: "Próximo passo, progresso e conquistas",
     },
     {
+        // UX-3: saiu de `/admin` para `/professores`. `/admin` passou a ser a
+        // Landing Administrativa da plataforma (§D3/D51).
         key: "educator-home",
         label: "Painel pedagógico",
         shortLabel: "Painel",
-        href: "/admin",
+        href: "/professores",
         icon: GraduationCap,
         group: "visao",
         roles: ["educator"],
@@ -138,17 +140,15 @@ export const DASHBOARD_NAV_ITEMS: readonly DashboardNavItem[] = [
         mobile: true,
         description: "Membros ativos e convites pendentes",
     },
+    // REMOVIDO na UX-3 (§D4/D52): o item `org-reports` apontava para `/admin` e
+    // duplicava indicadores que já vivem em `/org`. Um segundo item levando a
+    // outro painel gerava carga cognitiva sem informação nova. Não foi
+    // reaproveitado para `platform_admin`: a navegação administrativa terá itens
+    // próprios (Operação, Tenants, Segurança, IA e custos, Conteúdos e claims).
     {
-        key: "org-reports",
-        label: "Indicadores agregados",
-        shortLabel: "Dados",
-        href: "/admin",
-        icon: BarChart3,
-        group: "gestao",
-        roles: ["org_admin", "platform_admin"],
-        description: "Progresso agregado, sem dados individuais",
-    },
-    {
+        // Segue `future` porque uma página dedicada de turmas do docente não
+        // existe. Apontá-la para `/professores` criaria dois itens de menu para
+        // a mesma rota, e o estado "ativo" da navegação ficaria ambíguo.
         key: "teacher-classes",
         label: "Minhas turmas",
         shortLabel: "Turmas",

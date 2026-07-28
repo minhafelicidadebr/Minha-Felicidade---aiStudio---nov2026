@@ -171,3 +171,114 @@ Decisão pendente D33: school_admin → /escolas (landing) vs /escolas/:schoolId
 autenticado). Mantido comportamento atual (school_admin → /org via IMPLEMENTED_ROLE_HOME).
 
 PR: #37 (ux-2-org-dashboard → main).
+
+## 2026-07 · ONDA UX-3 — Painel escolar, limiar canônico e governança
+
+Antes do código, as oito decisões de contrato foram fechadas pelo humano e
+versionadas (D49–D57). Duas **reprovaram** propostas minhas, e o motivo importa:
+
+- **D51** — eu propus redirecionar `platform_admin` para `/org` provisoriamente.
+  Reprovado: confunde papel, pode mascarar falha de autorização e cria dívida
+  que tende a durar. **Ampliou o escopo da onda**: passou a exigir uma landing
+  administrativa mínima.
+- **D53** — eu tratei "esconder a escola inteira" como opção defensável. O
+  ajuste separou dado de **implantação** (turmas, convites — sobre a escola) de
+  dado de **atividade de estudante** (sobre um adolescente). Só o segundo é
+  suprimido; esconder o primeiro quebraria a operação do piloto sem ganho de
+  privacidade.
+
+### Documentos criados (achado D57)
+
+Os contratos `DASHBOARD-*.md` citados por UX-1 e UX-2 **nunca existiram no
+repositório** — circularam apenas no chat. Duas ondas rodaram contra um contrato
+não auditável. Criados agora, versionados:
+`docs/kiro/DASHBOARD_PRODUCT_CONTRACT.md` e `docs/kiro/METRIC_PRIVACY_POLICY.md`.
+
+### Servidor (`20260727120000_ux3_school_metrics_and_governance.sql`)
+
+- `metric_minimum_group_size()` — limiar canônico N=5, fonte única. Antes o 5
+  estava repetido em duas RPCs.
+- `institutional_decision_events` — ledger append-only. `REVOKE UPDATE, DELETE`
+  **mais** triggers que barram mutação até para `service_role` (o REVOKE não
+  alcança `service_role` nem função DEFINER com bug). `reason` é vocabulário
+  fechado; destinatário entra como hash sha256, porque o ledger é lido por
+  qualquer `org_admin`.
+- `can_read_school()` — escopo de `auth.uid()` + vínculos ativos. `school_admin`
+  com `school_id` nulo autoriza zero escolas.
+- `get_school_metrics()` — supressão no servidor. Grupo de 1 a 4 devolve só o
+  marcador, sem valor e sem contagem. Negação é indistinguível de escola
+  inexistente (anti-enumeração). Registra leitura autorizada **e** negada.
+- Supressão complementar determinística contra subtração.
+- `resend_invitation()` — 3 reenvios / 24 h, contados por organização +
+  destinatário. Contar na linha do convite seria derrotado cancelando e
+  recriando, porque `invite_member` é idempotente por (email, org, role).
+- `escalate_indicator()` — alvo fora da organização negado e registrado.
+
+### Cliente
+
+- `/escola/:schoolId` novo, sobre a casca, alcançável pela lista de escolas de
+  `/org` (que é a seleção explícita, com nome e município).
+- `/admin` virou Landing Administrativa; `/professores` recebeu o painel docente
+  migrado para a casca, com 401 e 403 agora distintos.
+- `src/lib/metric-privacy.ts` — regras puras, sem limiar hardcoded no cliente.
+- `SuppressedValue` — três estados textualmente distintos (suprimido, vazio,
+  falha), nunca `0` fabricado.
+
+### Gate
+
+`npm run quality` verde. Testes: **171 → 245** (21 arquivos). A asserção do
+literal de rota no gate foi **substituída**, não removida, e o gate ganhou
+asserções novas: anti-laço do `platform_admin`, ledger append-only, privilégio
+mínimo das RPCs e proibição de limiar hardcoded no cliente.
+
+Um falso positivo próprio: a asserção nova de "limiar hardcoded" pegou um
+comentário que citava o padrão proibido. Corrigido o comentário, não a asserção.
+
+### Fiação da DecisionQueue (fecha o Requirement 9)
+
+- `DecisionQueue` deixou de ser lista decorativa: ganhou `mutation` por item, com
+  execução única por vez em toda a fila, controle desabilitado durante a ação e
+  os **três desfechos textualmente distintos** — sucesso, permissão negada e
+  falha técnica. Falha declara explicitamente que **nada foi alterado** e mantém
+  o item na fila.
+- `useDecisionActions` traduz o erro do Postgres nos três desfechos. O detalhe
+  que importa: `42501` (sem privilégio) e `22023` (regra recusou — limite,
+  janela, convite expirado) viram **"negado"**, não "falhou". Colapsar os dois
+  faria o gestor repetir um reenvio que nunca vai passar.
+- `decision-queue-items.ts` deriva os itens do dado observado, com a evidência no
+  texto. Convite de **estudante** é agregado por escola, com contagem e **sem
+  e-mail** — estudante é adolescente, e o e-mail dele numa fila lida por qualquer
+  gestor é exposição desnecessária. Convite de adulto da equipe aparece
+  individual, porque o reenvio é por convite e o e-mail institucional é o
+  identificador natural do trabalho.
+- Reenvio em lote relata resultado **parcial** ("3 reenviados; 2 recusados pelo
+  limite ou pela janela") em vez de esconder recusas atrás de um "ok" genérico.
+  Cada convite é avaliado pelo servidor separadamente, porque o limite vale por
+  destinatário.
+- Convite expirado não oferece reenvio: a ação correta é reemitir, e o botão
+  explica isso em vez de falhar no servidor.
+- Escalonamento entra na fila quando a taxa de ativação sai da faixa esperada
+  (60%–100%), declarada no próprio item.
+- Gate ganhou asserção proibindo o rótulo "Aprovar convite" no código de UI
+  (§D1/D49 — rótulo de ação inexistente é overclaim).
+
+Testes: **245 → 276** (24 arquivos), incluindo dupla submissão bloqueada, runner
+que lança tratado como falha, e ausência do rótulo de aprovação.
+
+### Não entregue / limitações registradas (honestidade > overclaim)
+
+- **Migration não aplicada** no ambiente Lovable (SQL Editor manual).
+- **Testes de banco são estruturais**, não de execução: `ux3-migration-invariants.test.ts`
+  lê o SQL e verifica que as proteções estão escritas. Não prova comportamento em
+  Postgres — falta banco de teste.
+- **Escalonamento dispara na primeira leitura fora da faixa, não na segunda.** O
+  contrato (R9 item 16) pede 2 leituras consecutivas fora do esperado. Isso exige
+  histórico de leituras do indicador, que não existe hoje — não há onde guardar a
+  leitura anterior. Entregue com uma leitura; fechar o requisito depende de
+  persistir séries de indicador.
+- **`canResend` é sempre `true` no cliente.** A RLS de `useOrganizationDetail` já
+  restringe os dados a organizações que a pessoa administra, e o servidor nega e
+  registra quem não pode. Mas o contrato (R9 item 15) prevê esconder o controle
+  para papel sem permissão, e hoje o cliente não distingue `org_admin` de
+  `school_admin` para essa decisão — quem não pode vê o botão e recebe "permissão
+  negada" ao clicar. Funciona, mas não é o comportamento pedido.

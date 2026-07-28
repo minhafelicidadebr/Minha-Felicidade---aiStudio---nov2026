@@ -7,12 +7,52 @@
 // Regra de privacidade (contrato §6): o campo `owner` refere-se a papel/função
 // ("coordenação da escola"), não a estudante identificado.
 
+import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, CircleAlert, Clock, ListChecks } from "lucide-react";
+import {
+    ArrowRight,
+    CheckCircle2,
+    CircleAlert,
+    Clock,
+    ListChecks,
+    Loader2,
+    Lock,
+    TriangleAlert,
+} from "lucide-react";
 import DashboardEmptyState from "./DashboardEmptyState";
 import { cn } from "@/lib/utils";
 
 export type DecisionPriority = "high" | "medium" | "low";
+
+/**
+ * Desfecho de uma ação que ALTERA dados (UX-3, §D1/D49).
+ *
+ * Três casos deliberadamente distintos, porque a próxima coisa que a pessoa faz
+ * é diferente em cada um:
+ *   • `succeeded` → nada a fazer, o efeito ocorreu;
+ *   • `denied`    → a conta não tem permissão; insistir não resolve;
+ *   • `failed`    → falha técnica; **nada foi alterado** e tentar de novo faz
+ *                   sentido.
+ * Colapsar `denied` em `failed` faria o gestor repetir uma ação que nunca vai
+ * passar.
+ */
+export type DecisionActionOutcome =
+    | { status: "succeeded"; message: string }
+    | { status: "denied"; message: string }
+    | { status: "failed"; message: string };
+
+export interface DecisionMutation {
+    label: string;
+    pendingLabel?: string;
+    /** Executa a ação. Deve resolver com o desfecho, não lançar. */
+    run: () => Promise<DecisionActionOutcome>;
+    /**
+     * Bloqueio conhecido ANTES de chamar o servidor (ex.: janela de 24 h já
+     * contada no cliente). O controle aparece desabilitado com o motivo, em vez
+     * de gastar uma ida ao banco para ouvir "não".
+     */
+    blockedReason?: string | null;
+}
 
 export interface DecisionItem {
     id: string;
@@ -24,7 +64,13 @@ export interface DecisionItem {
     owner?: string;
     /** Prazo sugerido em linguagem natural (ex.: "esta semana"). */
     due?: string;
+    /** Ação de navegação (não altera dados). */
     action?: { label: string; to: string };
+    /**
+     * Ação que altera dados. Ausente quando o papel efetivo não pode executar —
+     * o item continua visível, só sem o controle (contrato R9 item 15).
+     */
+    mutation?: DecisionMutation;
 }
 
 interface DecisionQueueProps {
@@ -33,8 +79,21 @@ interface DecisionQueueProps {
     /** Texto do estado vazio — vazio aqui é boa notícia, não falta de dado. */
     emptyTitle?: string;
     emptyDescription?: string;
+    /** Chamado depois de uma ação bem-sucedida, para recarregar do servidor. */
+    onResolved?: () => void;
+    /** Teto de itens exibidos por leitura. */
+    maxItems?: number;
     className?: string;
 }
+
+const OUTCOME_STYLE: Record<
+    DecisionActionOutcome["status"],
+    { icon: typeof CheckCircle2; tone: string; role: "status" | "alert" }
+> = {
+    succeeded: { icon: CheckCircle2, tone: "text-success", role: "status" },
+    denied: { icon: Lock, tone: "text-destructive", role: "alert" },
+    failed: { icon: TriangleAlert, tone: "text-destructive", role: "alert" },
+};
 
 const PRIORITY_STYLE: Record<DecisionPriority, { label: string; badge: string; bar: string }> = {
     high: {
@@ -61,11 +120,50 @@ export default function DecisionQueue({
     items,
     emptyTitle = "Nenhuma decisão pendente",
     emptyDescription = "Nada exige intervenção agora. Quando um indicador sair do esperado, a decisão aparece aqui com o motivo.",
+    onResolved,
+    maxItems = 50,
     className,
 }: DecisionQueueProps) {
-    const ordered = [...items].sort(
-        (a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority],
+    const [runningId, setRunningId] = useState<string | null>(null);
+    const [outcomes, setOutcomes] = useState<Record<string, DecisionActionOutcome>>({});
+
+    const runMutation = useCallback(
+        async (item: DecisionItem) => {
+            if (!item.mutation || runningId) return;
+            setRunningId(item.id);
+            setOutcomes((previous) => {
+                const next = { ...previous };
+                delete next[item.id];
+                return next;
+            });
+            try {
+                const outcome = await item.mutation.run();
+                setOutcomes((previous) => ({ ...previous, [item.id]: outcome }));
+                if (outcome.status === "succeeded") onResolved?.();
+            } catch (caught) {
+                // Runner que lança em vez de resolver: tratado como falha
+                // técnica, e a mensagem diz que nada foi alterado.
+                setOutcomes((previous) => ({
+                    ...previous,
+                    [item.id]: {
+                        status: "failed",
+                        message:
+                            caught instanceof Error
+                                ? `${caught.message} Nada foi alterado.`
+                                : "Falha inesperada. Nada foi alterado.",
+                    },
+                }));
+            } finally {
+                setRunningId(null);
+            }
+        },
+        [runningId, onResolved],
     );
+
+    const ordered = [...items]
+        .sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority])
+        .slice(0, maxItems);
+    const hiddenCount = items.length - ordered.length;
 
     return (
         <section className={cn("space-y-3", className)} data-testid="decision-queue">
@@ -87,6 +185,11 @@ export default function DecisionQueue({
                 <ul className="space-y-2">
                     {ordered.map((item) => {
                         const style = PRIORITY_STYLE[item.priority];
+                        const isRunning = runningId === item.id;
+                        // Uma execução por vez em toda a fila: duas mutações
+                        // simultâneas deixariam o estado da lista ambíguo.
+                        const isBusy = runningId !== null;
+                        const outcome = outcomes[item.id];
                         return (
                             <li
                                 key={item.id}
@@ -123,20 +226,82 @@ export default function DecisionQueue({
                                         </p>
                                     </div>
 
-                                    {item.action && (
-                                        <Link
-                                            to={item.action.to}
-                                            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                                        >
-                                            {item.action.label}
-                                            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                                        </Link>
-                                    )}
+                                    <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+                                        {item.action && (
+                                            <Link
+                                                to={item.action.to}
+                                                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-border/60 px-4 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                            >
+                                                {item.action.label}
+                                                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                                            </Link>
+                                        )}
+
+                                        {item.mutation && (
+                                            <button
+                                                type="button"
+                                                onClick={() => void runMutation(item)}
+                                                disabled={isBusy || Boolean(item.mutation.blockedReason)}
+                                                aria-describedby={
+                                                    item.mutation.blockedReason ? `${item.id}-blocked` : undefined
+                                                }
+                                                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                                data-testid="decision-mutation-button"
+                                            >
+                                                {isRunning ? (
+                                                    <>
+                                                        <Loader2
+                                                            className="h-3.5 w-3.5 animate-spin"
+                                                            aria-hidden="true"
+                                                        />
+                                                        {item.mutation.pendingLabel ?? "Executando…"}
+                                                    </>
+                                                ) : (
+                                                    item.mutation.label
+                                                )}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
+
+                                {item.mutation?.blockedReason && (
+                                    <p
+                                        id={`${item.id}-blocked`}
+                                        className="mt-2 flex items-start gap-1.5 text-[11px] text-muted-foreground"
+                                    >
+                                        <Clock className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
+                                        {item.mutation.blockedReason}
+                                    </p>
+                                )}
+
+                                {outcome && (
+                                    <p
+                                        role={OUTCOME_STYLE[outcome.status].role}
+                                        aria-live={outcome.status === "succeeded" ? "polite" : "assertive"}
+                                        className={cn(
+                                            "mt-2 flex items-start gap-1.5 text-[11px] font-medium",
+                                            OUTCOME_STYLE[outcome.status].tone,
+                                        )}
+                                        data-testid={`decision-outcome-${outcome.status}`}
+                                    >
+                                        {(() => {
+                                            const Icon = OUTCOME_STYLE[outcome.status].icon;
+                                            return <Icon className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />;
+                                        })()}
+                                        {outcome.message}
+                                    </p>
+                                )}
                             </li>
                         );
                     })}
                 </ul>
+            )}
+
+            {hiddenCount > 0 && (
+                <p className="text-[11px] text-muted-foreground">
+                    Mostrando {ordered.length} de {items.length} itens. Resolva os atuais para ver os
+                    demais.
+                </p>
             )}
         </section>
     );

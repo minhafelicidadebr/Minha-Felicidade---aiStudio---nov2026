@@ -65,7 +65,9 @@ export const DASHBOARD_ROLE_LABEL: Record<DashboardRole, string> = {
  * `IMPLEMENTED_ROLE_HOME` continua mandando school_admin para `/org`.
  */
 export const CANONICAL_ROLE_HOME: Record<DashboardRole, string> = {
-    platform_admin: "/admin",
+    // Alvo do contrato. `/admin/operacao` ainda não existe como rota; até lá a
+    // Landing Administrativa é servida em `/admin` (ver IMPLEMENTED_ROLE_HOME).
+    platform_admin: "/admin/operacao",
     org_admin: "/org",
     school_admin: "/escola/:schoolId",
     educator: "/professores",
@@ -82,12 +84,40 @@ export const CANONICAL_ROLE_HOME: Record<DashboardRole, string> = {
  * migração incremental").
  */
 export const IMPLEMENTED_ROLE_HOME: Record<DashboardRole, string> = {
+    // UX-3 (§D3/D51): `/admin` deixou de ser o painel docente e passou a ser a
+    // Landing Administrativa da plataforma. Redirecionar `platform_admin` para
+    // `/org` foi REPROVADO pelo humano — confunde papel e pode mascarar falha
+    // de autorização. Quando `/admin/operacao` existir, este valor migra.
     platform_admin: "/admin",
     org_admin: "/org",
+    // Fallback: `school_admin` sem escola resolvível cai na visão da rede, que
+    // lista as escolas com nome e município. O destino real por escola é
+    // resolvido em runtime por `resolveRoleHomePathForContext`, porque um mapa
+    // de constantes não pode carregar um uuid.
     school_admin: "/org",
-    educator: "/admin",
+    educator: "/professores",
     student: "/dashboard",
 };
+
+/** Caminho do painel de uma escola específica. Único lugar que monta esta URL. */
+export function buildSchoolPath(schoolId: string): string {
+    return `/escola/${schoolId}`;
+}
+
+const UUID_PATTERN =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Valida o formato de um id de escola vindo da URL.
+ *
+ * Serve ao contrato §2 item 7: `schoolId` malformado precisa cair no estado de
+ * acesso negado SEM chamada de rede. Sem esta checagem, um valor arbitrário na
+ * URL viraria uma consulta ao banco — barulho inútil e superfície a mais.
+ */
+export function isValidSchoolId(value: string | null | undefined): boolean {
+    if (!value) return false;
+    return UUID_PATTERN.test(value);
+}
 
 export const DEFAULT_DASHBOARD_ROLE: DashboardRole = "student";
 
@@ -146,4 +176,34 @@ export function resolveRoleHomePath(
 /** True quando o papel pode ver dados institucionais agregados (org/escola). */
 export function canSeeInstitutionalData(role: DashboardRole): boolean {
     return role === "platform_admin" || role === "org_admin" || role === "school_admin";
+}
+
+/**
+ * Home navegável considerando o contexto real da pessoa (UX-3).
+ *
+ * Diferença em relação a `resolveRoleHomePath`: aquela função opera só sobre
+ * papéis e devolve constantes; esta recebe as escolas que a pessoa realmente
+ * administra e pode devolver um caminho com uuid concreto.
+ *
+ * Regra de cardinalidade (§3 do spec, itens 4–6):
+ *   • exatamente 1 escola  → vai direto ao painel dessa escola;
+ *   • 2 ou mais escolas    → NÃO escolhe por conta própria; manda para a visão
+ *                            da rede, onde as escolas aparecem com nome e
+ *                            município para escolha explícita;
+ *   • nenhuma escola       → fallback do papel.
+ *
+ * Escolher automaticamente uma entre várias seria pior que pedir a escolha: a
+ * pessoa não saberia por que caiu naquela escola nem que existem outras.
+ */
+export function resolveRoleHomePathForContext(input: {
+    roles?: readonly DashboardRole[] | null;
+    /** Escolas que a pessoa administra, derivadas no servidor. */
+    schoolIds?: readonly string[] | null;
+}): string {
+    const role = resolveDashboardRole(input.roles);
+    if (role !== "school_admin") return IMPLEMENTED_ROLE_HOME[role];
+
+    const schoolIds = (input.schoolIds ?? []).filter(isValidSchoolId);
+    if (schoolIds.length === 1) return buildSchoolPath(schoolIds[0]);
+    return IMPLEMENTED_ROLE_HOME.school_admin;
 }

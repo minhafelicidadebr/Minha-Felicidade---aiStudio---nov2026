@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import {
+    ArrowRight,
     Building2,
     School,
     Users,
@@ -11,12 +13,22 @@ import {
     Plus,
     Download,
 } from "lucide-react";
+import { buildSchoolPath } from "@/lib/role-home";
 import RoleAwareAppShell from "@/components/dashboard/RoleAwareAppShell";
 import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 import DashboardEmptyState from "@/components/dashboard/DashboardEmptyState";
 import DashboardErrorState from "@/components/dashboard/DashboardErrorState";
 import MetricCard from "@/components/dashboard/MetricCard";
+import DecisionQueue, { type DecisionItem } from "@/components/dashboard/DecisionQueue";
+import {
+    ACTIVATION_EXPECTED_RANGE,
+    buildInvitationDecisionItems,
+    buildInvitationSources,
+    describeRange,
+    isOutOfRange,
+} from "@/lib/decision-queue-items";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { useDecisionActions } from "@/hooks/useDecisionActions";
 import { useOrganizationDetail } from "@/hooks/useOrganizationDetail";
 import OnboardingWizard from "@/components/org/OnboardingWizard";
 import OperationalMetrics from "@/components/org/OperationalMetrics";
@@ -32,6 +44,7 @@ export default function OrgDashboardPage() {
     const { activeOrganization } = useDashboardContext();
     const { org, schools, classes, members, invitations, loading, error, refetch } =
         useOrganizationDetail(activeOrganization?.id);
+    const { resendInvitations, escalateIndicator } = useDecisionActions();
     const { toast } = useToast();
 
     // Invite form state
@@ -249,6 +262,42 @@ export default function OrgDashboardPage() {
     const activationRate = totalInvited > 0 ? Math.round((members.length / totalInvited) * 100) : 0;
     const now = new Date().toISOString();
 
+    // ── Fila de decisões ─────────────────────────────────────────────────────
+    // Cada item nasce de um dado observado. Nada é inventado para preencher a
+    // fila: fila vazia é boa notícia, não falta de dado.
+    const invitationSources = buildInvitationSources(invitations, schools);
+    const decisionItems: DecisionItem[] = [
+        ...buildInvitationDecisionItems({
+            sources: invitationSources,
+            // `useOrganizationDetail` só devolve dados de organização que a
+            // pessoa administra, então quem chega aqui já passou pela RLS. A
+            // autoridade final continua no servidor, que nega e registra.
+            canResend: true,
+            resend: resendInvitations,
+        }),
+    ];
+
+    if (totalInvited > 0 && isOutOfRange(activationRate, ACTIVATION_EXPECTED_RANGE)) {
+        decisionItems.push({
+            id: "indicator:activation_rate",
+            title: "Taxa de ativação abaixo do esperado",
+            reason: `Ativação em ${activationRate}% (${describeRange(ACTIVATION_EXPECTED_RANGE)}), com ${members.length} de ${totalInvited} convites aceitos.`,
+            priority: activationRate < ACTIVATION_EXPECTED_RANGE.min / 2 ? "high" : "medium",
+            owner: "gestão da rede",
+            due: "esta semana",
+            mutation: {
+                label: "Escalar pendência",
+                pendingLabel: "Registrando…",
+                run: () =>
+                    escalateIndicator({
+                        organizationId: org.id,
+                        indicator: "activation_rate",
+                        severity: activationRate < ACTIVATION_EXPECTED_RANGE.min / 2 ? "critical" : "warning",
+                    }),
+            },
+        });
+    }
+
     // ── Action slot for the shell header ─────────────────────────────────────
     const headerActions = (
         <div className="flex items-center gap-2">
@@ -447,14 +496,28 @@ export default function OrgDashboardPage() {
                                 const schoolClasses = classes.filter(c => c.school_id === s.id);
                                 return (
                                     <div key={s.id} className="p-4 rounded-2xl border border-border/50 bg-card/60">
-                                        <div className="flex items-center justify-between">
-                                            <div>
+                                        <div className="flex flex-wrap items-center justify-between gap-2">
+                                            <div className="min-w-0">
                                                 <h3 className="font-bold text-sm">{s.name}</h3>
-                                                {s.municipality && <p className="text-xs text-muted-foreground">{s.municipality}{s.state_code ? ` — ${s.state_code}` : ""}</p>}
+                                                {s.municipality
+                                                    ? <p className="text-xs text-muted-foreground">{s.municipality}{s.state_code ? ` — ${s.state_code}` : ""}</p>
+                                                    : <p className="text-xs text-muted-foreground/70">Município não informado</p>}
                                             </div>
-                                            <button onClick={() => setAddingClassForSchool(addingClassForSchool === s.id ? null : s.id)} className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1">
-                                                <Plus className="w-3 h-3" aria-hidden="true" /> Turma
-                                            </button>
+                                            <div className="flex items-center gap-3">
+                                                {/* UX-3: esta lista é a seleção explícita de escola. Nome e
+                                                    município ficam visíveis para que a escolha seja informada,
+                                                    em vez de o sistema decidir por conta própria qual escola
+                                                    abrir quando a pessoa administra mais de uma. */}
+                                                <Link
+                                                    to={buildSchoolPath(s.id)}
+                                                    className="inline-flex min-h-11 items-center gap-1.5 text-[11px] font-bold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                                >
+                                                    Abrir painel <ArrowRight className="w-3 h-3" aria-hidden="true" />
+                                                </Link>
+                                                <button onClick={() => setAddingClassForSchool(addingClassForSchool === s.id ? null : s.id)} className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1">
+                                                    <Plus className="w-3 h-3" aria-hidden="true" /> Turma
+                                                </button>
+                                            </div>
                                         </div>
                                         {addingClassForSchool === s.id && (
                                             <div className="mt-3 flex gap-2">
@@ -532,6 +595,18 @@ export default function OrgDashboardPage() {
                         </div>
                     </section>
                 )}
+
+                {/* Fila de decisões — ações que ALTERAM dados (UX-3, §D1/D49).
+            Só reenvio e escalonamento: o fluxo de "solicitar entrada e aguardar
+            aprovação" não existe no produto, e rótulo de ação inexistente é
+            overclaim. */}
+                <DecisionQueue
+                    items={decisionItems}
+                    onResolved={refetch}
+                    emptyTitle="Nenhuma decisão pendente"
+                    emptyDescription="Nenhum convite está parado há uma semana e a taxa de ativação está na faixa esperada. Quando algo sair do esperado, aparece aqui com o motivo."
+                    className="mb-8"
+                />
 
                 {/* Engagement Metrics */}
                 <EngagementMetrics organizationId={org.id} />
