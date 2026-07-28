@@ -677,6 +677,30 @@ export type Database = {
         }
         Relationships: []
       }
+      runtime_gates: {
+        Row: {
+          description: string
+          enabled: boolean
+          key: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          description?: string
+          enabled?: boolean
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          description?: string
+          enabled?: boolean
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       schools: {
         Row: {
           created_at: string
@@ -892,6 +916,7 @@ export type Database = {
       }
       claim_escolar_subscription: { Args: never; Returns: Json }
       claim_escolar_with_token: { Args: { _token: string }; Returns: Json }
+      compute_cycle_risk: { Args: { _cycle_id: string }; Returns: number }
       create_organization: {
         Args: { _name: string; _slug?: string }
         Returns: Json
@@ -900,6 +925,7 @@ export type Database = {
         Args: { _function_name: string }
         Returns: Json
       }
+      gate_enabled: { Args: { _key: string }; Returns: boolean }
       get_funnel_overview: { Args: { _days?: number }; Returns: Json }
       get_learning_progress_overview: { Args: never; Returns: Json }
       get_my_guardian_consent_status: { Args: never; Returns: Json }
