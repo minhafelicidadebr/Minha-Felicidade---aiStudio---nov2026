@@ -608,8 +608,11 @@ if (!existsSync(dashboardPage)) {
   if (!text.includes('rpc("get_my_profile"') || text.includes('from("user_roles"')) {
     fail("DashboardPage must use get_my_profile for role-aware UI and avoid direct user_roles reads");
   }
-  if (!text.includes("hasAnyRole(roles, [\"teacher\", \"manager\"])")) {
-    fail("DashboardPage must derive admin affordances from the complete role set");
+  // UX-5: admin affordances moved from an inline button to the shared shell
+  // sidebar (RoleAwareAppShell + RoleSidebar). The page no longer needs
+  // hasAnyRole because the navigation is resolved by useDashboardContext.
+  if (!text.includes("RoleAwareAppShell")) {
+    fail("DashboardPage must render within RoleAwareAppShell (the shared dashboard shell)");
   }
 }
 
