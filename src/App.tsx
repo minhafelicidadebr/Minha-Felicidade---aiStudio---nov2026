@@ -8,6 +8,7 @@ import ScrollToTop from "@/components/ScrollToTop";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import RequireAuth from "@/components/routing/RequireAuth";
 import RequireRole from "@/components/routing/RequireRole";
+import RequireInstitutionalRole from "@/components/routing/RequireInstitutionalRole";
 import RequireGuardianConsent from "@/components/routing/RequireGuardianConsent";
 import RequireFeature from "@/components/routing/RequireFeature";
 
@@ -92,11 +93,10 @@ const privateRoutes: PrivateRoute[] = [
   { path: "/poetry", element: <PoetryPage />, feature: "poetry" },
   { path: "/codesign", element: <CoDesignPage />, feature: "codesign" },
   { path: "/alegria", element: <AlegriaPage /> },
-  // UX-3 (§D3/D51): `/admin` é a Landing Administrativa da plataforma. A
-  // checagem de papel acontece dentro da página, porque `platform_admin` só
-  // existe em institutional_memberships e não é expressável em RequireRole
-  // (que conhece apenas os papéis de aplicação student/teacher/manager).
-  { path: "/admin", element: <AdminOperacaoPage /> },
+  // UX-3 (§D3/D51): `/admin` é a Landing Administrativa da plataforma.
+  // Protegida por RequireInstitutionalRole (papéis de membership, não de
+  // aplicação). O guard vive no render abaixo, não no campo `roles` da rota.
+  { path: "/admin", element: <RequireInstitutionalRole allowedRoles={["platform_admin"]}><AdminOperacaoPage /></RequireInstitutionalRole> },
   { path: "/professores", element: <AdminPage />, roles: ["teacher", "manager"] },
   { path: "/profile", element: <ProfilePage /> },
   { path: "/breathing", element: <BreathingPage /> },
