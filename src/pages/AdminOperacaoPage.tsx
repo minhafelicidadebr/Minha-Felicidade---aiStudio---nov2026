@@ -1,23 +1,11 @@
 // UX-3 — Landing Administrativa da plataforma, servida em `/admin` (§D3/D51).
 //
-// Por que esta página existe: eu havia proposto redirecionar `platform_admin`
-// para `/org` até `/admin/operacao` ficar pronto. O humano REPROVOU, com razão —
-// mandar um administrador de plataforma para o painel de gestor de organização
-// confunde papel, pode mascarar falha de autorização e cria uma dívida que
-// tende a durar mais que o previsto.
-//
-// Nota de guarda de rota: `RequireRole` só entende os papéis de APLICAÇÃO
-// (student/teacher/manager). `platform_admin` existe apenas em
-// `institutional_memberships`, então não há como expressá-lo em
-// `allowedRoles`. Por isso a checagem de papel acontece aqui, sobre o papel
-// derivado no servidor por `useDashboardContext` — e quem não é administrador
-// de plataforma é levado à própria home em vez de ver conteúdo administrativo.
+// Protegida por RequireInstitutionalRole no App.tsx. A checagem de papel que
+// antes vivia aqui dentro (D59) agora está no guard, como todos os outros
+// painéis. A página só recebe renderização quando o papel já é confirmado.
 
-import { Navigate } from "react-router-dom";
 import { Building2, Construction, CreditCard, ShieldCheck, Users } from "lucide-react";
 import RoleAwareAppShell from "@/components/dashboard/RoleAwareAppShell";
-import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
-import DashboardErrorState from "@/components/dashboard/DashboardErrorState";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { DASHBOARD_ROLE_LABEL } from "@/lib/role-home";
 import { formatFreshness } from "@/lib/dashboard-format";
@@ -59,35 +47,8 @@ const UNDER_CONSTRUCTION = [
 ] as const;
 
 export default function AdminOperacaoPage() {
-    const { role, roleHomePath, organizations, fetchedAt, isLoading, isError, error, refetch } =
+    const { role, organizations, fetchedAt } =
         useDashboardContext();
-
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-background p-4 sm:p-6">
-                <DashboardSkeleton variant="page" label="Verificando seu acesso administrativo" />
-            </div>
-        );
-    }
-
-    if (isError) {
-        return (
-            <div className="min-h-screen bg-background p-4 sm:p-6">
-                <DashboardErrorState
-                    title="Não conseguimos confirmar seu acesso administrativo"
-                    description="Sem resolver o papel não é seguro mostrar conteúdo administrativo. Nada foi alterado."
-                    detail={error?.message ?? null}
-                    onRetry={refetch}
-                />
-            </div>
-        );
-    }
-
-    // Quem não é administrador de plataforma vai para a própria home. Não é um
-    // erro da pessoa — é apenas a rota errada para o papel dela.
-    if (role !== "platform_admin") {
-        return <Navigate to={roleHomePath} replace state={{ accessDenied: true }} />;
-    }
 
     return (
         <RoleAwareAppShell title={TITLE} subtitle="Estado operacional e áreas administrativas">

@@ -306,8 +306,8 @@ if (!existsSync(appRouter)) {
   if (/path:\s*"\/admin",\s*element:\s*<AdminPage\s*\/>/.test(text)) {
     fail("/admin must not serve the educator dashboard: it is the platform administration landing");
   }
-  if (!text.includes('path: "/admin", element: <AdminOperacaoPage />')) {
-    fail("/admin must serve the platform administration landing (AdminOperacaoPage)");
+  if (!text.includes('path: "/admin", element: <RequireInstitutionalRole allowedRoles={["platform_admin"]}><AdminOperacaoPage /></RequireInstitutionalRole>')) {
+    fail("/admin must serve the platform administration landing (AdminOperacaoPage) guarded by RequireInstitutionalRole");
   }
   if (!text.includes("<RequireRole allowedRoles={route.roles}>{route.element}</RequireRole>")) {
     fail("Role-scoped routes must render through RequireRole");

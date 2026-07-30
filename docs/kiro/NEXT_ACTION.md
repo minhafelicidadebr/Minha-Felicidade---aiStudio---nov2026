@@ -1,12 +1,17 @@
 # NEXT_ACTION
 
-## Estado: ondas UX-2, UX-3 e UX-4 mergeadas em main
+## Estado: todas as ondas UX mergeadas — main corrente
 
 | Onda | PR | Entregas principais |
 |---|---|---|
 | UX-2 | #37 ✅ | /org sobre a casca, MetricCards, Recharts, multi-org |
-| UX-3 | #38 ✅ | /escola/:schoolId, limiar canônico N=5, ledger append-only, DecisionQueue com ações reais |
+| UX-3 | #38 ✅ | /escola/:schoolId, limiar canônico N=5, ledger append-only, DecisionQueue |
 | UX-4 | #39 ✅ | /alunos como home do estudante, code-split (882→49 kB) |
+| UX-5 | #40 ✅ | Estudante na casca compartilhada |
+
+**Todos os cinco papéis agora rodam dentro do `RoleAwareAppShell`.** Nenhum
+painel usa `Navbar`/`Footer` como shell. O redesenho de dashboards por papel
+está concluído.
 
 `npm run quality` verde: 276 testes em 24 arquivos, 0 lint warnings, build sem
 warning de chunk >500 kB, security gate.
@@ -19,26 +24,23 @@ warning de chunk >500 kB, security gate.
 
 ## Dívidas técnicas priorizadas
 
-### Alta (afetam a experiência ou o contrato)
+### Alta (contrato parcial — precisam decisão de produto)
 
-- **`DashboardPage` (estudante) ainda usa `Navbar`/`Footer`.** É o único painel
-  que não está na casca compartilhada. A migração é viável, mas muda a
-  experiência visual do estudante.
 - **Escalonamento na primeira leitura em vez da segunda (D65).** Falta onde
-  guardar a leitura anterior.
+  guardar a leitura anterior. Opções: snapshots periódicos do indicador, ou
+  derivar a segunda leitura do ledger de decisões.
 - **`canResend` sempre `true` no cliente (D65).** Quem não pode vê o botão.
+  Fechar exige o cliente distinguir `org_admin` de `school_admin`.
 
-### Média (correção de arquitetura)
+### Média (correção de arquitetura — executáveis sem decisão de produto)
 
-- `platform_admin` não é expressável em `RequireRole` — checagem dentro da
-  página. Guard de papéis institucionais é candidato a onda própria.
-- `/admin/operacao` não existe como rota separada; a Landing Administrativa vive
-  em `/admin`. `CANONICAL_ROLE_HOME.platform_admin` aponta para a futura.
+- `platform_admin` não é expressável em `RequireRole` — checagem ad hoc dentro
+  da página. Criar um guard que entenda papéis institucionais.
+- `useOrganization` ainda existe — o único consumidor era `/org`, que agora usa
+  `useOrganizationDetail`. Candidato a remoção.
+- `/admin/operacao` não existe como rota separada; a Landing está em `/admin`.
 - `org-schools` segue `future` (precisa href dinâmico).
-- Duplicação `org-home`/`org-people` → `/org` (decisão de produto sobre onde
-  "Pessoas e convites" mora).
-- `useOrganization` ainda existe (outros consumidores).
-- Dois vocabulários de papel no banco (D29).
+- Duplicação `org-home`/`org-people` → `/org` (decisão de produto).
 
 ### Baixa (backlog operacional)
 
@@ -51,6 +53,6 @@ warning de chunk >500 kB, security gate.
 
 ## Próxima ação sugerida
 
-Migrar `DashboardPage` para a casca compartilhada (`RoleAwareAppShell`), fechando
-o último painel que ainda usa `Navbar`/`Footer`. Isso dá ao estudante a mesma
-navegação lateral, bottom nav e skip link que todos os outros papéis já têm.
+Limpeza técnica: remover `useOrganization` (hook morto) e criar
+`RequireInstitutionalRole` (guard que entende papéis de membership), eliminando
+a checagem ad hoc dentro de `AdminOperacaoPage`.
