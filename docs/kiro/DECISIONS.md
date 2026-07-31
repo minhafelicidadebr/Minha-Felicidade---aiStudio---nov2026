@@ -312,3 +312,40 @@ fase de requisitos levantou em vez de resolver sozinha. Estão registradas em
   guardar a anterior; (b) `canResend` é sempre `true` no cliente, então quem não
   tem permissão vê o botão e recebe "permissão negada" ao clicar, em vez de o
   controle não ser renderizado (R9 item 15). Ambos em NEXT_ACTION.
+
+## 2026-07 · Limpeza pós-ondas (UX-5, UX-6)
+
+- **D66. `DashboardPage` migrado para a casca (UX-5).** Último painel que usava
+  `Navbar`/`Footer`. O header inline (botão de admin, badge de XP, logout,
+  settings) foi removido porque a casca já entrega tudo isso pela navegação por
+  papel — manter duplicado significaria dois lugares para a mesma ação, com
+  risco de divergirem. A asserção do gate que exigia `hasAnyRole` no
+  `DashboardPage` foi **substituída** por uma que exige `RoleAwareAppShell`: a
+  antiga verificava um botão de admin que agora vive no `RoleSidebar`.
+- **D67. `useOrganization` removido.** Zero consumidores desde a UX-2, quando
+  `/org` migrou para `useOrganizationDetail`. 115 linhas de código morto que
+  poderiam induzir alguém a usar o padrão antigo (`.limit(1).maybeSingle()`, que
+  quebra multi-organização).
+- **D68. `RequireInstitutionalRole` criado.** Remedia D59: a checagem de papel
+  institucional estava dentro do `AdminOperacaoPage`, ad hoc e invisível na
+  composição de guardas do `App.tsx`. Agora é um guard como os outros, e a
+  proteção de `/admin` aparece no route table. `RequireRole` continua existindo
+  para papéis de aplicação — os dois vocabulários seguem separados no banco
+  (D29), então dois guards é honesto, não redundante.
+- **D69. `org-people` absorvido por `org-home` (UX-6).** Os dois apontavam para
+  `/org`, o que deixava o estado "ativo" da sidebar indeterminado — ambos
+  ficavam marcados ao mesmo tempo — e sugeria duas telas onde havia uma. O
+  rótulo de `org-home` passou a descrever a página inteira. Havia um teste
+  fixando essa dívida em 3 duplicações; virou um teste que exige **zero**
+  duplicação em qualquer papel.
+- **D70. `org-schools` deixou de ser `future` e passou a ser `dynamic`.** A rota
+  `/escola/:schoolId` existe desde a UX-3, mas o item de menu não podia ser
+  renderizado porque o `href` precisa de um uuid que a configuração estática não
+  carrega. Solução: campo `dynamic` no item e `resolveNavItemHref`, que recebe as
+  escolas dos vínculos ativos (derivadas no servidor) e devolve um caminho
+  concreto — ou `null`, e então o item é **omitido**.
+  Cardinalidade deliberada: com **uma** escola o item aparece; com **zero** ou
+  **duas ou mais** ele é omitido, porque escolher uma entre várias sem informar o
+  critério seria arbitrário. A lista completa, com nome e município, está em
+  `/org`. Invariante preservada e testada em todos os contextos: nenhum item
+  renderizado carrega `:param` pendente.

@@ -1,20 +1,21 @@
 # NEXT_ACTION
 
-## Estado: todas as ondas UX mergeadas — main corrente
+## Estado: redesenho de dashboards concluído — main corrente
 
 | Onda | PR | Entregas principais |
 |---|---|---|
 | UX-2 | #37 ✅ | /org sobre a casca, MetricCards, Recharts, multi-org |
-| UX-3 | #38 ✅ | /escola/:schoolId, limiar canônico N=5, ledger append-only, DecisionQueue |
+| UX-3 | #38 ✅ | /escola/:schoolId, limiar N=5, ledger append-only, DecisionQueue |
 | UX-4 | #39 ✅ | /alunos como home do estudante, code-split (882→49 kB) |
 | UX-5 | #40 ✅ | Estudante na casca compartilhada |
+| — | #41 ✅ | Remoção de `useOrganization`, `RequireInstitutionalRole` |
+| UX-6 | #42 | Dedupe de navegação, item de escola com href dinâmico |
 
-**Todos os cinco papéis agora rodam dentro do `RoleAwareAppShell`.** Nenhum
-painel usa `Navbar`/`Footer` como shell. O redesenho de dashboards por papel
-está concluído.
+`npm run quality` verde: **285 testes** em 24 arquivos, 0 lint warnings, build sem
+warning de chunk, security gate.
 
-`npm run quality` verde: 276 testes em 24 arquivos, 0 lint warnings, build sem
-warning de chunk >500 kB, security gate.
+Todos os cinco papéis rodam no `RoleAwareAppShell`. Nenhum painel usa
+`Navbar`/`Footer`. Nenhum item de navegação é link morto ou destino duplicado.
 
 ## Ações manuais bloqueantes
 
@@ -22,25 +23,26 @@ warning de chunk >500 kB, security gate.
    no SQL Editor do Lovable.
 2. Rodar as queries de verificação de privilégio registradas no runbook.
 
-## Dívidas técnicas priorizadas
+## Dívidas restantes
 
 ### Alta (contrato parcial — precisam decisão de produto)
 
 - **Escalonamento na primeira leitura em vez da segunda (D65).** Falta onde
   guardar a leitura anterior. Opções: snapshots periódicos do indicador, ou
-  derivar a segunda leitura do ledger de decisões.
-- **`canResend` sempre `true` no cliente (D65).** Quem não pode vê o botão.
-  Fechar exige o cliente distinguir `org_admin` de `school_admin`.
+  derivar a leitura anterior do ledger de decisões.
+- **`canResend` sempre `true` no cliente (D65).** Quem não pode vê o botão e só
+  descobre ao clicar. Fechar exige o cliente distinguir `org_admin` de
+  `school_admin`.
 
-### Média (correção de arquitetura — executáveis sem decisão de produto)
+### Média
 
-- `platform_admin` não é expressável em `RequireRole` — checagem ad hoc dentro
-  da página. Criar um guard que entenda papéis institucionais.
-- `useOrganization` ainda existe — o único consumidor era `/org`, que agora usa
-  `useOrganizationDetail`. Candidato a remoção.
 - `/admin/operacao` não existe como rota separada; a Landing está em `/admin`.
-- `org-schools` segue `future` (precisa href dinâmico).
-- Duplicação `org-home`/`org-people` → `/org` (decisão de produto).
+  `CANONICAL_ROLE_HOME.platform_admin` já aponta para a futura.
+- Dois vocabulários de papel no banco (D29) — dois guards
+  (`RequireRole` + `RequireInstitutionalRole`) refletem essa divisão de forma
+  honesta, mas unificar no banco simplificaria.
+- `school_admin` com duas ou mais escolas não tem item de menu para escola
+  (omitido por design, D70). Um submenu com a lista resolveria.
 
 ### Baixa (backlog operacional)
 
@@ -53,6 +55,6 @@ warning de chunk >500 kB, security gate.
 
 ## Próxima ação sugerida
 
-Limpeza técnica: remover `useOrganization` (hook morto) e criar
-`RequireInstitutionalRole` (guard que entende papéis de membership), eliminando
-a checagem ad hoc dentro de `AdminOperacaoPage`.
+As duas dívidas de alta prioridade dependem de decisão de produto. Sugestão de
+pergunta ao humano: onde guardar o histórico de leituras do indicador, para que o
+escalonamento respeite a regra de duas leituras consecutivas?

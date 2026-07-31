@@ -52,6 +52,14 @@ export interface DashboardNavItem {
     label: string;
     /** Rótulo curto para bottom nav (mobile 320px). */
     shortLabel?: string;
+    /**
+     * Destino do item.
+     *
+     * Para itens `dynamic`, este valor é o GABARITO (contém `:param`) e nunca é
+     * navegado direto — `resolveNavItemHref` troca por um caminho concreto. Um
+     * item dinâmico sem contexto para resolver é omitido da navegação, porque
+     * renderizar `/escola/:schoolId` literal daria 404.
+     */
     href: string;
     icon: LucideIcon;
     group: DashboardNavGroup;
@@ -60,8 +68,19 @@ export interface DashboardNavItem {
     mobile?: boolean;
     /** Rota ainda não implementada (arquitetura-alvo). Não é renderizada. */
     future?: boolean;
+    /**
+     * O destino depende de dado em runtime (ex.: uuid de escola). A config é
+     * estática, então o valor concreto vem de `resolveNavItemHref`.
+     */
+    dynamic?: boolean;
     /** Descrição curta usada em tooltip/aria. */
     description?: string;
+}
+
+/** Contexto necessário para resolver itens com destino dinâmico. */
+export interface NavResolutionContext {
+    /** Escolas que a pessoa administra, derivadas no servidor. */
+    schoolIds?: readonly string[];
 }
 
 const ALL_INSTITUTIONAL: readonly DashboardRole[] = ["platform_admin", "org_admin", "school_admin"];
@@ -93,6 +112,10 @@ export const DASHBOARD_NAV_ITEMS: readonly DashboardNavItem[] = [
         description: "Indicadores agregados das turmas",
     },
     {
+        // UX-6: absorveu o antigo item `org-people`. Os dois apontavam para
+        // `/org` e deixavam o estado "ativo" da sidebar ambíguo — a pessoa não
+        // sabia qual dos dois estava selecionado, porque ambos estavam.
+        // A página já contém pessoas, convites e decisões: um item basta.
         key: "org-home",
         label: "Visão da rede",
         shortLabel: "Rede",
@@ -101,7 +124,7 @@ export const DASHBOARD_NAV_ITEMS: readonly DashboardNavItem[] = [
         group: "visao",
         roles: ALL_INSTITUTIONAL,
         mobile: true,
-        description: "Implantação, adesão e decisões da rede",
+        description: "Implantação, adesão, pessoas, convites e decisões da rede",
     },
     {
         key: "platform-home",
@@ -117,29 +140,25 @@ export const DASHBOARD_NAV_ITEMS: readonly DashboardNavItem[] = [
 
     // ── Gestão ───────────────────────────────────────────────────────────────
     {
-        // D33 (UX-2): `/escolas` é landing pública; o painel autenticado por
-        // escola é `/escola/:schoolId`, criado na UX-3. Segue `future` até lá.
+        // D33 (UX-2): `/escolas` é landing PÚBLICA; o painel autenticado por
+        // escola é `/escola/:schoolId`.
+        // UX-6: deixou de ser `future` e passou a ser `dynamic`. A rota existe
+        // desde a UX-3, mas o href precisa de um uuid que a config estática não
+        // carrega — `resolveNavItemHref` resolve com as escolas do contexto.
         key: "org-schools",
-        label: "Escolas",
-        shortLabel: "Escolas",
+        label: "Minha escola",
+        shortLabel: "Escola",
         href: "/escola/:schoolId",
         icon: School,
         group: "gestao",
         roles: ALL_INSTITUTIONAL,
-        future: true,
-        description: "Portfólio e maturidade de implantação",
+        dynamic: true,
+        description: "Indicadores agregados da escola",
     },
-    {
-        key: "org-people",
-        label: "Pessoas e convites",
-        shortLabel: "Pessoas",
-        href: "/org",
-        icon: Users,
-        group: "gestao",
-        roles: ALL_INSTITUTIONAL,
-        mobile: true,
-        description: "Membros ativos e convites pendentes",
-    },
+    // REMOVIDO na UX-6: `org-people` apontava para `/org`, a mesma rota de
+    // `org-home`. Dois itens de menu para um destino deixam o estado "ativo"
+    // indeterminado e sugerem que existem duas telas onde há uma. Pessoas e
+    // convites continuam em `/org` — só não têm mais entrada própria no menu.
     // REMOVIDO na UX-3 (§D4/D52): o item `org-reports` apontava para `/admin` e
     // duplicava indicadores que já vivem em `/org`. Um segundo item levando a
     // outro painel gerava carga cognitiva sem informação nova. Não foi
@@ -251,16 +270,59 @@ export const DASHBOARD_NAV_ITEMS: readonly DashboardNavItem[] = [
 /** Máximo de itens na bottom nav mobile (alvos de toque confortáveis em 320px). */
 export const MOBILE_NAV_MAX_ITEMS = 5;
 
-/** Itens navegáveis (não-future) visíveis para o papel. */
-export function getNavItemsForRole(role: DashboardRole): DashboardNavItem[] {
-    return DASHBOARD_NAV_ITEMS.filter((item) => !item.future && item.roles.includes(role));
+/**
+ * Resolve o destino concreto de um item.
+ *
+ * Devolve `null` quando o item é dinâmico e o contexto não permite resolver —
+ * por exemplo, um `org_admin` cuja rede ainda não tem escola cadastrada. Quem
+ * renderiza deve OMITIR o item nesse caso: um link para `/escola/:schoolId`
+ * literal levaria a 404, e um link desabilitado só ocuparia espaço.
+ *
+ * Cardinalidade: com duas ou mais escolas o item também é omitido, porque
+ * escolher uma sem informar o critério seria arbitrário — a lista completa vive
+ * em `/org`, que já mostra nome e município de cada escola.
+ */
+export function resolveNavItemHref(
+    item: DashboardNavItem,
+    context: NavResolutionContext = {},
+): string | null {
+    if (!item.dynamic) return item.href;
+
+    if (item.key === "org-schools") {
+        const schoolIds = context.schoolIds ?? [];
+        if (schoolIds.length !== 1) return null;
+        return `/escola/${schoolIds[0]}`;
+    }
+
+    // Item dinâmico sem regra de resolução conhecida: omitir é mais seguro que
+    // navegar para um gabarito com `:param`.
+    return null;
+}
+
+/**
+ * Itens navegáveis visíveis para o papel.
+ *
+ * Exclui itens `future` (rota inexistente) e itens `dynamic` que não puderam ser
+ * resolvidos com o contexto recebido. O `href` devolvido é sempre concreto.
+ */
+export function getNavItemsForRole(
+    role: DashboardRole,
+    context: NavResolutionContext = {},
+): DashboardNavItem[] {
+    return DASHBOARD_NAV_ITEMS.filter((item) => !item.future && item.roles.includes(role))
+        .map((item) => {
+            const href = resolveNavItemHref(item, context);
+            return href ? { ...item, href } : null;
+        })
+        .filter((item): item is DashboardNavItem => item !== null);
 }
 
 /** Itens agrupados e ordenados para a sidebar desktop/tablet. */
 export function getGroupedNavItemsForRole(
     role: DashboardRole,
+    context: NavResolutionContext = {},
 ): { group: DashboardNavGroup; label: string; items: DashboardNavItem[] }[] {
-    const items = getNavItemsForRole(role);
+    const items = getNavItemsForRole(role, context);
     return DASHBOARD_NAV_GROUP_ORDER.map((group) => ({
         group,
         label: DASHBOARD_NAV_GROUP_LABEL[group],
@@ -272,10 +334,13 @@ export function getGroupedNavItemsForRole(
  * Itens da bottom nav mobile. Deduplica por href (dois rótulos apontando para
  * a mesma rota confundiriam o estado ativo) e respeita MOBILE_NAV_MAX_ITEMS.
  */
-export function getMobileNavItemsForRole(role: DashboardRole): DashboardNavItem[] {
+export function getMobileNavItemsForRole(
+    role: DashboardRole,
+    context: NavResolutionContext = {},
+): DashboardNavItem[] {
     const seenHref = new Set<string>();
     const items: DashboardNavItem[] = [];
-    for (const item of getNavItemsForRole(role)) {
+    for (const item of getNavItemsForRole(role, context)) {
         if (!item.mobile || seenHref.has(item.href)) continue;
         seenHref.add(item.href);
         items.push(item);

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sidebar";
 import logoIcon from "@/assets/logo-mf-icon.png";
 import RoleNavigation from "./RoleNavigation";
+import type { NavResolutionContext } from "@/config/dashboard-navigation";
 import { DASHBOARD_ROLE_LABEL, type DashboardRole } from "@/lib/role-home";
 import { useSidebar } from "@/components/ui/sidebar";
 
@@ -20,9 +21,11 @@ interface RoleSidebarProps {
     role: DashboardRole;
     /** Home do papel — o clique na marca volta para o lugar certo. */
     homePath: string;
+    /** Contexto para resolver itens de destino dinâmico (ex.: escola). */
+    navContext?: NavResolutionContext;
 }
 
-export default function RoleSidebar({ role, homePath }: RoleSidebarProps) {
+export default function RoleSidebar({ role, homePath, navContext }: RoleSidebarProps) {
     const { isMobile, setOpenMobile } = useSidebar();
 
     const closeOnMobile = () => {
@@ -55,7 +58,7 @@ export default function RoleSidebar({ role, homePath }: RoleSidebarProps) {
             </SidebarHeader>
 
             <SidebarContent className="px-2 py-3">
-                <RoleNavigation role={role} onNavigate={closeOnMobile} />
+                <RoleNavigation role={role} onNavigate={closeOnMobile} navContext={navContext} />
             </SidebarContent>
 
             <SidebarFooter className="border-t border-sidebar-border/60">

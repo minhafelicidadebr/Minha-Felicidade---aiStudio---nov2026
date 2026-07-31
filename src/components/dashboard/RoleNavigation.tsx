@@ -4,7 +4,10 @@
 // era exatamente o problema do Navbar atual (nove ferramentas iguais para todos).
 
 import { NavLink } from "react-router-dom";
-import { getGroupedNavItemsForRole } from "@/config/dashboard-navigation";
+import {
+    getGroupedNavItemsForRole,
+    type NavResolutionContext,
+} from "@/config/dashboard-navigation";
 import type { DashboardRole } from "@/lib/role-home";
 import { cn } from "@/lib/utils";
 
@@ -12,11 +15,18 @@ interface RoleNavigationProps {
     role: DashboardRole;
     /** Chamado após navegar (fecha o drawer no mobile). */
     onNavigate?: () => void;
+    /** Contexto para resolver itens de destino dinâmico (ex.: escola). */
+    navContext?: NavResolutionContext;
     className?: string;
 }
 
-export default function RoleNavigation({ role, onNavigate, className }: RoleNavigationProps) {
-    const sections = getGroupedNavItemsForRole(role);
+export default function RoleNavigation({
+    role,
+    onNavigate,
+    navContext,
+    className,
+}: RoleNavigationProps) {
+    const sections = getGroupedNavItemsForRole(role, navContext);
 
     return (
         <nav aria-label="Navegação principal" className={cn("space-y-5", className)} data-testid="role-navigation">
