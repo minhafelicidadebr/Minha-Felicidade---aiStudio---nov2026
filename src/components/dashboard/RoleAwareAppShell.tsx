@@ -12,6 +12,7 @@
 // estados canônicos no lugar de `null` e respeito a prefers-reduced-motion
 // (nenhuma animação obrigatória é introduzida aqui).
 
+import { useMemo } from "react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import DashboardErrorState from "./DashboardErrorState";
@@ -48,12 +49,31 @@ export default function RoleAwareAppShell({
         organizations,
         activeOrganization,
         setActiveOrganization,
+        memberships,
         fetchedAt,
         isLoading,
         isError,
         error,
         refetch,
     } = useDashboardContext();
+
+    // UX-6: contexto para resolver itens de navegação com destino dinâmico.
+    // As escolas vêm dos vínculos ativos, derivados no servidor — o cliente não
+    // inventa a lista. Quando a pessoa administra exatamente uma escola, o item
+    // "Minha escola" aparece apontando para ela; com zero ou várias, o item é
+    // omitido (a lista completa está em `/org`, com nome e município).
+    const navContext = useMemo(
+        () => ({
+            schoolIds: [
+                ...new Set(
+                    memberships
+                        .map((membership) => membership.schoolId)
+                        .filter((schoolId): schoolId is string => Boolean(schoolId)),
+                ),
+            ],
+        }),
+        [memberships],
+    );
 
     // Enquanto o papel não é conhecido, renderizar a navegação seria mostrar o
     // menu errado (ou o de menor privilégio) e depois trocar — pior que esperar.
@@ -88,7 +108,7 @@ export default function RoleAwareAppShell({
                 Pular para o conteúdo
             </a>
 
-            <RoleSidebar role={role} homePath={roleHomePath} />
+            <RoleSidebar role={role} homePath={roleHomePath} navContext={navContext} />
 
             {/* SidebarInset já É o landmark <main>: o id e o tabIndex vão nele
           para existir exatamente UM main por página (evita landmark duplicado
@@ -118,7 +138,7 @@ export default function RoleAwareAppShell({
                 </div>
             </SidebarInset>
 
-            <MobileRoleNavigation role={role} />
+            <MobileRoleNavigation role={role} navContext={navContext} />
         </SidebarProvider>
     );
 }

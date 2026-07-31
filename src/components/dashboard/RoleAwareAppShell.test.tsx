@@ -184,7 +184,6 @@ describe("RoleAwareAppShell — navegação varia por papel", () => {
 
         expect(nav).toHaveTextContent("Minha jornada");
         expect(nav).not.toHaveTextContent("Visão da rede");
-        expect(nav).not.toHaveTextContent("Pessoas e convites");
         expect(nav).not.toHaveTextContent("Indicadores agregados");
     });
 
@@ -196,7 +195,6 @@ describe("RoleAwareAppShell — navegação varia por papel", () => {
         const nav = screen.getByTestId("role-navigation");
 
         expect(nav).toHaveTextContent("Visão da rede");
-        expect(nav).toHaveTextContent("Pessoas e convites");
         expect(nav).not.toHaveTextContent("Minha jornada");
     });
 

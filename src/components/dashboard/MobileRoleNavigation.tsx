@@ -8,17 +8,26 @@
 // na rota ativa e rótulo textual permanente (não depende de ícone/cor).
 
 import { NavLink } from "react-router-dom";
-import { getMobileNavItemsForRole } from "@/config/dashboard-navigation";
+import {
+    getMobileNavItemsForRole,
+    type NavResolutionContext,
+} from "@/config/dashboard-navigation";
 import type { DashboardRole } from "@/lib/role-home";
 import { cn } from "@/lib/utils";
 
 interface MobileRoleNavigationProps {
     role: DashboardRole;
+    /** Contexto para resolver itens de destino dinâmico (ex.: escola). */
+    navContext?: NavResolutionContext;
     className?: string;
 }
 
-export default function MobileRoleNavigation({ role, className }: MobileRoleNavigationProps) {
-    const items = getMobileNavItemsForRole(role);
+export default function MobileRoleNavigation({
+    role,
+    navContext,
+    className,
+}: MobileRoleNavigationProps) {
+    const items = getMobileNavItemsForRole(role, navContext);
 
     if (items.length === 0) return null;
 

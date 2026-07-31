@@ -5,6 +5,7 @@ import {
     getGroupedNavItemsForRole,
     getMobileNavItemsForRole,
     getNavItemsForRole,
+    resolveNavItemHref,
 } from "./dashboard-navigation";
 import { DASHBOARD_ROLE_PRECEDENCE, type DashboardRole } from "@/lib/role-home";
 
@@ -71,21 +72,78 @@ describe("navegação por papel", () => {
         expect(hrefs).toContain("/professores");
     });
 
-    // Dívida conhecida (registrada em NEXT_ACTION na UX-3): `org-home` e
-    // `org-people` apontam ambos para `/org`, o que deixa o estado "ativo" da
-    // sidebar ambíguo para o gestor. É a mesma classe de duplicação que §D4/D52
-    // eliminou em `org-reports`, mas resolver exige decidir onde "Pessoas e
-    // convites" passa a morar — decisão de produto, não de implementação.
-    // Este teste fixa o tamanho atual da dívida para que ela não CRESÇA.
-    it("não aumenta a duplicação de destino na navegação", () => {
-        const duplicatesByRole = ROLES.map((role) => {
+    // UX-6: a dívida foi PAGA. `org-people` foi absorvido por `org-home`, que
+    // já descreve a página inteira (implantação, pessoas, convites, decisões).
+    // Dois itens para uma rota deixavam o estado "ativo" indeterminado.
+    it("não tem destino duplicado na navegação de nenhum papel", () => {
+        for (const role of ROLES) {
             const hrefs = getNavItemsForRole(role).map((item) => item.href);
-            return hrefs.length - new Set(hrefs).size;
-        });
-        const totalDuplicates = duplicatesByRole.reduce((sum, count) => sum + count, 0);
-        // 3 = /org repetido para os três papéis institucionais. Se subir, algo
-        // novo duplicou e precisa ser justificado.
-        expect(totalDuplicates).toBe(3);
+            expect(new Set(hrefs).size).toBe(hrefs.length);
+        }
+    });
+
+    it("não expõe mais o item duplicado de pessoas e convites", () => {
+        expect(DASHBOARD_NAV_ITEMS.some((item) => item.key === "org-people")).toBe(false);
+    });
+});
+
+// ── UX-6: itens de destino dinâmico ─────────────────────────────────────────
+describe("resolução de destino dinâmico", () => {
+    const SCHOOL_A = "11111111-2222-3333-4444-555555555555";
+    const SCHOOL_B = "66666666-7777-8888-9999-000000000000";
+
+    function orgSchoolsItem() {
+        return DASHBOARD_NAV_ITEMS.find((item) => item.key === "org-schools")!;
+    }
+
+    it("o gabarito do item de escola contém parâmetro e não é navegado direto", () => {
+        const item = orgSchoolsItem();
+        expect(item.dynamic).toBe(true);
+        expect(item.href).toContain(":");
+    });
+
+    it("resolve para a escola quando a pessoa administra exatamente uma", () => {
+        expect(resolveNavItemHref(orgSchoolsItem(), { schoolIds: [SCHOOL_A] })).toBe(
+            `/escola/${SCHOOL_A}`,
+        );
+    });
+
+    it("omite o item quando não há escola vinculada", () => {
+        expect(resolveNavItemHref(orgSchoolsItem(), { schoolIds: [] })).toBeNull();
+        expect(resolveNavItemHref(orgSchoolsItem(), {})).toBeNull();
+    });
+
+    it("omite o item quando há duas ou mais escolas, em vez de escolher uma", () => {
+        // Escolher sem informar o critério seria arbitrário: a lista completa,
+        // com nome e município, vive em /org.
+        expect(resolveNavItemHref(orgSchoolsItem(), { schoolIds: [SCHOOL_A, SCHOOL_B] })).toBeNull();
+    });
+
+    it("item estático devolve o próprio href", () => {
+        const staticItem = DASHBOARD_NAV_ITEMS.find((item) => item.key === "org-home")!;
+        expect(resolveNavItemHref(staticItem)).toBe("/org");
+    });
+
+    it("navegação do gestor inclui a escola quando há exatamente uma", () => {
+        const hrefs = getNavItemsForRole("org_admin", { schoolIds: [SCHOOL_A] }).map((i) => i.href);
+        expect(hrefs).toContain(`/escola/${SCHOOL_A}`);
+    });
+
+    it("navegação do gestor não tem link morto quando não há escola", () => {
+        const hrefs = getNavItemsForRole("org_admin", { schoolIds: [] }).map((i) => i.href);
+        expect(hrefs.some((href) => href.includes(":"))).toBe(false);
+        expect(hrefs).not.toContain("/escola/:schoolId");
+    });
+
+    it("nenhum item resolvido carrega parâmetro pendente, em qualquer contexto", () => {
+        const contexts = [{}, { schoolIds: [] }, { schoolIds: [SCHOOL_A] }, { schoolIds: [SCHOOL_A, SCHOOL_B] }];
+        for (const role of ROLES) {
+            for (const context of contexts) {
+                for (const item of getNavItemsForRole(role, context)) {
+                    expect(item.href).not.toContain(":");
+                }
+            }
+        }
     });
 
     it("bottom nav respeita o limite de itens e não duplica destino", () => {
