@@ -349,3 +349,35 @@ fase de requisitos levantou em vez de resolver sozinha. Estão registradas em
   critério seria arbitrário. A lista completa, com nome e município, está em
   `/org`. Invariante preservada e testada em todos os contextos: nenhum item
   renderizado carrega `:param` pendente.
+
+## 2026-07 · Fechamento da D65 (as duas entregas parciais)
+
+- **D71. Leitura anterior do indicador é RECONSTRUÍDA, não guardada.** Eu havia
+  oferecido duas opções ao humano — snapshot periódico ou derivar do ledger — e
+  **as duas eram ruins**: snapshot exige tabela nova mais cron e escrita a cada
+  visita; o ledger só registra escalonamentos, então quando nada foi escalado não
+  existe leitura anterior alguma. A terceira opção, adotada: a taxa de ativação é
+  reconstruível de `created_at` e `accepted_at`, contando apenas as linhas que já
+  existiam na data alvo. Zero tabela, zero cron, zero escrita.
+  **Limitação declarada em `computeActivationRateAt`:** a reconstrução não vê
+  remoções — quem saiu da rede desaparece também do passado. Para decidir "está
+  ruim há uma semana ou caiu agora", a aproximação serve. Para série histórica
+  oficial, não serve, e aí snapshot de verdade seria necessário.
+- **D72. Escalonamento passou a exigir duas leituras fora da faixa (R9 item 16).**
+  O caso que motiva a regra: uma rede que convidou 30 pessoas ontem tem ativação
+  despencada por construção, não por problema. Com uma leitura só, o painel
+  escalaria alarme falso justamente no momento de maior atividade da rede. Três
+  situações não escalam e cada uma tem texto próprio: dentro da faixa; fora da
+  faixa mas sem leitura anterior (rede recém-criada — julgar quem não teve chance
+  seria injusto); e fora agora mas dentro antes (oscilação).
+- **D73. `canResend` derivado dos vínculos, e a ausência do controle é
+  EXPLICADA.** `resend_invitation` exige `is_org_admin` no banco, então
+  `school_admin`, `educator` e `student` nunca conseguiriam reenviar. Antes o
+  botão aparecia para todos e a pessoa descobria ao clicar. Agora o controle não
+  é renderizado — e, junto da fila, aparece uma linha dizendo por que
+  (`CANNOT_RESEND_HINT`). Omitir o botão sem explicar pareceria defeito da tela.
+  A permissão vem dos vínculos que o servidor devolveu; o cliente não afirma
+  papel, e o banco verifica de novo e nega.
+- **D74. A permissão é por organização, não global.** `canResendInvitations`
+  cruza o `organizationId` do vínculo com a organização ativa: gestor da rede A
+  não reenvia convite da rede B. Há teste para esse vazamento.

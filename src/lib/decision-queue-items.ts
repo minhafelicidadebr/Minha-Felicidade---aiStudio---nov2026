@@ -217,3 +217,172 @@ export function isOutOfRange(value: number, range: ExpectedRange): boolean {
 export function describeRange(range: ExpectedRange): string {
     return `faixa esperada ${range.min}%–${range.max}%`;
 }
+
+/** Dias entre a leitura atual e a anterior usada na comparação. */
+export const READING_INTERVAL_DAYS = 7;
+
+export interface MembershipLike {
+    created_at?: string;
+    status?: string;
+}
+
+/**
+ * Taxa de ativação como estava em um instante do passado.
+ *
+ * RECONSTRUÇÃO, não snapshot. O contrato (R9 item 16) pede duas leituras
+ * consecutivas fora da faixa para não escalar por oscilação, mas o projeto não
+ * guarda histórico de indicador. Em vez de criar tabela de snapshot e um cron
+ * para alimentá-la, a leitura anterior é reconstruída de `created_at`: contam-se
+ * apenas as linhas que já existiam na data alvo.
+ *
+ * LIMITAÇÃO HONESTA: a reconstrução assume que quem é membro hoje já era membro
+ * quando entrou, e não vê remoções. Uma pessoa removida da rede continua
+ * contando na leitura passada (porque a linha desapareceu do presente, não do
+ * passado). Para o uso aqui — decidir se um indicador está ruim há uma semana ou
+ * caiu agora — a aproximação é suficiente. Para relatório oficial de série
+ * histórica, não é: isso exigiria snapshot de verdade.
+ */
+export function computeActivationRateAt(
+    members: readonly MembershipLike[],
+    invitations: readonly InvitationLike[],
+    at: Date,
+): number | null {
+    const cutoff = at.getTime();
+
+    const membersThen = members.filter(
+        (member) => member.created_at && new Date(member.created_at).getTime() <= cutoff,
+    ).length;
+
+    // Convite pendente naquela data: já existia e ainda não havia sido aceito.
+    const pendingThen = invitations.filter((invitation) => {
+        if (!invitation.created_at) return false;
+        if (new Date(invitation.created_at).getTime() > cutoff) return false;
+        if (!invitation.accepted_at) return true;
+        return new Date(invitation.accepted_at).getTime() > cutoff;
+    }).length;
+
+    const invitedThen = membersThen + pendingThen;
+    // Sem ninguém convidado naquela data, não existe taxa — e zero seria uma
+    // leitura fabricada que dispararia escalonamento indevido (doutrina §1).
+    if (invitedThen === 0) return null;
+
+    return Math.round((membersThen / invitedThen) * 100);
+}
+
+export interface ActivationEscalationInput {
+    members: readonly MembershipLike[];
+    invitations: readonly InvitationLike[];
+    range: ExpectedRange;
+    now?: Date;
+}
+
+export interface ActivationEscalationVerdict {
+    /** True só quando AS DUAS leituras estão fora da faixa. */
+    shouldEscalate: boolean;
+    current: number | null;
+    previous: number | null;
+    /** Explica por que escalou ou por que não — usado na evidência do item. */
+    rationale: string;
+}
+
+/**
+ * Decide se a taxa de ativação merece escalonamento (R9 item 16).
+ *
+ * Exige DUAS leituras consecutivas fora da faixa. Uma leitura só poderia ser
+ * oscilação — uma rede que convidou 30 pessoas ontem tem ativação baixa por
+ * construção, não por problema.
+ */
+export function evaluateActivationEscalation(
+    input: ActivationEscalationInput,
+): ActivationEscalationVerdict {
+    const now = input.now ?? new Date();
+    const previousAt = new Date(now.getTime() - READING_INTERVAL_DAYS * 86_400_000);
+
+    const current = computeActivationRateAt(input.members, input.invitations, now);
+    const previous = computeActivationRateAt(input.members, input.invitations, previousAt);
+
+    if (current === null) {
+        return {
+            shouldEscalate: false,
+            current,
+            previous,
+            rationale: "Ainda não há convites suficientes para calcular a taxa de ativação.",
+        };
+    }
+
+    if (!isOutOfRange(current, input.range)) {
+        return {
+            shouldEscalate: false,
+            current,
+            previous,
+            rationale: `Ativação em ${current}%, dentro da ${describeRange(input.range)}.`,
+        };
+    }
+
+    if (previous === null) {
+        return {
+            shouldEscalate: false,
+            current,
+            previous,
+            rationale: `Ativação em ${current}%, fora da ${describeRange(input.range)}, mas sem leitura de ${READING_INTERVAL_DAYS} dias atrás para confirmar tendência.`,
+        };
+    }
+
+    if (!isOutOfRange(previous, input.range)) {
+        return {
+            shouldEscalate: false,
+            current,
+            previous,
+            rationale: `Ativação caiu para ${current}% agora, mas estava em ${previous}% há ${READING_INTERVAL_DAYS} dias — pode ser oscilação de convites recentes.`,
+        };
+    }
+
+    return {
+        shouldEscalate: true,
+        current,
+        previous,
+        rationale: `Ativação fora da ${describeRange(input.range)} em duas leituras: ${previous}% há ${READING_INTERVAL_DAYS} dias e ${current}% agora.`,
+    };
+}
+
+// ── Permissão de ação por papel (R9 item 15) ────────────────────────────────
+
+/**
+ * Papéis institucionais que podem reenviar convite.
+ *
+ * Espelha `is_org_admin` no banco, que é a autoridade real: `resend_invitation`
+ * verifica a permissão de novo no servidor e nega quem não pode. Esta lista
+ * serve para NÃO RENDERIZAR o controle a quem não pode usá-lo — mostrar um botão
+ * que sempre falha é pior que não mostrar botão.
+ *
+ * `school_admin` fica de fora porque `invite_member` e `resend_invitation`
+ * exigem `is_org_admin`: a coordenação de escola não emite convite da rede.
+ */
+const ROLES_THAT_CAN_RESEND: readonly string[] = ["org_admin", "platform_admin"];
+
+export interface MembershipRoleLike {
+    organizationId: string;
+    role: string;
+}
+
+/**
+ * A pessoa pode reenviar convite nesta organização?
+ *
+ * Derivado dos vínculos que o servidor devolveu — o cliente não afirma papel,
+ * só lê o que veio. Decisão final continua no banco.
+ */
+export function canResendInvitations(
+    memberships: readonly MembershipRoleLike[],
+    organizationId: string | null | undefined,
+): boolean {
+    if (!organizationId) return false;
+    return memberships.some(
+        (membership) =>
+            membership.organizationId === organizationId &&
+            ROLES_THAT_CAN_RESEND.includes(membership.role),
+    );
+}
+
+/** Texto exibido quando o papel não alcança a ação, em vez de um botão morto. */
+export const CANNOT_RESEND_HINT =
+    "Reenvio de convite é uma ação da gestão da rede. Sua conta pode acompanhar a pendência, mas não reenviar.";

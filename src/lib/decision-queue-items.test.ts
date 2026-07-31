@@ -2,9 +2,13 @@ import { describe, expect, it, vi } from "vitest";
 import {
     ACTIVATION_EXPECTED_RANGE,
     PENDING_INVITATION_HOURS,
+    READING_INTERVAL_DAYS,
     buildInvitationDecisionItems,
     buildInvitationSources,
+    canResendInvitations,
+    computeActivationRateAt,
     describeRange,
+    evaluateActivationEscalation,
     isActionableInvitation,
     isOutOfRange,
     type InvitationLike,
@@ -179,5 +183,158 @@ describe("faixa esperada do indicador", () => {
         expect(isOutOfRange(40, ACTIVATION_EXPECTED_RANGE)).toBe(true);
         expect(isOutOfRange(75, ACTIVATION_EXPECTED_RANGE)).toBe(false);
         expect(isOutOfRange(60, ACTIVATION_EXPECTED_RANGE)).toBe(false);
+    });
+});
+
+// ── D65 fechada: escalonamento exige duas leituras (R9 item 16) ──────────────
+describe("escalonamento por duas leituras consecutivas", () => {
+    const NOW_E = new Date("2026-07-27T12:00:00.000Z");
+    const range = ACTIVATION_EXPECTED_RANGE;
+
+    function member(createdAt: string) {
+        return { created_at: createdAt, status: "active" };
+    }
+
+    function pendingInvite(id: string, createdAt: string, acceptedAt: string | null = null) {
+        return invitation({
+            id,
+            created_at: createdAt,
+            accepted_at: acceptedAt,
+            expires_at: "2026-12-31T00:00:00.000Z",
+        });
+    }
+
+    it("reconstrói a taxa de uma data passada contando só o que já existia", () => {
+        // Há 7 dias: 1 membro, 1 convite pendente → 50%.
+        // Hoje: 1 membro, 3 convites pendentes → 25%.
+        const members = [member("2026-07-01T00:00:00.000Z")];
+        const invitations = [
+            pendingInvite("a", "2026-07-01T00:00:00.000Z"),
+            pendingInvite("b", "2026-07-25T00:00:00.000Z"),
+            pendingInvite("c", "2026-07-26T00:00:00.000Z"),
+        ];
+
+        expect(computeActivationRateAt(members, invitations, new Date("2026-07-20T12:00:00.000Z"))).toBe(50);
+        expect(computeActivationRateAt(members, invitations, NOW_E)).toBe(25);
+    });
+
+    it("conta convite como pendente na data se só foi aceito depois", () => {
+        const members = [member("2026-07-01T00:00:00.000Z")];
+        // Aceito em 26/07: na leitura de 20/07 ainda era pendente.
+        const invitations = [pendingInvite("a", "2026-07-02T00:00:00.000Z", "2026-07-26T00:00:00.000Z")];
+
+        expect(computeActivationRateAt(members, invitations, new Date("2026-07-20T12:00:00.000Z"))).toBe(50);
+    });
+
+    it("devolve null quando ninguém havia sido convidado ainda", () => {
+        // Zero seria uma leitura fabricada, e dispararia escalonamento indevido.
+        expect(computeActivationRateAt([], [], NOW_E)).toBeNull();
+    });
+
+    it("NÃO escala quando só a leitura atual está fora da faixa", () => {
+        // Rede convidou 30 pessoas ontem: ativação despenca por construção, não
+        // por problema. Escalar aqui seria alarme falso.
+        const members = Array.from({ length: 8 }, () => member("2026-07-01T00:00:00.000Z"));
+        const invitations = Array.from({ length: 30 }, (_, i) =>
+            pendingInvite(`new-${i}`, "2026-07-26T00:00:00.000Z"),
+        );
+
+        const verdict = evaluateActivationEscalation({ members, invitations, range, now: NOW_E });
+        expect(verdict.shouldEscalate).toBe(false);
+        expect(verdict.previous).toBe(100);
+        expect(verdict.rationale).toContain("oscilação");
+    });
+
+    it("escala quando AS DUAS leituras estão fora da faixa", () => {
+        // Baixa há semanas: 2 membros, 8 convites parados desde o começo.
+        const members = [member("2026-07-01T00:00:00.000Z"), member("2026-07-02T00:00:00.000Z")];
+        const invitations = Array.from({ length: 8 }, (_, i) =>
+            pendingInvite(`old-${i}`, "2026-07-01T00:00:00.000Z"),
+        );
+
+        const verdict = evaluateActivationEscalation({ members, invitations, range, now: NOW_E });
+        expect(verdict.shouldEscalate).toBe(true);
+        expect(verdict.current).toBe(20);
+        expect(verdict.previous).toBe(20);
+        expect(verdict.rationale).toContain("duas leituras");
+    });
+
+    it("NÃO escala quando a taxa está dentro da faixa", () => {
+        const members = Array.from({ length: 9 }, () => member("2026-07-01T00:00:00.000Z"));
+        const invitations = [pendingInvite("a", "2026-07-01T00:00:00.000Z")];
+
+        const verdict = evaluateActivationEscalation({ members, invitations, range, now: NOW_E });
+        expect(verdict.shouldEscalate).toBe(false);
+        expect(verdict.current).toBe(90);
+        expect(verdict.rationale).toContain("dentro da");
+    });
+
+    it("NÃO escala sem leitura anterior para comparar", () => {
+        // Rede criada hoje: fora da faixa, mas sem histórico. Escalar seria
+        // julgar uma rede que ainda não teve chance.
+        const members = [member("2026-07-27T00:00:00.000Z")];
+        const invitations = Array.from({ length: 9 }, (_, i) =>
+            pendingInvite(`n-${i}`, "2026-07-27T00:00:00.000Z"),
+        );
+
+        const verdict = evaluateActivationEscalation({ members, invitations, range, now: NOW_E });
+        expect(verdict.shouldEscalate).toBe(false);
+        expect(verdict.previous).toBeNull();
+        expect(verdict.rationale).toContain("sem leitura");
+    });
+
+    it("usa intervalo de 7 dias entre as leituras", () => {
+        expect(READING_INTERVAL_DAYS).toBe(7);
+    });
+});
+
+// ── D65 fechada: controle escondido por papel (R9 item 15) ───────────────────
+describe("permissão de reenvio por papel", () => {
+    const ORG = "org-1";
+
+    it("permite a gestão da rede", () => {
+        expect(canResendInvitations([{ organizationId: ORG, role: "org_admin" }], ORG)).toBe(true);
+    });
+
+    it("permite a administração da plataforma", () => {
+        expect(canResendInvitations([{ organizationId: ORG, role: "platform_admin" }], ORG)).toBe(true);
+    });
+
+    it("NÃO permite coordenação de escola", () => {
+        // `resend_invitation` exige is_org_admin no banco: a coordenação de
+        // escola não emite convite da rede. Mostrar o botão para ela seria
+        // prometer uma ação que sempre falharia.
+        expect(canResendInvitations([{ organizationId: ORG, role: "school_admin" }], ORG)).toBe(false);
+    });
+
+    it("NÃO permite educador nem estudante", () => {
+        expect(canResendInvitations([{ organizationId: ORG, role: "educator" }], ORG)).toBe(false);
+        expect(canResendInvitations([{ organizationId: ORG, role: "student" }], ORG)).toBe(false);
+    });
+
+    it("não vaza permissão entre organizações", () => {
+        // Gestor da rede A não reenvia convite da rede B.
+        expect(canResendInvitations([{ organizationId: "org-A", role: "org_admin" }], "org-B")).toBe(false);
+    });
+
+    it("nega sem organização resolvida", () => {
+        expect(canResendInvitations([{ organizationId: ORG, role: "org_admin" }], null)).toBe(false);
+        expect(canResendInvitations([{ organizationId: ORG, role: "org_admin" }], undefined)).toBe(false);
+    });
+
+    it("nega com lista de vínculos vazia", () => {
+        expect(canResendInvitations([], ORG)).toBe(false);
+    });
+
+    it("aceita quando a pessoa tem vários vínculos e um deles serve", () => {
+        expect(
+            canResendInvitations(
+                [
+                    { organizationId: "org-A", role: "educator" },
+                    { organizationId: ORG, role: "org_admin" },
+                ],
+                ORG,
+            ),
+        ).toBe(true);
     });
 });

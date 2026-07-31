@@ -22,10 +22,11 @@ import MetricCard from "@/components/dashboard/MetricCard";
 import DecisionQueue, { type DecisionItem } from "@/components/dashboard/DecisionQueue";
 import {
     ACTIVATION_EXPECTED_RANGE,
+    CANNOT_RESEND_HINT,
     buildInvitationDecisionItems,
     buildInvitationSources,
-    describeRange,
-    isOutOfRange,
+    canResendInvitations,
+    evaluateActivationEscalation,
 } from "@/lib/decision-queue-items";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDecisionActions } from "@/hooks/useDecisionActions";
@@ -48,7 +49,7 @@ async function loadPdfGenerator() {
 
 export default function OrgDashboardPage() {
     // Organização ativa vem do ContextSwitcher (shell) — reage à troca no switcher.
-    const { activeOrganization } = useDashboardContext();
+    const { activeOrganization, memberships } = useDashboardContext();
     const { org, schools, classes, members, invitations, loading, error, refetch } =
         useOrganizationDetail(activeOrganization?.id);
     const { resendInvitations, escalateIndicator } = useDecisionActions();
@@ -273,36 +274,53 @@ export default function OrgDashboardPage() {
     // ── Fila de decisões ─────────────────────────────────────────────────────
     // Cada item nasce de um dado observado. Nada é inventado para preencher a
     // fila: fila vazia é boa notícia, não falta de dado.
+    //
+    // Permissão derivada dos vínculos que o servidor devolveu (R9 item 15): quem
+    // não pode reenviar vê o item, mas sem o controle. Mostrar um botão que
+    // sempre falha é pior que não mostrar botão. A autoridade final continua no
+    // banco, que verifica de novo e nega.
+    const canResend = canResendInvitations(memberships, org.id);
     const invitationSources = buildInvitationSources(invitations, schools);
     const decisionItems: DecisionItem[] = [
         ...buildInvitationDecisionItems({
             sources: invitationSources,
-            // `useOrganizationDetail` só devolve dados de organização que a
-            // pessoa administra, então quem chega aqui já passou pela RLS. A
-            // autoridade final continua no servidor, que nega e registra.
-            canResend: true,
+            canResend,
             resend: resendInvitations,
         }),
     ];
 
-    if (totalInvited > 0 && isOutOfRange(activationRate, ACTIVATION_EXPECTED_RANGE)) {
+    // Escalonamento exige DUAS leituras fora da faixa (R9 item 16). A leitura
+    // anterior é reconstruída de `created_at` — ver limitação documentada em
+    // `computeActivationRateAt`.
+    const activationVerdict = evaluateActivationEscalation({
+        members,
+        invitations,
+        range: ACTIVATION_EXPECTED_RANGE,
+    });
+
+    if (activationVerdict.shouldEscalate) {
+        const isSevere =
+            activationVerdict.current !== null &&
+            activationVerdict.current < ACTIVATION_EXPECTED_RANGE.min / 2;
         decisionItems.push({
             id: "indicator:activation_rate",
             title: "Taxa de ativação abaixo do esperado",
-            reason: `Ativação em ${activationRate}% (${describeRange(ACTIVATION_EXPECTED_RANGE)}), com ${members.length} de ${totalInvited} convites aceitos.`,
-            priority: activationRate < ACTIVATION_EXPECTED_RANGE.min / 2 ? "high" : "medium",
+            reason: activationVerdict.rationale,
+            priority: isSevere ? "high" : "medium",
             owner: "gestão da rede",
             due: "esta semana",
-            mutation: {
-                label: "Escalar pendência",
-                pendingLabel: "Registrando…",
-                run: () =>
-                    escalateIndicator({
-                        organizationId: org.id,
-                        indicator: "activation_rate",
-                        severity: activationRate < ACTIVATION_EXPECTED_RANGE.min / 2 ? "critical" : "warning",
-                    }),
-            },
+            mutation: canResend
+                ? {
+                    label: "Escalar pendência",
+                    pendingLabel: "Registrando…",
+                    run: () =>
+                        escalateIndicator({
+                            organizationId: org.id,
+                            indicator: "activation_rate",
+                            severity: isSevere ? "critical" : "warning",
+                        }),
+                }
+                : undefined,
         });
     }
 
@@ -613,8 +631,14 @@ export default function OrgDashboardPage() {
                     onResolved={refetch}
                     emptyTitle="Nenhuma decisão pendente"
                     emptyDescription="Nenhum convite está parado há uma semana e a taxa de ativação está na faixa esperada. Quando algo sair do esperado, aparece aqui com o motivo."
-                    className="mb-8"
+                    className="mb-2"
                 />
+
+                {/* Honestidade: sem o controle, a pessoa precisa saber POR QUE não
+            o tem — senão parece defeito da tela (R9 item 15). */}
+                {!canResend && decisionItems.length > 0 && (
+                    <p className="mb-8 text-[11px] text-muted-foreground">{CANNOT_RESEND_HINT}</p>
+                )}
 
                 {/* Engagement Metrics */}
                 <EngagementMetrics organizationId={org.id} />
