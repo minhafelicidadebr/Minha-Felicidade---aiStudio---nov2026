@@ -25,14 +25,16 @@ Todos os cinco papéis rodam no `RoleAwareAppShell`. Nenhum painel usa
 
 ## Dívidas restantes
 
-### Alta (contrato parcial — precisam decisão de produto)
+### Alta
 
-- **Escalonamento na primeira leitura em vez da segunda (D65).** Falta onde
-  guardar a leitura anterior. Opções: snapshots periódicos do indicador, ou
-  derivar a leitura anterior do ledger de decisões.
-- **`canResend` sempre `true` no cliente (D65).** Quem não pode vê o botão e só
-  descobre ao clicar. Fechar exige o cliente distinguir `org_admin` de
-  `school_admin`.
+Nenhuma. As duas entregas parciais da D65 foram fechadas (D71–D74):
+
+- Escalonamento agora exige **duas leituras** fora da faixa. A leitura anterior é
+  reconstruída de `created_at`/`accepted_at`, sem tabela nova nem cron.
+  Limitação declarada: a reconstrução não vê remoções de membro.
+- `canResend` é derivado dos vínculos por organização, e quando o papel não
+  alcança a ação o controle **não é renderizado** — com uma linha explicando por
+  quê, para não parecer defeito da tela.
 
 ### Média
 
@@ -55,6 +57,10 @@ Todos os cinco papéis rodam no `RoleAwareAppShell`. Nenhum painel usa
 
 ## Próxima ação sugerida
 
-As duas dívidas de alta prioridade dependem de decisão de produto. Sugestão de
-pergunta ao humano: onde guardar o histórico de leituras do indicador, para que o
-escalonamento respeite a regra de duas leituras consecutivas?
+Nada de alta prioridade em aberto no código. As duas ações manuais (aplicar a
+migration e conferir privilégios) são o caminho crítico agora — sem elas o painel
+escolar não tem dados.
+
+Depois disso, o backlog é escolha de prioridade do humano: `/admin/operacao` como
+rota própria, submenu de escolas para `school_admin` com várias escolas, ou os
+itens operacionais (secrets, domínio, cron).
