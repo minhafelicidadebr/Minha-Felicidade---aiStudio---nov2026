@@ -64,8 +64,20 @@ export default function ProfilePage() {
           </button>
 
           <div className="text-center mb-8">
-            <div className="w-20 h-20 rounded-2xl gradient-institute flex items-center justify-center mx-auto mb-4 shadow-warm">
-              <User className="w-10 h-10 text-primary-foreground" />
+            <div className="w-20 h-20 rounded-2xl gradient-institute flex items-center justify-center mx-auto mb-4 shadow-warm overflow-hidden">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={fullName || "Avatar"}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // URL inválida ou imagem quebrada: volta para o ícone.
+                    e.currentTarget.style.display = "none";
+                    e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                  }}
+                />
+              ) : null}
+              <User className={`w-10 h-10 text-primary-foreground ${avatarUrl ? "hidden" : ""}`} />
             </div>
             <h1 className="text-3xl font-display font-bold">Meu Perfil</h1>
             <p className="text-muted-foreground text-sm mt-1">Gerencie suas informações pessoais</p>
