@@ -64,7 +64,7 @@ export function isSuppressed(group: MetricGroup): group is SuppressedGroup {
  * ler "sem dados" onde a resposta correta é "ninguém participou".
  */
 export function isEmptyGroup(group: MetricGroup): boolean {
-    return !group.suppressed && group.isEmpty;
+    return !group.suppressed && (group as DisclosedGroup).isEmpty;
 }
 
 /**

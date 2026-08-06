@@ -98,7 +98,7 @@ export default function DashboardEmptyState({
             ) : action ? (
                 <button
                     type="button"
-                    onClick={action.onClick}
+                    onClick={(action as { label: string; onClick: () => void }).onClick}
                     className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                     {action.label}

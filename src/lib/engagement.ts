@@ -31,12 +31,12 @@ export async function trackEngagement(
         // Resolve org_id (best-effort, cached per session)
         const orgId = await getOrgId(userId);
 
-        await supabase.from("engagement_events").insert({
+        await supabase.from("engagement_events").insert([{
             user_id: userId,
             organization_id: orgId,
             event_type: eventType,
-            metadata: metadata ? sanitize(metadata) : {},
-        });
+            metadata: (metadata ? sanitize(metadata) : {}) as never,
+        }]);
     } catch {
         // Silencioso: instrumentação nunca atrapalha o usuário.
     }
