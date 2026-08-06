@@ -12,8 +12,7 @@
 // refatoração futura. Esse é o modo de falha realista aqui — regressão por
 // edição, não bug sutil de semântica do Postgres.
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const { readFileSync } = (globalThis as any).require?.("fs") ?? await import("node:fs");
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { MAX_RESENDS, RESEND_COOLDOWN_HOURS } from "./invitation-resend";
 
