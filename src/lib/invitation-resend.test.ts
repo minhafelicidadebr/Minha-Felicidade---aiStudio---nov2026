@@ -97,7 +97,7 @@ describe("janela mínima de 24 horas", () => {
         );
         expect(decision).toMatchObject({ allowed: false, reason: "cooldown" });
         if (!decision.allowed) {
-            expect(decision.retryAfter).toBe("2026-07-27T12:01:00.000Z");
+            expect((decision as { retryAfter: string | null }).retryAfter).toBe("2026-07-27T12:01:00.000Z");
         }
     });
 
@@ -116,7 +116,7 @@ describe("janela mínima de 24 horas", () => {
         );
         expect(decision.allowed).toBe(false);
         if (!decision.allowed) {
-            expect(decision.retryAfter).toBe("2026-07-28T06:00:00.000Z");
+            expect((decision as { retryAfter: string | null }).retryAfter).toBe("2026-07-28T06:00:00.000Z");
         }
     });
 
