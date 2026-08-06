@@ -35,7 +35,7 @@ export async function trackEngagement(
             user_id: userId,
             organization_id: orgId,
             event_type: eventType,
-            metadata: metadata ? sanitize(metadata) : {},
+            metadata: (metadata ? sanitize(metadata) : {}) as never,
         }]);
     } catch {
         // Silencioso: instrumentação nunca atrapalha o usuário.
