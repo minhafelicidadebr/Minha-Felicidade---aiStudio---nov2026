@@ -180,6 +180,82 @@ export type Database = {
         }
         Relationships: []
       }
+      institutional_decision_events: {
+        Row: {
+          actor_role: string
+          actor_user_id: string
+          class_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          idempotency_key: string | null
+          metadata: Json
+          organization_id: string
+          reason: string
+          result: string
+          school_id: string | null
+          severity: string
+          source_entity: string
+          source_id: string | null
+        }
+        Insert: {
+          actor_role: string
+          actor_user_id: string
+          class_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          idempotency_key?: string | null
+          metadata?: Json
+          organization_id: string
+          reason: string
+          result: string
+          school_id?: string | null
+          severity?: string
+          source_entity: string
+          source_id?: string | null
+        }
+        Update: {
+          actor_role?: string
+          actor_user_id?: string
+          class_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          idempotency_key?: string | null
+          metadata?: Json
+          organization_id?: string
+          reason?: string
+          result?: string
+          school_id?: string | null
+          severity?: string
+          source_entity?: string
+          source_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institutional_decision_events_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institutional_decision_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institutional_decision_events_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       institutional_invitations: {
         Row: {
           accepted_at: string | null
@@ -890,6 +966,7 @@ export type Database = {
         }
         Returns: Json
       }
+      can_read_school: { Args: { _school_id: string }; Returns: boolean }
       claim_escolar_subscription: { Args: never; Returns: Json }
       claim_escolar_with_token: { Args: { _token: string }; Returns: Json }
       create_organization: {
@@ -898,6 +975,15 @@ export type Database = {
       }
       enforce_ai_usage_limit: {
         Args: { _function_name: string }
+        Returns: Json
+      }
+      escalate_indicator: {
+        Args: {
+          _indicator: string
+          _organization_id: string
+          _school_id: string
+          _severity?: string
+        }
         Returns: Json
       }
       get_funnel_overview: { Args: { _days?: number }; Returns: Json }
@@ -924,6 +1010,10 @@ export type Database = {
         Returns: Json
       }
       get_org_engagement_summary: { Args: { _org_id: string }; Returns: Json }
+      get_school_metrics: {
+        Args: { _period?: string; _school_id: string }
+        Returns: Json
+      }
       get_user_plan: { Args: { _user_id: string }; Returns: Json }
       has_my_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
@@ -948,6 +1038,7 @@ export type Database = {
       }
       is_org_admin: { Args: { _org_id: string }; Returns: boolean }
       is_org_member: { Args: { _org_id: string }; Returns: boolean }
+      metric_minimum_group_size: { Args: never; Returns: number }
       record_guardian_consent: {
         Args: {
           _guardian_email: string
@@ -957,6 +1048,7 @@ export type Database = {
         Returns: Json
       }
       request_subscription_cancellation: { Args: never; Returns: Json }
+      resend_invitation: { Args: { _invitation_id: string }; Returns: Json }
       run_subscription_lifecycle: {
         Args: { _reminder_days?: number }
         Returns: Json
