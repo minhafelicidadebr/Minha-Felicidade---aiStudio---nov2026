@@ -67,15 +67,22 @@ const chip =
 const chipOn = "px-2.5 py-1.5 rounded-lg text-[11px] font-bold gradient-institute text-primary-foreground";
 
 /* 1. Respiração — pacer 4-4-4 real, conclui após 1 ciclo completo */
+//
+// As fases são constantes do exercício, não estado do componente. Ficam no
+// escopo do módulo para que `phases.length` deixe de ser valor reativo dentro do
+// efeito — antes o array era recriado a cada render, e o `exhaustive-deps` pedia
+// `phases.length` na lista de dependências. O comportamento é o mesmo: o timer
+// continua reagindo apenas à troca de fase.
+const BREATHING_PHASES = ["Inspire", "Segure", "Expire"] as const;
+
 function Breathing({ complete }: { complete: () => void }) {
-    const phases = ["Inspire", "Segure", "Expire"] as const;
     const [i, setI] = useState(0);
     const [cycles, setCycles] = useState(0);
     useEffect(() => {
         const t = setTimeout(() => {
             setI((p) => {
-                if (p === phases.length - 1) setCycles((c) => c + 1);
-                return (p + 1) % phases.length;
+                if (p === BREATHING_PHASES.length - 1) setCycles((c) => c + 1);
+                return (p + 1) % BREATHING_PHASES.length;
             });
         }, 4000);
         return () => clearTimeout(t);
@@ -88,7 +95,7 @@ function Breathing({ complete }: { complete: () => void }) {
                 transition={{ duration: 4, ease: "easeInOut" }}
             />
             <div className="flex-1">
-                <p className="text-sm font-display font-bold">{phases[i]}…</p>
+                <p className="text-sm font-display font-bold">{BREATHING_PHASES[i]}…</p>
                 <p className="text-[11px] text-muted-foreground mb-2">Ciclos completos: {cycles}</p>
                 <button className={btn} onClick={complete} disabled={cycles < 1}>
                     {cycles < 1 ? "Complete 1 ciclo" : "Concluir prática"}

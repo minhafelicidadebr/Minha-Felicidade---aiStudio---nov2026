@@ -84,7 +84,13 @@ export default function InteractiveToolsShowcase() {
   const [lab, setLab] = useState(() => readLab());
 
   const update = (next: typeof lab) => { setLab(next); writeLab(next); };
-  const prescribed = lab.state ? STATE_META[lab.state].tools : [];
+  // Memoizado em `lab.state` porque o ramo `: []` criava um array novo a cada
+  // render, invalidando o `useMemo` de `filtered` sempre — inclusive quando nada
+  // havia mudado. A prescrição só muda quando o estado declarado muda.
+  const prescribed = useMemo(
+    () => (lab.state ? STATE_META[lab.state].tools : []),
+    [lab.state],
+  );
 
   const filtered = useMemo(() => {
     const base = filter === "all" ? tools : tools.filter((t) => t.category === filter);
