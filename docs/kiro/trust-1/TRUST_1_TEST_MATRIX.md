@@ -1,6 +1,7 @@
 # TRUST-1 — MATRIZ DE TESTES
 
-301 testes em 24 arquivos. Todos passando no commit-base `7e09493`.
+**320 testes em 25 arquivos.** Todos passando após a TRUST-1.1B.
+(Baseline da TRUST-1.0: 301 em 24 arquivos, commit `7e09493`.)
 
 ## Cobertura por domínio
 
@@ -17,6 +18,7 @@
 | Reenvio | `invitation-resend.test.ts` | 14 | Limite 3, janela 24h, estados terminais |
 | Ações | `useDecisionActions.test.ts` | 7 | Tradução 42501/22023, três desfechos |
 | Migration SQL | `ux3-migration-invariants.test.ts` | 26 | Estrutura do SQL, append-only, privilégios |
+| **Reconciliação TRUST-1** | `trust1-reconciliation-invariants.test.ts` | **19** | Qualificação de schema do pgcrypto, imutabilidade do histórico, seed sem UUID literal, reconciliada forward-only |
 | Redirect | `redirect.test.ts` | 8 | Open redirect, /auth loop |
 | Auth profile | `auth-profile.test.ts` | 5 | Parse de roles |
 | Analytics | `analytics.test.ts` | 3 | Sanitize metadata |
@@ -44,3 +46,49 @@
 | Zero teste de contexto (troca de org durante query em andamento) | P1 | TRUST-1.3 |
 | Zero teste de `eligible_universe` no payload quando suprimido | P1 | TRUST-1.2 |
 | Edge functions (Deno) sem qualquer teste automatizado | P2 | Fora de escopo TRUST-1 |
+| ~~Sequência de migrations nunca testada desde zero (R18)~~ | ~~P0~~ | ✅ **Fechada na TRUST-1.1B** |
+| ~~Grants/RLS nunca verificados em banco reconstruído~~ | ~~P0~~ | ✅ **Fechada na TRUST-1.1B** |
+| Testes SQL/RLS não rodam no CI (exigiriam Docker no runner) | P1 novo | Aberto |
+
+## Testes SQL/RLS executados na TRUST-1.1B
+
+17 testes contra Postgres real (Supabase local, 43 migrations desde zero), com
+dados 100% sintéticos removidos no teardown. Resultado integral no receipt.
+
+| # | Teste | Resultado |
+|---|---|---|
+| T1 | RLS cross-tenant em `organizations` | ✅ |
+| T2 | RLS cross-tenant em `schools` | ✅ |
+| T3 | `can_read_school` própria vs alheia | ✅ |
+| T4 | `get_school_metrics` cross-tenant nega 42501 | ✅ |
+| T5 | `get_school_metrics` sem membership nega (mesma mensagem, não serve de sonda) | ✅ |
+| T6 | `get_school_metrics` como `anon` nega por privilégio | ✅ |
+| T7 | Supressão por limiar (2 alunos < 5) | ✅ |
+| T8 | Período inválido nega 22023 | ✅ |
+| T9 | `escalate_indicator` fora do escopo nega | ✅ |
+| T10 | `escalate_indicator` legítimo grava no ledger | ✅ |
+| T11 | UPDATE no ledger rejeitado pelo trigger | ✅ |
+| T12 | DELETE no ledger rejeitado pelo trigger | ✅ |
+| T13 | Leitura cross-tenant do ledger | ✅ (revelou R21) |
+| T14 | `resend_invitation` por não-membro nega | ✅ |
+| T15 | Antiburla de reenvio (limite + cooldown 24h) | ✅ **revelou o R20 (P0)** |
+| T16 | INSERT direto em `user_subscriptions` por `authenticated` nega | ✅ |
+| T17 | `activate_subscription_from_intent` por `authenticated` nega | ✅ |
+
+**Estes testes não estão no CI.** Foram executados uma vez, em staging local, e
+o resultado está registrado no receipt. O que entrou no repositório e roda em
+todo `npm run quality` são os 19 testes de invariante de
+`trust1-reconciliation-invariants.test.ts`, que protegem contra regressão por
+edição — não substituem a execução.
+
+### Verificações de schema executadas (além dos 17 testes)
+
+| Verificação | Resultado |
+|---|---|
+| Funções `SECURITY DEFINER` sem `search_path` | 0 de 36 |
+| Tabelas em `public` sem RLS | 0 de 22 |
+| Policies de UPDATE/DELETE em tabela append-only | 0 |
+| RPCs executáveis por `anon` | 0 (só 2 funções de trigger) |
+| `auth.users` após reset | 0 linhas |
+| Objetos residuais de migration contaminante | 0 |
+| Limiar canônico de privacidade | 5 |

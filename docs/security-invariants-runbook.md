@@ -391,3 +391,115 @@ O gate `audit:security` usa `--audit-level=critical`. Contexto honesto:
 
 **Backlog P2 (sessão de manutenção dedicada):** migrar `eslint@9 → 10` e
 `react-router-dom@6 → 7`, revalidar lint config e rotas, e voltar o gate para `--audit-level=high`.
+
+## Ordem de aplicação — migrations 28 a 32
+
+Lacuna corrigida na TRUST-1.1B: a lista numerada acima parou em 27 e cinco
+migrations aplicadas depois nunca foram registradas aqui. Registradas agora, na
+ordem real de aplicação.
+
+28. `supabase/migrations/20260725100000_nps_and_engagement_metrics.sql` — Cria
+    `nps_responses` e `engagement_events` com RLS, e as RPCs de leitura agregada.
+    **Invariante conhecido em aberto (R02/R11):** as policies de INSERT validam
+    apenas `user_id = auth.uid()`, não o `organization_id`, então um usuário pode
+    gravar evento ou NPS em organização alheia. Tratamento previsto na TRUST-1.4.
+    Idempotente.
+
+29. `supabase/migrations/20260725200000_engagement_reminders.sql` —
+    `enqueue_engagement_reminders()`, SECURITY DEFINER, `search_path = public`,
+    executável apenas por `service_role`. Enfileira lembretes em
+    `notification_outbox`. Idempotente (CREATE OR REPLACE).
+
+30. `supabase/migrations/20260727120000_ux3_school_metrics_and_governance.sql` —
+    UX-3: limiar canônico `metric_minimum_group_size()`, ledger append-only
+    `institutional_decision_events` (triggers de rejeição de UPDATE/DELETE,
+    vocabulário controlado em CHECK, índice parcial de idempotência),
+    `can_read_school()`, `get_school_metrics()`, `resend_invitation()`,
+    `escalate_indicator()`. Todas SECURITY DEFINER com `search_path = public`,
+    REVOKE de PUBLIC/anon + GRANT mínimo.
+    **Três defeitos historicamente nesta migration:** (a) `get_school_metrics`
+    referenciava `e.school_id`, coluna inexistente — corrigido em #32 abaixo;
+    (b) `resend_invitation` chamava `digest()` sem qualificar schema (R20) —
+    corrigido em #33; (c) a policy de leitura do ledger foi criada sem
+    `GRANT SELECT`, ficando inerte (R21) — **em aberto por decisão de contrato**.
+    A migration não é editada: histórico aplicado é imutável.
+
+31. `supabase/migrations/20260728194005_f1a02734-*.sql` e
+    `20260728194702_43fa7f5b-*.sql` — **Contaminantes de outro produto.** A
+    primeira cria `runtime_gates`, `gate_enabled()`, `compute_cycle_risk()`; a
+    segunda os remove e emite `DROP ... IF EXISTS` sobre tabelas que nunca
+    pertenceram a este projeto. Verificado em execução na TRUST-1.1B: **nenhum
+    objeto residual no estado final** e nenhum objeto do domínio escolar afetado.
+    Não reaplicar; não reescrever.
+
+32. `supabase/migrations/20260731100000_fix_school_metrics_no_school_id_column.sql`
+    — Corretiva de #30(a). `get_school_metrics` passa a derivar os estudantes da
+    escola via `institutional_memberships`, porque `engagement_events` só tem
+    `user_id` e `organization_id`. Idempotente (CREATE OR REPLACE).
+    **É pré-condição verificada da #33.**
+
+33. `supabase/migrations/20260824120000_trust1_dashboard_os_reconciled.sql` —
+    Reconciliação forward-only da TRUST-1.1B. Aplicar **depois** de #32.
+
+    - **§0 Pré-condições, com falha explícita.** Aborta se: `get_school_metrics`
+      estiver ausente ou for a versão que referencia `e.school_id`; o ledger não
+      existir; os dois triggers append-only não existirem; `metric_minimum_group_size`
+      não existir; pgcrypto não estiver instalado.
+    - **§1 Correção do R20 (P0).** `resend_invitation` passa a chamar
+      `extensions.digest(...)`. O pgcrypto do Supabase mora no schema `extensions`
+      e a função é pinada em `SET search_path = public` — a chamada não
+      qualificada **nunca resolveu**, em nenhum ambiente. O botão "Reenviar
+      convite" nunca funcionou. O `search_path` pinado é preservado; nada mais no
+      corpo muda (antiburla de §D56 intacta: 3 reenvios além do inicial, 24h de
+      intervalo, contagem por organização + destinatário via hash).
+    - **§2 Grants mínimos**, reafirmados de forma idempotente para
+      `resend_invitation`, `get_school_metrics`, `escalate_indicator`,
+      `can_read_school`, `metric_minimum_group_size`.
+    - **§3 Contaminantes:** apenas `RAISE WARNING` se houver resíduo. **Não
+      remove nada** — remoção de objeto não inventariado seria destrutiva.
+
+    Forward-only, preservadora de dados, sem `DROP ... CASCADE`, sem criação de
+    conta, sem secret. Não redeclara `get_school_metrics` de propósito: o estado
+    final já está correto desde #32, e uma terceira cópia de ~200 linhas seria
+    dívida, não reconciliação.
+
+    **Não aplicada remotamente.** Provada em banco reconstruído desde zero
+    (43 migrations, Supabase local), não contra o estado acumulado do remoto.
+
+    Verificação após aplicar:
+    ```sql
+    -- correção do R20 presente no corpo aplicado (esperado: true)
+    SELECT position('extensions.digest' in pg_get_functiondef(p.oid)) > 0
+      FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+     WHERE n.nspname = 'public' AND p.proname = 'resend_invitation';
+
+    -- grants mínimos (esperado: false | true)
+    SELECT has_function_privilege('anon',          'public.resend_invitation(uuid)', 'EXECUTE'),
+           has_function_privilege('authenticated', 'public.resend_invitation(uuid)', 'EXECUTE');
+
+    -- pinning preservado (esperado: search_path=public)
+    SELECT array_to_string(proconfig, ',') FROM pg_proc p
+      JOIN pg_namespace n ON n.oid = p.pronamespace
+     WHERE n.nspname = 'public' AND p.proname = 'resend_invitation';
+    ```
+
+### Reconstrução do banco desde zero
+
+Comprovada na TRUST-1.1B. Duas migrations do histórico precisaram de saneamento
+mínimo, com nome e timestamp preservados:
+
+- `20260706192738` — operação de credencial em claro → no-op documentado (R17).
+- `20260706192545` — INSERT em `user_roles` com UUID literal de contas de
+  `auth.users` → passa a derivar `user_id` por e-mail (R18). Antes disso, o reset
+  abortava na 11ª de 42 migrations com SQLSTATE 23503.
+
+Ambiente local (portas 55321-55329 declaradas em `supabase/config.toml` para
+conviver com outro projeto Supabase na mesma máquina):
+
+```bash
+npx supabase start
+npx supabase db reset --local
+```
+
+Receipt completo com os 17 testes SQL/RLS executados:
+`docs/kiro/trust-1/TRUST_1_1B_LOCAL_RESET_RECEIPT.md`

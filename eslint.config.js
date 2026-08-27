@@ -5,7 +5,11 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist"] },
+  // `supabase/.temp` guarda artefatos gerados pelo Supabase CLI ao subir o
+  // stack local (inclusive bundles minificados do edge runtime). Não é código
+  // do projeto e não deve derrubar o gate de qualidade de quem roda o ambiente
+  // local — TRUST-1.1B.
+  { ignores: ["dist", "supabase/.temp"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
