@@ -503,3 +503,96 @@ npx supabase db reset --local
 
 Receipt completo com os 17 testes SQL/RLS executados:
 `docs/kiro/trust-1/TRUST_1_1B_LOCAL_RESET_RECEIPT.md`
+
+## Ordem de aplicação — migration 34
+
+34. `supabase/migrations/20260826120000_trust1_5_ledger_read_rpc.sql` —
+    TRUST-1.5, fecha o R21. Aplicar **depois** de `20260727120000`.
+
+    - **§0 Pré-condições, com falha explícita.** Aborta se: o ledger
+      `institutional_decision_events` não existir; `is_org_admin` não existir;
+      `data_access_logs` não existir; ou os dois gatilhos append-only não
+      estiverem ambos presentes (esta migration abre um caminho de LEITURA e não
+      deve ser aplicada em ledger que perdeu a proteção de escrita).
+    - **§1** Remove a policy `"Org admins read decision events"`, que era inerte:
+      existia sem `GRANT SELECT`, e em PostgreSQL a RLS **restringe** um
+      privilégio existente, não o concede. Reafirma
+      `REVOKE SELECT, INSERT, UPDATE, DELETE ... FROM anon, authenticated`.
+    - **§2** Cria `get_institutional_decision_events(uuid, integer, integer, integer)`
+      como **única** porta de leitura do ledger: `SECURITY DEFINER`,
+      `SET search_path = public`, escopo validado por `is_org_admin` contra o
+      banco, teto rígido de 100 linhas por página, período máximo de 180 dias,
+      ordenação determinística `created_at DESC, id DESC` nos dois níveis
+      (subquery da página e agregado do resultado), projeção fechada sem
+      `recipient_hash` e sem `idempotency_key`, `metadata` não devolvido cru.
+      Negativa idêntica para organização inexistente e fora de escopo, para não
+      servir de sonda de existência de tenant.
+    - **§3** `REVOKE EXECUTE ... FROM PUBLIC, anon` + `GRANT EXECUTE ... TO authenticated`.
+
+    Forward-only. Preserva dados. Sem `DROP ... CASCADE`. Não concede `SELECT`
+    bruto a papel nenhum, inclusive `service_role`.
+
+    **Não aplicada remotamente.** Provada em banco reconstruído desde zero
+    (44 migrations, Supabase local) com 15 casos de execução real.
+
+    Verificação após aplicar:
+    ```sql
+    -- a tabela NÃO é legível diretamente pela API (esperado: false | false)
+    SELECT has_table_privilege('anon',          'public.institutional_decision_events', 'SELECT'),
+           has_table_privilege('authenticated', 'public.institutional_decision_events', 'SELECT');
+
+    -- a policy inerte não existe mais (esperado: 0)
+    SELECT count(*) FROM pg_policies
+     WHERE schemaname = 'public' AND tablename = 'institutional_decision_events';
+
+    -- a RPC é executável só por authenticated (esperado: false | true)
+    SELECT has_function_privilege('anon',          'public.get_institutional_decision_events(uuid, integer, integer, integer)', 'EXECUTE'),
+           has_function_privilege('authenticated', 'public.get_institutional_decision_events(uuid, integer, integer, integer)', 'EXECUTE');
+
+    -- gatilhos append-only intactos (esperado: 2)
+    SELECT count(*) FROM pg_trigger
+     WHERE tgrelid = 'public.institutional_decision_events'::regclass AND NOT tgisinternal;
+    ```
+
+### Dois invariantes que NÃO valem hoje — não confie neles
+
+Ambos comprovados em execução na TRUST-1.5. Estão registrados como riscos abertos
+porque resolvê-los exige decisão de contrato, não correção mecânica.
+
+**R23 — organização, escola e turma referenciadas pelo ledger não podem ser
+apagadas.** As FKs de `institutional_decision_events` são
+`organization_id ON DELETE CASCADE` e `school_id`/`class_id ON DELETE SET NULL`.
+Qualquer uma dispara escrita na tabela, e os gatilhos append-only rejeitam
+escrita — inclusive vinda de `service_role`. O erro que aparece é
+`institutional_decision_events is append-only`, o que não deixa óbvio que a causa
+foi a FK. Escola sem evento no ledger continua deletável normalmente.
+
+**R24 — `data_access_logs` NÃO registra tentativas negadas.** `get_school_metrics`
+e `get_institutional_decision_events` inserem uma linha de negativa antes de
+`RAISE EXCEPTION`, e a exceção desfaz o INSERT. Só o caminho de sucesso persiste.
+Qualquer relatório de "quem tentou acessar o que não podia" montado sobre essa
+tabela está vazio por construção.
+
+### Contrato de tipos ↔ schema
+
+`src/integrations/supabase/types.ts` é **gerado**, nunca editado à mão, e a fonte é
+o schema homologado — o banco local reconstruído por replay das migrations:
+
+```bash
+npx supabase start
+npx supabase gen types typescript --local --schema public > src/integrations/supabase/types.ts
+```
+
+Quando o tipo não bate com o uso, a resposta é regerar ou corrigir o schema.
+**Nunca** silenciar com `as never`. A TRUST-1.5 removeu seis casts desse tipo que
+estavam obsoletos: as RPCs já constavam nos tipos e as muletas nunca foram
+retiradas.
+
+O gate de tipos passou a verificar os arquivos reais:
+
+```json
+"typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit"
+```
+
+Antes era `tsc --noEmit` sobre um `tsconfig.json` com `files: []` e só
+`references`, o que compilava **zero arquivo**.

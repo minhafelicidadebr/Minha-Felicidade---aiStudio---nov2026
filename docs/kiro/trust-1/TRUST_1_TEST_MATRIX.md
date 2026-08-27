@@ -92,3 +92,66 @@ edição — não substituem a execução.
 | `auth.users` após reset | 0 linhas |
 | Objetos residuais de migration contaminante | 0 |
 | Limiar canônico de privacidade | 5 |
+
+---
+
+## Atualização TRUST-1.5 — 346 testes em 26 arquivos
+
+| Domínio | Arquivo | Testes | O que cobre |
+|---|---|---|---|
+| **Contrato de runtime** | `rpc-runtime-contract.test.ts` | **26** | Execução real contra PostgreSQL: resolução de função, `search_path`, autorização, negativa, cross-tenant, privilégios |
+
+### A categoria `RPC_RUNTIME_CONTRACT`
+
+Criada porque o R20 provou que invariante de texto não basta:
+`resend_invitation` passava em todos os testes que **liam** o SQL e falhava em
+toda invocação real.
+
+**Regra permanente:** toda RPC P0/P1 tem pelo menos um contrato de runtime
+executado contra PostgreSQL real.
+
+Cobertura atual:
+
+| RPC | Contratos |
+|---|---|
+| `resend_invitation` | existência, `SECURITY DEFINER`, `search_path`, recompilação de corpo, resolução de `digest`, negativa de escopo, `anon` negado |
+| `get_school_metrics` | idem + período inválido, ausência de `e.school_id`/`e.class_id` |
+| `escalate_indicator` | idem + organização fora de escopo |
+| `get_institutional_decision_events` | idem + ledger sem `SELECT` para a API, policy inerte ausente, gatilhos append-only de pé, sonda de tenant, `NULL` negado, projeção fechada, tetos de paginação |
+
+O teste central é a **recompilação**: cada função é reexecutada com
+`check_function_bodies = on`, o que força o Postgres a resolver todos os objetos
+que o corpo referencia sob o `search_path` pinado. É o teste que teria pegado o
+R20 no dia em que nasceu.
+
+### Honestidade sobre o alcance
+
+Estes 26 testes exigem Docker e o stack Supabase local. Onde não há Docker — o
+runner do GitHub Actions, por exemplo — eles são **pulados**, não falsamente
+aprovados: o `describe.skip` imprime o motivo. Verificado na prática: com o
+container parado, o resultado é `26 skipped`.
+
+Dívida registrada: **R25 — o gate do CI não executa contrato de runtime.**
+
+### Lacunas fechadas nesta onda
+
+| Lacuna | Status |
+|---|---|
+| ~~Typecheck pode não verificar código real (R03)~~ | ✅ **Fechada** — prova negativa nos dois sentidos |
+| ~~Tipos Supabase desatualizados / casts de máscara (R04)~~ | ✅ **Fechada** — 0 casts de máscara |
+| ~~Ledger sem caminho de leitura auditado (R21)~~ | ✅ **Fechada** — RPC dedicada, 15 casos em execução real |
+| Testes de banco eram parsing de SQL, não execução | ✅ **Substancialmente fechada** — resta o CI (R25) |
+
+### Lacunas remanescentes
+
+| Lacuna | Relevância | Corte |
+|---|---|---|
+| Contratos de runtime não rodam no CI (R25) | P1 | Precisa de Docker/Postgres no workflow |
+| Zero teste de spoofing de `engagement_event` (R02) | P0 | TRUST-1.4 |
+| Zero teste de NPS com `organization_id` arbitrário (R11) | P1 | TRUST-1.4 |
+| Zero teste do consentimento com responsável independente (R06) | P0 | TRUST-1.6 |
+| Zero teste de contexto (troca de org durante query) | P1 | TRUST-1.3 |
+| `eligible_universe` no payload quando suprimido (R10) | P1 | TRUST-1.2 |
+| Deleção de tenant com ledger (R23) | P1 | Aguarda decisão |
+| Persistência da auditoria de negativa (R24) | P1 | Aguarda decisão |
+| Edge functions (Deno) sem teste | P2 | Fora de escopo TRUST-1 |

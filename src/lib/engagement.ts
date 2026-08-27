@@ -35,7 +35,7 @@ export async function trackEngagement(
             user_id: userId,
             organization_id: orgId,
             event_type: eventType,
-            metadata: (metadata ? sanitize(metadata) : {}) as never,
+            metadata: metadata ? sanitize(metadata) : {},
         }]);
     } catch {
         // Silencioso: instrumentação nunca atrapalha o usuário.
@@ -67,8 +67,12 @@ async function getOrgId(userId: string): Promise<string | null> {
     return cachedOrgId;
 }
 
-function sanitize(obj: Record<string, unknown>): Record<string, unknown> {
-    const result: Record<string, unknown> = {};
+// TRUST-1.5: o retorno é tipado como valores JSON escalares em vez de `unknown`.
+// A coluna `metadata` é `Json` no schema; antes o descasamento era escondido com
+// `as never` no insert. O filtro abaixo já garantia só string/number/boolean —
+// agora o tipo diz isso, e o insert type-checa sem cast.
+function sanitize(obj: Record<string, unknown>): Record<string, string | number | boolean> {
+    const result: Record<string, string | number | boolean> = {};
     const keys = Object.keys(obj).slice(0, 5);
     for (const key of keys) {
         const val = obj[key];

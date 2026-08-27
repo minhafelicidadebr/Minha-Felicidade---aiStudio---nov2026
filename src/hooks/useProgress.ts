@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { useToast } from "@/hooks/use-toast";
 import { trackEvent } from "@/lib/analytics";
 import { trackEngagement } from "@/lib/engagement";
@@ -50,7 +51,11 @@ export function useProgress() {
           score: score || null,
           xp_earned: xp,
           completed,
-          data: (data || {}) as never,
+          // TRUST-1.5: `as never` trocado por `as Json`. Cast LEGÍTIMO e estreito:
+          // `data` chega de chamadores como `Record<string, unknown>` e a coluna é
+          // `Json`. O TypeScript não consegue provar a serializabilidade aqui, mas
+          // a asserção fica restrita ao tipo real da coluna, não a `never`.
+          data: (data || {}) as Json,
         }]).select().single();
 
         if (error) {

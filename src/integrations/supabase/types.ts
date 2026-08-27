@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   public: {
     Tables: {
       ai_usage_limits: {
@@ -977,6 +972,7 @@ export type Database = {
         Args: { _function_name: string }
         Returns: Json
       }
+      enqueue_engagement_reminders: { Args: never; Returns: Json }
       escalate_indicator: {
         Args: {
           _indicator: string
@@ -1193,3 +1189,4 @@ export const Constants = {
     },
   },
 } as const
+

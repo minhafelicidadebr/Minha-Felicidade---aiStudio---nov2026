@@ -381,3 +381,64 @@ fase de requisitos levantou em vez de resolver sozinha. Estão registradas em
 - **D74. A permissão é por organização, não global.** `canResendInvitations`
   cruza o `organizationId` do vínculo com a organização ativa: gestor da rede A
   não reenvia convite da rede B. Há teste para esse vazamento.
+
+## TRUST-1.5 — Contrato de tipos, typecheck e leitura do ledger
+
+- **D75. O ledger de governança não tem leitura direta pela API.**
+  `authenticated` não recebe `GRANT SELECT` em `institutional_decision_events`.
+  A leitura passa por `get_institutional_decision_events()`, no mesmo padrão de
+  `guardian_consent_events` — escrita por RPC, leitura por RPC, tabela sem DML
+  para os papéis da API. A alternativa considerada e rejeitada foi conceder
+  `SELECT` para tornar efetiva a policy que existia: seria alargar privilégio numa
+  tabela de auditoria sem consumidor que justificasse.
+
+- **D76. A policy inerte foi removida, não corrigida.** `"Org admins read
+  decision events"` existia sem grant, então nunca foi avaliada. Em PostgreSQL a
+  RLS **restringe** um privilégio existente; não o concede. Mantê-la deixaria no
+  schema a afirmação falsa de que org_admin acessa a tabela diretamente.
+
+- **D77. Auditar o ledger é atribuição de `org_admin`, não de `educator`.**
+  A RPC exige `is_org_admin`, o mesmo papel que a UX-3 exige para reenviar convite
+  e escalar indicador (D49, D73): quem decide pode auditar. Educator da própria
+  organização recebe a mesma negativa que um estranho. Há teste de execução real
+  para isso.
+
+- **D78. Os tetos de paginação são resolvidos no servidor, não pedidos pelo
+  cliente.** `_limit` máximo 100, `_days` máximo 180, `_offset` mínimo 0. Valores
+  inválidos são **normalizados**, não recusados — pedir 5000 devolve 100, pedir
+  -10 devolve 1. O cliente pode pedir qualquer coisa; o servidor decide.
+
+- **D79. A projeção do ledger é fechada.** `metadata` não sai cru. Saem três
+  campos derivados dele (`target_role`, `resend`, `resends`) e nunca
+  `recipient_hash` nem `idempotency_key`. O hash existe para contar reenvios sem
+  guardar o e-mail (D56/§D2); devolvê-lo na leitura desfaria esse cuidado.
+  `actor_user_id` sai, porque auditoria de governança precisa saber quem decidiu e
+  quem lê é administrador da própria organização.
+
+- **D80. Ordenação determinística nos dois níveis.** `created_at DESC, id DESC`
+  na subquery (define *quais* linhas entram na página) **e** no `jsonb_agg`
+  (define a ordem *do resultado*). Sem o desempate por `id`, páginas com
+  `created_at` repetido repetem ou perdem linhas. Sem a ordenação no agregado, a
+  ordem do array não é garantida pelo PostgreSQL.
+
+- **D81. `types.ts` é gerado do schema homologado, nunca editado à mão.** A fonte
+  é o banco local reconstruído por replay das migrations — não o remoto e não a
+  memória de quem escreveu o código. Quando o tipo não bate com o uso, a resposta
+  é regerar ou corrigir o schema. `as never` está proibido para essa finalidade:
+  não é cast estreito, desliga a verificação por completo. Os seis casts removidos
+  nesta onda estavam **obsoletos** — as RPCs já constavam nos tipos e ninguém
+  voltou para tirar as muletas.
+
+- **D82. Toda RPC P0/P1 tem contrato de runtime contra PostgreSQL real.**
+  Categoria `RPC_RUNTIME_CONTRACT`. A motivação é o R20: `resend_invitation`
+  passava em todo teste que **lia** o SQL e falhava em toda invocação real. O
+  teste central recompila o corpo da função com `check_function_bodies = on`, o
+  que força a resolução de todos os objetos sob o `search_path` pinado. Onde não
+  há Docker, esses testes são **pulados com aviso**, nunca aprovados por omissão.
+
+- **D83. Duas decisões ficaram explicitamente em aberto.** R23 (o ledger torna
+  organizações, escolas e turmas indeletáveis, porque as FKs disparam escrita e os
+  gatilhos append-only rejeitam) e R24 (a auditoria da negativa nunca persiste,
+  porque o `RAISE EXCEPTION` desfaz o INSERT). As duas foram descobertas por
+  execução, as duas têm saídas não equivalentes que mexem em retenção de dados ou
+  no contrato de segurança. Registradas, não alteradas.

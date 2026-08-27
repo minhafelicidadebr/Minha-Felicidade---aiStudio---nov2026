@@ -118,3 +118,38 @@ grants mínimos; verificação (sem remoção) de resíduo de contaminante.
 3. **Reconciliação ideal:** feita como #43, e deliberadamente **mínima** — não
    consolida o estado inteiro do dashboard, porque redeclarar ~200 linhas de
    `get_school_metrics` já correta criaria uma terceira cópia a manter.
+
+---
+
+## Atualização TRUST-1.5
+
+| # | Migration | Domínio | Classificação |
+|---|---|---|---|
+| 44 | `20260826120000_trust1_5_ledger_read_rpc.sql` | Governança / Dashboard OS | **RECONCILED, forward-only, NOT_YET_APPLIED_REMOTELY** |
+
+Fecha o R21. Remove a policy inerte `"Org admins read decision events"`, reafirma
+a ausência de DML para `anon`/`authenticated` na tabela do ledger, e cria
+`get_institutional_decision_events(uuid, integer, integer, integer)` como única
+porta de leitura.
+
+Procedência: partiu de um candidato não commitado encontrado na árvore ao final da
+TRUST-1.1B, preservado com hash SHA-256 verificado
+(`F5E890B5CCA2E01C7A54C722D6BBAB40483F3065E64DEFC5D248CB5D703E8A8B`) e tratado
+como ponto de partida, não como fonte de verdade. Alterado em quatro pontos:
+determinismo do agregado, pré-condições ampliadas, timestamp real, e comentário
+explícito sobre o R24.
+
+Pré-condições que abortam a migration: ledger ausente, `is_org_admin` ausente,
+`data_access_logs` ausente, ou gatilhos append-only incompletos.
+
+`db reset --local`: **44/44 migrations desde banco vazio.**
+
+### Achados de execução que envolvem migrations anteriores
+
+| Migration | Achado |
+|---|---|
+| `20260727120000_ux3_*` | **R23** — as FKs do ledger (`ON DELETE CASCADE` / `ON DELETE SET NULL`) são incompatíveis com os próprios gatilhos append-only: deletar organização, escola ou turma referenciada falha para qualquer papel, inclusive `service_role`. |
+| `20260727120000_ux3_*` | **R24** — a auditoria da negativa em `get_school_metrics` nunca persiste: o `RAISE EXCEPTION` desfaz o INSERT em `data_access_logs`. |
+
+Nenhuma das duas foi alterada: ambas exigem decisão de contrato. Ver o registro
+de riscos.

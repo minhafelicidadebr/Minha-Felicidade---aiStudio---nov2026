@@ -54,7 +54,7 @@ Cada corte tem um gate. O gate só passa quando TODOS os critérios estão ✅.
 | Gate de qualidade | ✅ 320 testes, build e security gate verdes |
 | **Achado P1 novo resolvido** | 🟡 **NÃO** — R21 aberto por decisão de contrato |
 
-**Gate: 🟡 PARCIAL**
+**Gate: 🟡 PARCIAL — integrada via PR #47 (commit `b41f43c` em `main`)**
 
 Aprovada na substância. Duas ressalvas, ambas deliberadas:
 
@@ -76,16 +76,42 @@ Evidências: `evidence/reset-failure-01-seed-fk.md`,
 `evidence/reset-failure-02-pgcrypto-search-path.md`,
 `evidence/finding-03-ledger-policy-sem-grant.md`
 
-## TRUST-1.5 — Typecheck, Schema e Tipos
+## TRUST-1.5 — Typecheck, Schema, Tipos e R21
 
 | Critério | Status |
 |---|---|
-| Typecheck verifica arquivos reais | ⬜ |
-| Tipos refletem staging | ⬜ |
-| CI falha diante de erro | ⬜ |
-| Build e testes usam mesma versão de schema | ⬜ |
+| Typecheck verifica arquivos reais | ✅ prova negativa nos dois sentidos (exit 2 com erro, exit 0 sem) |
+| Tipos refletem o schema homologado | ✅ gerados do banco local reconstruído desde zero |
+| CI falha diante de erro de tipo | ✅ `typecheck` real integrado ao `quality`, que é o gate do CI |
+| Build e testes usam a mesma versão de schema | ✅ 44 migrations locais = migrations da branch |
+| Casts que mascaram drift removidos | ✅ 0 restantes no código |
+| R03 fechado | ✅ |
+| R04 fechado | ✅ |
+| R21 fechado | ✅ leitura do ledger por RPC dedicada, sem `GRANT SELECT` bruto |
+| RPC do ledger executada em Postgres real | ✅ 15 casos + 26 contratos de runtime |
+| Sem `SELECT` bruto no ledger | ✅ `has_table_privilege` = false para `anon` e `authenticated` |
+| Runtime contracts das RPCs críticas | ✅ `resend_invitation`, `get_school_metrics`, `escalate_indicator`, `get_institutional_decision_events` |
+| `db reset --local` continua passando | ✅ 44/44 desde banco vazio |
+| Produção intocada | ✅ |
+| Dados reais usados | ✅ nenhum — só sintéticos, em banco descartável |
+| Gate de qualidade | ✅ 26 arquivos, 346 testes, build, security gate |
+| **Achados novos resolvidos** | 🟡 **NÃO** — R23 e R24 abertos por decisão de contrato |
+| **Runtime contracts no CI** | 🟡 **NÃO** — R25: exigem Docker no runner |
 
-**Gate: ⬜ NÃO INICIADO**
+**Gate: 🟡 PARCIAL**
+
+Os três riscos do escopo declarado (R03, R04, R21) estão fechados e provados em
+execução. As duas ressalvas são deliberadas:
+
+1. **R23 e R24 são decisões de contrato.** O ledger torna tenants indeletáveis, e
+   a auditoria de negativa nunca persiste. Ambos foram descobertos por execução
+   nesta onda, ambos têm saídas não equivalentes que envolvem retenção de dados e
+   contrato de segurança. Registrados, não alterados.
+2. **R25 — o CI não executa os contratos de runtime.** Eles rodam localmente e são
+   pulados (com aviso explícito, não aprovados) onde não há Docker.
+
+Receipts: `TRUST_1_5_TYPECHECK_RECEIPT.md`,
+`TRUST_1_5_SCHEMA_TYPE_CONTRACT.md`, `TRUST_1_5_R21_RUNTIME_RECEIPT.md`
 
 ## TRUST-1.2 — Privacidade Integral
 

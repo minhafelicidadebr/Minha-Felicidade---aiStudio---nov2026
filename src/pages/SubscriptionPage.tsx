@@ -65,11 +65,12 @@ export default function SubscriptionPage() {
   }, []);
 
   // Histórico de pagamentos do próprio usuário (RPC self-scoped).
-  // Cast: get_my_payment_history ainda não está nos tipos gerados pelo Lovable
-  // (os tipos são regenerados quando a migration é aplicada no Lovable Cloud).
+  // TRUST-1.5: cast `as never` removido — a RPC está nos tipos gerados a partir
+  // do schema homologado. O `as unknown as PaymentRow[]` permanece porque a RPC
+  // devolve `Json`, e a forma das linhas é contrato de aplicação, não de schema.
   useEffect(() => {
     const fetchPayments = async () => {
-      const { data, error } = await supabase.rpc("get_my_payment_history" as never);
+      const { data, error } = await supabase.rpc("get_my_payment_history");
       if (!error && data) setPayments(data as unknown as PaymentRow[]);
     };
     fetchPayments();
@@ -108,8 +109,8 @@ export default function SubscriptionPage() {
     if (!window.confirm("Cancelar a renovação da sua assinatura? Você mantém o acesso até o fim do ciclo atual e não haverá nova cobrança.")) return;
     setCanceling(true);
     try {
-      // RPC nova (ainda não nos tipos gerados até o Lovable aplicar a migration).
-      const { error } = await supabase.rpc("request_subscription_cancellation" as never);
+      // TRUST-1.5: cast `as never` removido — a RPC está nos tipos gerados.
+      const { error } = await supabase.rpc("request_subscription_cancellation");
       if (error) throw error;
       setCanceled(true);
       toast({

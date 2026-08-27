@@ -312,3 +312,23 @@ lint com 205 erros. Adicionado a `eslint.config.js` (ignores) e ao `.gitignore`.
 - Que o e-mail de reenvio chega. R20 conserta a RPC; R09 (secrets de e-mail não
   configurados) continua aberto. O ledger registra a decisão; o envio é outra
   camada.
+
+---
+
+## Status de integração (acrescentado depois, sem alterar o registro acima)
+
+| Campo | Valor |
+|---|---|
+| Integration status | **merged via PR #47** |
+| Commit em `main` | `b41f43c` |
+| Data da integração | 2026-08-26 |
+| CI do PR | verde após o `main` ser recuperado pelo PR #48 |
+
+O `main` estava vermelho em `aa39286` por dois avisos de
+`react-hooks/exhaustive-deps` introduzidos por commits do Lovable em componentes
+de landing — fora do domínio TRUST. Corrigidos em PR isolado (#48) antes da
+integração, sem tocar nenhum arquivo TRUST.
+
+**O registro acima permanece verdadeiro:** o R21 estava aberto durante a
+TRUST-1.1B e não foi incluído nela. Ele foi fechado depois, na TRUST-1.5 — ver
+`TRUST_1_5_R21_RUNTIME_RECEIPT.md`.

@@ -9,7 +9,10 @@ export default tseslint.config(
   // stack local (inclusive bundles minificados do edge runtime). Não é código
   // do projeto e não deve derrubar o gate de qualidade de quem roda o ambiente
   // local — TRUST-1.1B.
-  { ignores: ["dist", "supabase/.temp"] },
+  // `.trust1-*` são diretórios de trabalho e evidência das ondas TRUST (também
+  // no .gitignore). Guardam snapshots de schema e tipos gerados para comparação
+  // — não são código do projeto — TRUST-1.5.
+  { ignores: ["dist", "supabase/.temp", ".trust1-*"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

@@ -282,3 +282,84 @@ que lança tratado como falha, e ausência do rótulo de aprovação.
   para papel sem permissão, e hoje o cliente não distingue `org_admin` de
   `school_admin` para essa decisão — quem não pode vê o botão e recebe "permissão
   negada" ao clicar. Funciona, mas não é o comportamento pedido.
+
+## 2026-08-26 — Recuperação do main + TRUST-1.1B integrada + TRUST-1.5
+
+Três frentes numa sessão, na ordem: destravar o `main`, integrar o que estava
+provado, fechar o próximo corte.
+
+### PR #48 — recuperação do `main`
+
+O `main` estava vermelho em `aa39286`. O gate roda `eslint . --max-warnings 0` e
+dois avisos de `react-hooks/exhaustive-deps` entraram por commits do Lovable em
+componentes de landing. Todo PR aberto herdava a falha, inclusive o #47, que
+estava tecnicamente correto.
+
+Corrigido em branch isolada, sem `eslint-disable` e sem afrouxar configuração:
+
+- `ToolMicroPractice` — as fases do pacer 4-4-4 eram um array literal recriado a
+  cada render, e o efeito lia `phases.length`. Adicionar a dependência seria
+  mecânico e errado: fases são constantes do exercício, não estado. Movidas para
+  o escopo do módulo.
+- `InteractiveToolsShowcase` — `prescribed` tinha um ramo `: []` que criava array
+  novo a cada render, invalidando o `useMemo` de `filtered` sempre. Memoizado em
+  `[lab.state]`. Efeito colateral positivo: `filtered` volta a memoizar de verdade.
+
+Nenhum arquivo TRUST no hotfix.
+
+### PR #47 — TRUST-1.1B integrada
+
+Drift do Lovable classificado como `SAME_DOMAIN_OVERLAP` (tocava `types.ts`,
+`metric-privacy.ts`, `tsconfig.app.json`) mas **sem** sobreposição em
+migration, RLS, auth ou schema. Rebase limpo, gate verde, revalidação no Postgres
+local confirmando que R17, R18 e R20 seguiam fechados. Mergeada em `b41f43c`.
+
+Gate TRUST-1.1B: PARCIAL → **integrada**. O receipt original continua dizendo que
+o R21 ficou aberto durante aquela onda, porque ficou.
+
+### PR TRUST-1.5 — R03, R04, R21
+
+**R03 — o gate de tipos era vazio.** `tsc --noEmit` sobre um `tsconfig.json` com
+`files: []` e só `references` compilava zero arquivo. Provado por prova negativa:
+erro deliberado em `src/` e exit 0. Corrigido verificando cada projeto
+explicitamente; prova negativa refeita nos dois sentidos.
+
+**R04 — os casts estavam obsoletos.** Regerados os tipos do banco local
+homologado, o diff contra o `types.ts` versionado foi de duas linhas. Todas as
+RPCs que estavam sendo castadas com `as never` **já constavam nos tipos**. As
+muletas tinham ficado, cada uma com um comentário explicando um motivo que já não
+existia. Seis removidas; zero casts de máscara no código.
+
+**R21 — leitura do ledger por RPC dedicada.** Partiu do candidato encontrado na
+árvore ao final da 1.1B, preservado com hash verificado e tratado como ponto de
+partida, não como verdade. Alterado em quatro pontos, sendo o mais relevante o
+determinismo: o candidato ordenava só na subquery e agregava sem `ORDER BY`, o que
+deixa a ordem do resultado indefinida.
+
+44 migrations desde banco vazio. 15 casos de execução real: cross-tenant,
+educator da própria organização, sonda de tenant, tetos de paginação, ausência de
+`recipient_hash`, estabilidade de página, append-only.
+
+**Criada a categoria `RPC_RUNTIME_CONTRACT`** — 26 testes que executam Postgres
+real, incluindo recompilação de corpo de função com `check_function_bodies = on`.
+É o teste que teria pegado o R20 no dia em que nasceu. Sem Docker eles são
+pulados com aviso, nunca aprovados por omissão.
+
+### Dois achados novos, abertos por decisão
+
+**R23 — o ledger torna tenants indeletáveis.** As FKs de
+`institutional_decision_events` (`ON DELETE CASCADE` e `ON DELETE SET NULL`)
+disparam escrita na tabela, e os gatilhos append-only rejeitam escrita — inclusive
+de `service_role`. Deletar organização ou escola com qualquer decisão registrada
+falha. Pode ser exatamente o desejado ou um bloqueio operacional inaceitável;
+escolher envolve retenção de dados.
+
+**R24 — a auditoria da negativa nunca persiste.** `get_school_metrics` (desde a
+UX-3) e a RPC nova gravam a negativa em `data_access_logs` e o `RAISE EXCEPTION`
+desfaz o INSERT. Medido: negativa → 0 linhas, sucesso → 1 linha. Ou seja, a
+tabela não é registro de tentativas negadas. O INSERT ficou, com comentário no
+corpo da função dizendo que não persiste — honestidade sobre o que existe.
+
+### Contagem
+
+301 → **346 testes**, 24 → **26 arquivos**. Gate verde nas três frentes.

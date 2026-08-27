@@ -40,9 +40,9 @@ export function normalizeClaimReason(reason: unknown): ClaimReason {
 
 export async function claimEscolarSubscription(): Promise<ClaimResult> {
     try {
-        // Cast `as never`: a RPC ainda não está nos tipos gerados até o Lovable
-        // regenerá-los (mesmo padrão de get_my_payment_history / cancelamento).
-        const { data, error } = await supabase.rpc("claim_escolar_subscription" as never);
+        // TRUST-1.5: os casts `as never` foram removidos. A RPC está nos tipos
+        // gerados a partir do schema homologado — o contrato agora é verificado.
+        const { data, error } = await supabase.rpc("claim_escolar_subscription");
         if (error) return { ok: false, reason: "error" };
 
         const payload = (data ?? {}) as RpcClaimPayload;
@@ -59,7 +59,7 @@ export async function claimEscolarSubscription(): Promise<ClaimResult> {
  */
 export async function claimEscolarWithToken(token: string): Promise<ClaimResult> {
     try {
-        const { data, error } = await supabase.rpc("claim_escolar_with_token" as never, { _token: token } as never);
+        const { data, error } = await supabase.rpc("claim_escolar_with_token", { _token: token });
         if (error) return { ok: false, reason: "error" };
 
         const payload = (data ?? {}) as RpcClaimPayload;
