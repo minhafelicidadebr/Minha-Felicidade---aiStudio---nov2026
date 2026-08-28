@@ -117,13 +117,34 @@ Receipts: `TRUST_1_5_TYPECHECK_RECEIPT.md`,
 
 | Critério | Status |
 |---|---|
-| Payload não revela contagem abaixo de 5 | ⬜ |
-| Subtração não reconstrói grupos | ⬜ |
+| Superfície mapeada | ✅ preparação dirigida concluída |
+| Contrato de testes pré-definido | ✅ cardinalidade, inferência, payload, saídas |
+| Payload não revela contagem abaixo de 5 | ⬜ **R10 aberto e comprovado** |
+| Subtração não reconstrói grupos | ⬜ supressão complementar existe; falta cobertura de teste |
 | UI, PDF e CSV coerentes | ⬜ |
+| Tooltip e a11y não revelam grupo suprimido | ⬜ |
 | Testes passam em banco real | ⬜ |
 | Documentação reflete a regra | ⬜ |
 
-**Gate: ⬜ NÃO INICIADO**
+**Gate: 📋 PREPARADO, NÃO INICIADO**
+
+Preparação em `TRUST_1_2_PREP.md`: superfície medida (servidor, cliente, export,
+tooltip, a11y, cache) e contrato de testes definido antes de qualquer mudança de
+comportamento. Nenhuma alteração de privacidade foi implementada.
+
+## Homologação pós-merge (2026-08-26)
+
+| Verificação | Resultado |
+|---|---|
+| `main` após TRUST-1.5 | `e6e6d0c` |
+| CI do `main` | ✅ success |
+| `git status` | limpo |
+| `db reset --local` em `main` | ✅ 44/44 desde banco vazio |
+| `npm run quality` em `main` | ✅ 26 arquivos, 346 testes, build, security gate |
+| Produção tocada | **NÃO** |
+
+A propriedade `main limpo → dependências → replay de schema → tipos → typecheck →
+testes → build` foi verificada de ponta a ponta na branch integrada.
 
 ## TRUST-1.3 — Contexto Organizacional Único
 
