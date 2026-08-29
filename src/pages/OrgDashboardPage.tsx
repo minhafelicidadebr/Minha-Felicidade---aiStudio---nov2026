@@ -87,22 +87,32 @@ export default function OrgDashboardPage() {
         const totalInvited = members.length + invitations.length;
         const activationRate = totalInvited > 0 ? Math.round((members.length / totalInvited) * 100) : 0;
 
-        // Try to fetch engagement data
+        // Engajamento e NPS da rede.
+        //
+        // TRUST-1.2 (§D8): exportação é superfície de dados, não detalhe visual.
+        // O servidor suprime as métricas derivadas de estudantes quando a rede
+        // tem entre 1 e o limiar de participantes — e nesse caso elas chegam
+        // aqui como `null`. O `|| 0` que existia antes convertia a supressão em
+        // zero fabricado e o PDF imprimia "0" onde a resposta é "não podemos
+        // dizer". Agora a supressão trafega até o PDF.
         let engagementData = undefined;
         try {
             const { data: eng } = await supabase.rpc("get_org_engagement_summary", { _org_id: org.id });
             if (eng && typeof eng === "object") {
                 const e = eng as Record<string, unknown>;
+                const num = (v: unknown): number | null => (typeof v === "number" ? v : null);
                 engagementData = {
-                    totalSessions: (e.total_sessions as number) || 0,
-                    totalExercises: (e.total_exercises as number) || 0,
-                    totalAiInteractions: (e.total_ai_interactions as number) || 0,
-                    activeUsers7d: (e.active_users_7d as number) || 0,
-                    activeUsers30d: (e.active_users_30d as number) || 0,
-                    npsAvg: (e.nps_avg as number) || null,
-                    npsCount: (e.nps_count as number) || 0,
-                    npsPromotors: (e.nps_promoters as number) || 0,
-                    npsDetractors: (e.nps_detractors as number) || 0,
+                    suppressed: e.analytics_suppressed === true,
+                    minimumGroupSize: num(e.minimum_group_size) ?? 0,
+                    totalSessions: num(e.total_sessions),
+                    totalExercises: num(e.total_exercises),
+                    totalAiInteractions: num(e.total_ai_interactions),
+                    activeUsers7d: num(e.active_users_7d),
+                    activeUsers30d: num(e.active_users_30d),
+                    npsAvg: num(e.nps_avg),
+                    npsCount: num(e.nps_count),
+                    npsPromotors: num(e.nps_promoters),
+                    npsDetractors: num(e.nps_detractors),
                 };
             }
         } catch { /* best-effort */ }

@@ -27,9 +27,24 @@ export interface SchoolMetrics {
     period: DashboardPeriod;
     days: number;
     minimum_group_size: number;
-    eligible_universe: number;
+    /**
+     * TRUST-1.2 (R10): deixou de ser um inteiro cru.
+     *
+     * O tamanho do universo elegível é ele mesmo um dado protegido: publicá-lo
+     * exato quando os indicadores estão suprimidos revelaria o tamanho do grupo,
+     * que é justamente o que o limiar existe para esconder. E, mesmo acima do
+     * limiar, o total permitia reconstruir por subtração o headcount de uma turma
+     * suprimida (`eligible_universe - Σ counts divulgados`), então o servidor
+     * também o suprime de forma complementar nesse caso.
+     */
+    eligible_universe: MetricGroup;
     generated_at: string;
-    /** True quando o universo elegível da escola está abaixo do limiar. */
+    /**
+     * True quando o universo elegível da escola está entre 1 e o limiar.
+     *
+     * Universo ZERO é `false`: ninguém foi exposto, e "ninguém participou" é
+     * resposta diferente de "amostra insuficiente".
+     */
     analytics_suppressed: boolean;
     totals: SchoolMetricsTotals;
     classes: NamedGroup[];

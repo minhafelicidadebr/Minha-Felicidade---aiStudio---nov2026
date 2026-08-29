@@ -9,17 +9,41 @@ export interface PilotReportData {
     totalEducators: number;
     totalInvitations: number;
     activationRate: number;
+    /**
+     * Engajamento e NPS da rede.
+     *
+     * TRUST-1.2 (§D8): exportação é superfície de dados, não detalhe visual. O
+     * servidor suprime estas métricas quando a rede tem entre 1 e o limiar de
+     * estudantes, e nesse caso elas chegam `null`. `null` NÃO pode ser impresso
+     * como `0`: zero fabricado é afirmação falsa num arquivo que sai da
+     * organização por e-mail.
+     */
     engagementData?: {
-        totalSessions: number;
-        totalExercises: number;
-        totalAiInteractions: number;
-        activeUsers7d: number;
-        activeUsers30d: number;
+        /** True quando o servidor suprimiu o bloco por amostra insuficiente. */
+        suppressed: boolean;
+        /** Limiar aplicado pelo servidor, para o texto ser honesto. */
+        minimumGroupSize: number;
+        totalSessions: number | null;
+        totalExercises: number | null;
+        totalAiInteractions: number | null;
+        activeUsers7d: number | null;
+        activeUsers30d: number | null;
         npsAvg: number | null;
-        npsCount: number;
-        npsPromotors: number;
-        npsDetractors: number;
+        npsCount: number | null;
+        npsPromotors: number | null;
+        npsDetractors: number | null;
     };
+}
+
+/**
+ * Número suprimido nunca vira `0` no PDF (TRUST-1.2 §D8).
+ *
+ * `null` significa "o servidor não autorizou este valor". Imprimir zero seria
+ * afirmar que ninguém participou, o que é diferente e pode ser falso. O travessão
+ * é o mesmo símbolo que o resto do relatório usa para ausência.
+ */
+function cell(value: number | null): string {
+    return value === null ? "—" : String(value);
 }
 
 // Brand colors
@@ -202,45 +226,65 @@ export function generatePilotReportPDF(data: PilotReportData): jsPDF {
     drawProgressBar(doc, margin + 5, y + 22, contentW - 10, data.activationRate, COLORS.emerald);
     y += 38;
 
-    // ─── ENGAGEMENT (if available) ───
-    if (data.engagementData && data.engagementData.totalSessions > 0) {
+    // ─── ENGAGEMENT ───
+    if (data.engagementData) {
+        const ed = data.engagementData;
+        const halfW = (contentW - 3) / 2;
+
         doc.setFont("helvetica", "bold");
         doc.setFontSize(10);
         doc.setTextColor(...COLORS.gold);
         doc.text("ENGAJAMENTO (últimos 30 dias)", margin, y);
         y += 10;
 
-        const ed = data.engagementData;
-        const halfW = (contentW - 3) / 2;
-
-        drawMetricCard(doc, margin, y, halfW, String(ed.totalSessions), "Sessões", COLORS.primary);
-        drawMetricCard(doc, margin + halfW + 3, y, halfW, String(ed.totalExercises), "Exercícios completados", COLORS.emerald);
-        y += 33;
-
-        drawMetricCard(doc, margin, y, halfW, String(ed.totalAiInteractions), "Interações com IA", COLORS.violet);
-        drawMetricCard(doc, margin + halfW + 3, y, halfW, `${ed.activeUsers7d}/${ed.activeUsers30d}`, "Ativos 7d / 30d", COLORS.sky);
-        y += 33;
-
-        // NPS
-        if (ed.npsCount > 0) {
-            const npsScore = Math.round(((ed.npsPromotors - ed.npsDetractors) / ed.npsCount) * 100);
+        // TRUST-1.2 (§D8): amostra insuficiente aparece como TEXTO explícito no
+        // PDF. Antes, o bloco simplesmente não era desenhado quando
+        // `totalSessions` era 0 — o que confundia "ninguém participou" com
+        // "não podemos dizer", e imprimia números quando o servidor os enviava.
+        if (ed.suppressed) {
             doc.setFillColor(...COLORS.darkCard);
-            doc.roundedRect(margin, y, contentW, 25, 3, 3, "F");
-
-            doc.setFont("helvetica", "bold");
+            doc.roundedRect(margin, y, contentW, 22, 3, 3, "F");
+            doc.setFont("helvetica", "normal");
             doc.setFontSize(9);
             doc.setTextColor(...COLORS.textMuted);
-            doc.text("NPS DO PILOTO", margin + 5, y + 8);
-
-            doc.setFontSize(16);
-            const npsColor = npsScore >= 50 ? COLORS.emerald : npsScore >= 0 ? COLORS.gold : COLORS.rose;
-            doc.setTextColor(...npsColor);
-            doc.text(`${npsScore > 0 ? "+" : ""}${npsScore}`, margin + 5, y + 19);
-
+            doc.text("Amostra insuficiente para exibição segura.", margin + 5, y + 9);
             doc.setFontSize(8);
-            doc.setTextColor(...COLORS.textMuted);
-            doc.text(`${ed.npsCount} respostas · Média ${ed.npsAvg ?? "—"}/10`, margin + 35, y + 19);
+            doc.text(
+                `Indicadores de estudantes são agregados com limiar mínimo de ${ed.minimumGroupSize} pessoas.`,
+                margin + 5,
+                y + 16,
+            );
             y += 30;
+        } else {
+            drawMetricCard(doc, margin, y, halfW, cell(ed.totalSessions), "Sessões", COLORS.primary);
+            drawMetricCard(doc, margin + halfW + 3, y, halfW, cell(ed.totalExercises), "Exercícios completados", COLORS.emerald);
+            y += 33;
+
+            drawMetricCard(doc, margin, y, halfW, cell(ed.totalAiInteractions), "Interações com IA", COLORS.violet);
+            drawMetricCard(doc, margin + halfW + 3, y, halfW, `${cell(ed.activeUsers7d)}/${cell(ed.activeUsers30d)}`, "Ativos 7d / 30d", COLORS.sky);
+            y += 33;
+
+            // NPS — só quando há respostas E os números não estão suprimidos.
+            if (ed.npsCount !== null && ed.npsCount > 0 && ed.npsPromotors !== null && ed.npsDetractors !== null) {
+                const npsScore = Math.round(((ed.npsPromotors - ed.npsDetractors) / ed.npsCount) * 100);
+                doc.setFillColor(...COLORS.darkCard);
+                doc.roundedRect(margin, y, contentW, 25, 3, 3, "F");
+
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(9);
+                doc.setTextColor(...COLORS.textMuted);
+                doc.text("NPS DO PILOTO", margin + 5, y + 8);
+
+                doc.setFontSize(16);
+                const npsColor = npsScore >= 50 ? COLORS.emerald : npsScore >= 0 ? COLORS.gold : COLORS.rose;
+                doc.setTextColor(...npsColor);
+                doc.text(`${npsScore > 0 ? "+" : ""}${npsScore}`, margin + 5, y + 19);
+
+                doc.setFontSize(8);
+                doc.setTextColor(...COLORS.textMuted);
+                doc.text(`${ed.npsCount} respostas · Média ${ed.npsAvg ?? "—"}/10`, margin + 35, y + 19);
+                y += 30;
+            }
         }
     }
 

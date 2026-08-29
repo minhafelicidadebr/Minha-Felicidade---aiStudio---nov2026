@@ -153,3 +153,50 @@ Pré-condições que abortam a migration: ledger ausente, `is_org_admin` ausente
 
 Nenhuma das duas foi alterada: ambas exigem decisão de contrato. Ver o registro
 de riscos.
+
+---
+
+## Atualização da MACRO-ONDA D
+
+| # | Migration | Domínio | Classificação |
+|---|---|---|---|
+| 45 | `20260828120000_trust1_2_privacy_and_archive.sql` | Privacidade + Governança | **RECONCILED, forward-only, NOT_YET_APPLIED_REMOTELY** |
+
+Cinco seções, todas motivadas por achado comprovado em execução:
+
+- **§1 (R23)** `status` em `schools` e `classes` espelhando `organizations`;
+  gatilho `BEFORE DELETE` nas três tabelas devolvendo erro de domínio
+  (`ERRCODE 23001`) que aponta o arquivamento. A função é `SECURITY DEFINER` —
+  necessário porque desde a TRUST-1.5 nem `authenticated` nem `service_role` têm
+  `SELECT` no ledger; um gatilho `INVOKER` falharia com `permission denied`, que é
+  o tipo de erro obscuro que a função existe para eliminar.
+- **§2 (R10)** `eligible_universe` deixou de ser inteiro cru e passou a
+  `MetricGroup`.
+- **§3 (R10/D6)** proteção complementar do **canal de headcount**, novo.
+- **§4 (R28)** universo zero deixou de ser tratado como amostra insuficiente.
+- **§5 (R27)** `get_org_engagement_summary` passou a aplicar o limiar. Antes não
+  aplicava nenhum: devolvia contagens cruas e o bloco inteiro de NPS, alimentando
+  o painel **e** o PDF do relatório piloto.
+
+Pré-condições que abortam: ledger ausente, `schools`/`classes` ausentes,
+`metric_minimum_group_size` ausente, ou `get_school_metrics` aplicada sendo a
+versão que referencia `e.school_id`.
+
+`db reset --local`: **45/45 migrations desde banco vazio.**
+
+Nenhum `DROP ... CASCADE`. Nenhuma linha de dado removida. O único DDL destrutivo
+é `DROP TRIGGER IF EXISTS` sobre os gatilhos que a própria migration recria.
+
+### Migrations TRUST pendentes de promoção
+
+Três, todas provadas em banco reconstruído desde zero e **nenhuma** aplicada
+remotamente:
+
+| # | Migration | Onda |
+|---|---|---|
+| 43 | `20260824120000_trust1_dashboard_os_reconciled.sql` | 1.1B |
+| 44 | `20260826120000_trust1_5_ledger_read_rpc.sql` | 1.5 |
+| 45 | `20260828120000_trust1_2_privacy_and_archive.sql` | 1.2 |
+
+Ordem de aplicação é a ordem dos timestamps. O checklist read-only de preflight
+está em `TRUST_1_R22_PREFLIGHT_CHECKLIST.md` e **não foi executado**.

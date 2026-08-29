@@ -363,3 +363,87 @@ corpo da função dizendo que não persiste — honestidade sobre o que existe.
 ### Contagem
 
 301 → **346 testes**, 24 → **26 arquivos**. Gate verde nas três frentes.
+
+## 2026-08-29 — MACRO-ONDA D: privacidade end-to-end + fechamento da TRUST-1.5
+
+### R10 — o limiar escondia os valores e revelava o tamanho do grupo
+
+Escrevi os testes antes de mexer no servidor, e eles ficaram vermelhos: 6 de 17.
+O payload medido de uma escola com 4 estudantes dizia
+`"analytics_suppressed": true` e, na linha seguinte, `"eligible_universe": 4`.
+
+Havia um segundo canal que o mapeamento não previa. Escola de 20 estudantes, turma
+de 17 divulgada com `count: 17`, turma de 3 suprimida, `eligible_universe: 20`.
+`20 − 17 = 3`. A supressão complementar da UX-3 protegia o **valor** (eventos) e
+deixava o **headcount** (pessoas) aberto — são dois canais de subtração, cada um
+com seu total e suas partes, e só um estava coberto.
+
+Correção: `eligible_universe` virou grupo, e o canal de headcount ganhou supressão
+complementar determinística. Recontagem depois da passagem de valor; se sobrou
+exatamente um grupo suprimido, o total do headcount sai de cena.
+
+Também corrigi uma incoerência que os testes expuseram: universo **zero** era
+tratado como amostra insuficiente no nível da escola, enquanto o nível da turma já
+distinguia `isEmpty`. Zero não expõe ninguém; "ninguém participou" não é "sem
+dados".
+
+### R27 — o PDF do piloto exportava NPS de duas pessoas
+
+Fui verificar a superfície de export e encontrei o pior achado da onda:
+`get_org_engagement_summary` não aplicava limiar **nenhum**. Devolvia contagens
+cruas e o bloco inteiro de NPS — média, promotores, detratores.
+
+Uma rede com 2 estudantes gerava um PDF com "2 respostas · Média 9.0/10". Num
+arquivo que o gestor manda para a secretaria.
+
+Agravante: o cliente fazia `(e.nps_count as number) || 0`. Se o servidor passasse
+a mandar `null`, o `|| 0` transformaria a supressão em "0 respostas" — falso. A
+correção teve que atravessar as três camadas: servidor, fronteira do cliente e
+gerador de PDF.
+
+### R23 — arquivar em vez de apagar
+
+Decisão tomada: entidade com histórico auditável não é destruída. `schools` e
+`classes` ganharam o `status` que `organizations` já tinha. E o erro obscuro
+(`institutional_decision_events is append-only`, que não diz nada sobre a causa)
+virou erro de domínio que nomeia a entidade, conta os eventos e mostra o comando
+de arquivamento.
+
+O seed do teste quebrou contra a própria proteção: na segunda execução a turma já
+tinha histórico e o `DELETE` foi corretamente recusado. Serve como evidência
+independente de que o gatilho funciona, e como lição — seed de teste não pode
+assumir que consegue destruir o que criou.
+
+Não criei UI de arquivamento: não existe botão de apagar no painel, e inventar
+fluxo seria feature não pedida. Fica o débito registrado (R29): nenhuma leitura
+filtra `archived` ainda.
+
+### R24 — aceito, com o código dizendo a verdade
+
+`data_access_logs` formalizado como registro de acessos **concedidos**. A negativa
+nunca persiste porque o `RAISE EXCEPTION` desfaz o INSERT, e trocar isso custaria
+fail-closed. Mantive os INSERTs com comentário explícito no corpo da função
+dizendo que não persistem — apagá-los faria a implementação futura redescobrir onde
+instrumentar, e deixá-los sem aviso faria alguém concluir que a auditoria funciona.
+
+### R25 — skip deixou de ser verde
+
+Job `runtime-db` no CI: sobe o stack Supabase efêmero no runner, aplica as
+migrations desde banco vazio, roda os 62 contratos e **falha** se houver skip ou se
+menos de 50 executarem. Nenhum segredo, nenhum `--linked`, nenhum `db push`.
+
+Efeito colateral que vale: o CI passou a travar o invariante da TRUST-1.1B. Se a
+sequência histórica deixar de reconstruir o schema, `supabase start` falha.
+
+### Nota sobre um erro meu
+
+A primeira versão do varredor de payload procurava dígitos no **texto** da
+resposta, e acusou vazamento onde não havia — fragmentos de UUID e de timestamp
+contêm dígitos. Antes de tocar no varredor, fui olhar o payload real para
+confirmar que estava seguro. A ordem importa: o contrário seria ajustar o teste até
+ficar verde.
+
+### Contagem
+
+346 → **382 testes**, 26 → **28 arquivos**. 62 contratos de runtime contra
+PostgreSQL real, agora no CI. 45 migrations aplicam desde banco vazio.

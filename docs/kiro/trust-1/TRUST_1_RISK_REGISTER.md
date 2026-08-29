@@ -70,3 +70,30 @@ Todos comprovados em **execução real** contra PostgreSQL, não por leitura.
 | R13 | **Substancialmente pago.** Existe agora a categoria `RPC_RUNTIME_CONTRACT` com 26 testes que executam Postgres real, incluindo recompilação de corpo de função com `check_function_bodies = on` — o teste que teria pegado o R20 no dia em que nasceu. A dívida remanescente é o CI (R25), não a ausência de testes. |
 | R22 | **Reforçado, não resolvido.** O diff entre os tipos gerados do local e os tipos anteriores (gerados do remoto) é de duas linhas, o que é indício forte de convergência. Indício não é consulta ao catálogo. Continua **obrigatório como preflight read-only antes de promover qualquer migration TRUST para produção.** |
 | R09 | **Inalterado e agora mais visível.** O R20 consertou a RPC de reenvio, mas `PUBLIC_SITE_URL` e `RESEND_API_KEY` continuam ausentes: o ledger registra a decisão e o e-mail não sai. |
+
+## Atualização da MACRO-ONDA D (TRUST-1.2 + fechamento da 1.5)
+
+| # | Risco | Severidade | Status |
+|---|---|---|---|
+| R10 | **`eligible_universe` transportava o tamanho exato do grupo.** Escola com 4 estudantes devolvia `"eligible_universe": 4` junto de `analytics_suppressed: true` — a supressão escondia os valores e revelava o tamanho do grupo. Segundo canal, descoberto nesta onda: escola de 20 com turma de 17 (divulgada, `count: 17`) e turma de 3 (suprimida) permitia `20 − 17 = 3`. A supressão complementar da UX-3 protegia o `value` e deixava o `count` aberto. | P1 | ✅ **FECHADO.** `eligible_universe` passou a ser um `MetricGroup`; o canal de headcount recebeu supressão complementar determinística. 23 contratos de execução real, escritos vermelhos antes da correção. Ver `TRUST_1_2_PRIVACY_TEST_RECEIPT.md`. |
+| R23 | O ledger tornava organizações, escolas e turmas indeletáveis, com mensagem obscura de append-only. | P1 | ✅ **FECHADO / ARCHIVE_CONTRACT.** `schools` e `classes` ganharam `status` espelhando `organizations`; gatilho `BEFORE DELETE` devolve erro de domínio (`ERRCODE 23001`) apontando o arquivamento. 13 contratos. Ver `TRUST_1_5_R23_DECISION.md`. |
+| R24 | A auditoria da negativa nunca persiste: o `RAISE EXCEPTION` desfaz o INSERT. | P1 | 🟡 **ACCEPTED_ARCHITECTURAL_LIMITATION / FAIL_CLOSED_PRESERVED.** `data_access_logs` formalizado como registro de acessos **concedidos**. Negativas pertencem a `security_denied_access_events`, canal externo à transação, ainda inexistente. Fail-closed preservado; não se troca segurança por completude de log. Ver `TRUST_1_5_R24_DECISION.md`. |
+| R25 | Contratos de runtime não rodavam no CI; skip aparecia como verde. | P1 | ✅ **FECHADO.** Job `runtime-db` sobe o stack Supabase efêmero no runner, aplica as migrations desde zero e **falha** diante de skip ou de menos de 50 contratos executados. Ver `TRUST_1_5_R25_CI_RECEIPT.md`. |
+| R22 | Schema remoto inferido, não consultado. | P1 | 🔴 **OPEN / REQUIRED_BEFORE_PRODUCTION.** Checklist read-only de 10 seções criado em `TRUST_1_R22_PREFLIGHT_CHECKLIST.md`. Nada executado; nenhuma credencial remota usada; nenhum `db push` em nenhuma onda. |
+
+### Novos desta onda
+
+| # | Risco | Severidade | Evidência | Status |
+|---|---|---|---|---|
+| R27 | **`get_org_engagement_summary` não aplicava limiar nenhum.** Devolvia contagens cruas de atividade e o bloco inteiro de NPS — `nps_avg`, `nps_count`, `nps_promoters`, `nps_detractors`. Alimenta o painel institucional **e** o PDF do relatório piloto. Uma rede com 2 estudantes exportava média e distribuição de um grupo de duas pessoas, num arquivo que sai por e-mail. Agravante: o cliente fazia `|| 0`, que converteria supressão em zero fabricado. | P1 | **Comprovado no corpo aplicado e em execução.** | ✅ **CORRIGIDO.** Universo elegível da organização passou a ser o gate, com a mesma regra do nível da escola. Chaves derivadas vêm `null` com `analytics_suppressed` e `minimum_group_size`. Propagado até o PDF. Ver `TRUST_1_2_EXPORT_SURFACE_RECEIPT.md`. |
+| R28 | **Universo zero era tratado como amostra insuficiente.** No nível da escola, 0 estudantes produzia `analytics_suppressed: true` e totais `below_threshold` — contradizendo o nível da turma, que já distinguia `isEmpty`. O gestor lia "sem dados" onde a resposta correta era "ninguém participou". | P2 | **Comprovado em execução.** | ✅ **CORRIGIDO.** Zero é divulgável: `value: 0`, `count: 0`, `isEmpty: true`, `analytics_suppressed: false`. |
+| R29 | **Arquivamento não é filtrado em nenhuma leitura.** `schools.status` e `classes.status` existem, mas nada define `archived` e nenhuma query o exclui. Hoje é inócuo; quando o arquivamento virar operação real, entidade arquivada continuará aparecendo no painel e nas métricas. | P2 | Comprovado no código. | **Aberto.** É o principal débito que a decisão do R23 deixa. Trabalho da onda que expuser o arquivamento. |
+| R30 | **Roster administrativo fora do limiar, por decisão.** `totalMembers`, `totalStudents`, `totalEducators`, `totalInvitations` e `classCount` por escola continuam saindo exatos no PDF do piloto. São contagens de cadastro que o org_admin gerencia diretamente, não analytics derivadas de comportamento. | P2 | Comprovado no código. | **Aberto por decisão.** Estender o limiar a essas contagens é decisão de produto, não ajuste técnico. Registrado explicitamente em `TRUST_1_2_PRIVACY_CONTRACT.md`. |
+
+### Atualização de riscos anteriores
+
+| # | Mudança |
+|---|---|
+| R13 | **Pago.** 62 contratos de runtime contra PostgreSQL real, e agora **no CI**. A dívida que restava era o runner (R25), fechada nesta onda. |
+| R05 | **Mitigado com mais força.** O staging local reproduzível agora é exercitado pelo CI em cada PR, não só na máquina de quem lembra de rodar. |
+| R02 / R11 | **Inalterados.** `engagement_events` e `nps_responses` continuam aceitando INSERT direto com `organization_id` arbitrário. A supressão desta onda protege a **leitura**; a integridade da **escrita** é TRUST-1.4. Vale registrar a interação: um atacante pode inflar contagens de uma organização alheia e, com isso, tirar um grupo do limiar. |

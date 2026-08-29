@@ -442,3 +442,82 @@ fase de requisitos levantou em vez de resolver sozinha. Estão registradas em
   porque o `RAISE EXCEPTION` desfaz o INSERT). As duas foram descobertas por
   execução, as duas têm saídas não equivalentes que mexem em retenção de dados ou
   no contrato de segurança. Registradas, não alteradas.
+
+## TRUST-1.2 — Privacidade end-to-end e contrato de arquivamento
+
+- **D84. `eligible_universe` é um grupo, não um inteiro.** O tamanho do universo
+  elegível é ele mesmo dado protegido. Publicá-lo exato quando os indicadores estão
+  suprimidos revela o tamanho do grupo — exatamente o que o limiar esconde. E,
+  mesmo acima do limiar, o total permitia reconstruir por subtração o headcount de
+  uma turma suprimida. Hoje tem as mesmas três formas de qualquer grupo:
+  divulgado, vazio ou suprimido.
+
+- **D85. Existem DOIS canais de subtração, não um.** O payload carrega duas
+  famílias de números: **valor** (eventos, com total em `totals`) e **headcount**
+  (pessoas, com total em `eligible_universe`). A implementação da UX-3 protegia só
+  o primeiro. Cada canal precisa da sua supressão complementar. Algoritmo em
+  `TRUST_1_2_COMPLEMENTARY_SUPPRESSION.md`.
+
+- **D86. Universo zero é divulgável.** Zero participantes não expõe ninguém, e
+  `0` ali é resposta honesta. O nível da turma já distinguia `isEmpty`; o nível da
+  escola contradizia isso e tratava zero como amostra insuficiente. Corrigido:
+  "ninguém participou" e "não podemos dizer" são respostas diferentes e têm saídas
+  diferentes.
+
+- **D87. `null` e nunca `0` para valor suprimido.** Zero fabricado é afirmação
+  falsa. Vale em especial no PDF, que sai da organização por e-mail: `|| 0` na
+  fronteira do cliente converteria supressão em "0 respostas". O helper `cell()`
+  imprime travessão.
+
+- **D88. Exportação é superfície de dados, não detalhe visual.** Toda supressão
+  vale em CSV, PDF e qualquer download. Bloco suprimido no PDF imprime texto
+  explícito com o limiar, em vez de simplesmente não ser desenhado — porque não
+  desenhar confunde "ninguém participou" com "não podemos dizer".
+
+- **D89. O vocabulário de supressão não se duplica.** Continua
+  `suppressed` / `reason` / `minimumGroupSize`, que é o contrato canônico (D53–D55)
+  e o que `metric-privacy.ts` já lê. Não se introduziu `status`/`threshold` em
+  paralelo: dois dialetos para a mesma coisa é como o limiar degrada em silêncio.
+  No nível de **bloco** (organização), a supressão é sinalizada por
+  `analytics_suppressed` + `minimum_group_size`, o mesmo par que a escola já
+  publicava — porque ali não há grupos nomeados a suprimir.
+
+- **D90. O limiar protege analytics de estudante, não o roster administrativo.**
+  `totalMembers`, `totalStudents`, `classCount` no relatório piloto são contagens
+  de cadastro que o org_admin gerencia diretamente. Não são métricas derivadas de
+  comportamento. Estender o limiar a elas é decisão de produto, e está registrada
+  como aberta (R30) em vez de decidida por conveniência técnica.
+
+- **D91. `ARCHIVE_INSTEAD_OF_HARD_DELETE`.** Entidade institucional referenciada
+  por histórico auditável não é fisicamente removida — é arquivada. Rejeitadas:
+  FKs para `NO ACTION` (troca uma mensagem obscura por outra), gatilhos ignorarem
+  ação de FK e `ON DELETE CASCADE` no ledger (as duas fazem a auditoria
+  desaparecer com o auditado, o que não é auditoria). `schools` e `classes`
+  ganharam o vocabulário de estado que `organizations` já tinha; nenhum sistema
+  paralelo foi inventado.
+
+- **D92. Bloqueio deve ter erro de domínio, não erro de encanamento.** A recusa do
+  ledger append-only aparecia como `institutional_decision_events is append-only`,
+  que não diz nada sobre a causa. Agora um gatilho `BEFORE DELETE` verifica o
+  histórico e recusa com mensagem que nomeia a entidade, conta os eventos e mostra
+  o comando de arquivamento. `ERRCODE 23001`.
+
+- **D93. Nenhuma UI de arquivamento foi criada.** O painel só insere escola e
+  turma; não existe botão de apagar. Formalizou-se o contrato — coluna de estado e
+  erro compreensível — sem inventar feature. Nenhuma leitura passou a filtrar
+  `archived`, porque nada define esse estado hoje; filtrar seria mudança sem efeito
+  com risco de regressão. Registrado como R29, o débito que esta decisão deixa.
+
+- **D94. `data_access_logs` registra acessos CONCEDIDOS.** A linha de negativa
+  nunca persiste: o `RAISE EXCEPTION` desfaz o INSERT. Fail-closed é preservado —
+  não se muda autorização para o log sobreviver. Tentativas negadas pertencem a
+  `security_denied_access_events`, canal externo à transação e ainda inexistente.
+  Até existir implementação **e** teste, não se afirma que negativas estão
+  persistidas. Os INSERTs foram mantidos com comentário explícito de que não
+  persistem, porque são o ponto de captura correto no futuro.
+
+- **D95. Skip não é sucesso no CI.** O job `runtime-db` sobe Postgres real, aplica
+  as migrations desde zero e falha diante de skip ou de menos de 50 contratos
+  executados. Antes, "0 testes executados" aparecia verde — o que esvazia a razão
+  de existir da categoria, criada justamente porque o R20 passou por todo teste que
+  apenas lia o SQL.

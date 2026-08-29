@@ -95,20 +95,25 @@ Evidências: `evidence/reset-failure-01-seed-fk.md`,
 | Produção intocada | ✅ |
 | Dados reais usados | ✅ nenhum — só sintéticos, em banco descartável |
 | Gate de qualidade | ✅ 26 arquivos, 346 testes, build, security gate |
-| **Achados novos resolvidos** | 🟡 **NÃO** — R23 e R24 abertos por decisão de contrato |
-| **Runtime contracts no CI** | 🟡 **NÃO** — R25: exigem Docker no runner |
+| **R23** | ✅ **FECHADO na MACRO-ONDA D** — `ARCHIVE_CONTRACT` |
+| **R24** | 🟡 **ACEITO na MACRO-ONDA D** — limitação arquitetural, fail-closed preservado |
+| **R25** | ✅ **FECHADO na MACRO-ONDA D** — job `runtime-db` no CI |
 
 **Gate: 🟡 PARCIAL**
 
 Os três riscos do escopo declarado (R03, R04, R21) estão fechados e provados em
 execução. As duas ressalvas são deliberadas:
 
-1. **R23 e R24 são decisões de contrato.** O ledger torna tenants indeletáveis, e
-   a auditoria de negativa nunca persiste. Ambos foram descobertos por execução
-   nesta onda, ambos têm saídas não equivalentes que envolvem retenção de dados e
-   contrato de segurança. Registrados, não alterados.
-2. **R25 — o CI não executa os contratos de runtime.** Eles rodam localmente e são
-   pulados (com aviso explícito, não aprovados) onde não há Docker.
+As três ressalvas que restavam foram endereçadas na MACRO-ONDA D:
+
+1. **R23** — decidido como `ARCHIVE_INSTEAD_OF_HARD_DELETE`. `schools` e `classes`
+   ganharam coluna de estado espelhando `organizations`, e o erro obscuro de
+   append-only virou erro de domínio que aponta o arquivamento.
+2. **R24** — aceito como limitação arquitetural. `data_access_logs` formalizado
+   como registro de acessos **concedidos**; negativas pertencem a um canal externo
+   à transação, ainda inexistente. Fail-closed preservado: não se troca segurança
+   por completude de log.
+3. **R25** — fechado. O CI passou a subir Postgres real e a falhar diante de skip.
 
 Receipts: `TRUST_1_5_TYPECHECK_RECEIPT.md`,
 `TRUST_1_5_SCHEMA_TYPE_CONTRACT.md`, `TRUST_1_5_R21_RUNTIME_RECEIPT.md`
@@ -117,20 +122,44 @@ Receipts: `TRUST_1_5_TYPECHECK_RECEIPT.md`,
 
 | Critério | Status |
 |---|---|
-| Superfície mapeada | ✅ preparação dirigida concluída |
-| Contrato de testes pré-definido | ✅ cardinalidade, inferência, payload, saídas |
-| Payload não revela contagem abaixo de 5 | ⬜ **R10 aberto e comprovado** |
-| Subtração não reconstrói grupos | ⬜ supressão complementar existe; falta cobertura de teste |
-| UI, PDF e CSV coerentes | ⬜ |
-| Tooltip e a11y não revelam grupo suprimido | ⬜ |
-| Testes passam em banco real | ⬜ |
-| Documentação reflete a regra | ⬜ |
+| Superfície mapeada | ✅ |
+| Contrato de testes pré-definido | ✅ e escrito **vermelho antes** da correção |
+| Servidor não retorna valores abaixo de k | ✅ `eligible_universe` é `MetricGroup`; grupos suprimidos sem `value`/`count` |
+| Supressão complementar funciona | ✅ dois canais — valor e headcount — algoritmo documentado |
+| Payload serializado é seguro | ✅ varredura de valores JSON com caminho, em todas as escolas |
+| Exports são seguros | ✅ CSV via `toExportCell`; PDF com bloco de supressão |
+| PDF é seguro | ✅ `null` nunca vira `0`; NPS só desenha com números reais |
+| Tooltips e a11y são seguros | ✅ `sr-only` só menciona o limiar; gráfico recebe `null` |
+| Cache não reintroduz valor | ✅ chave inclui escopo; nenhum vazamento inequívoco |
+| Testes adversariais verdes | ✅ 23 contratos, inclusive não-inferência |
+| Replay DB verde | ✅ 45/45 migrations desde banco vazio |
+| RPC runtime contracts verdes | ✅ 62 no total |
+| CI runtime DB verde | ✅ job `runtime-db` (R25) |
+| Quality verde | ✅ 28 arquivos, 382 testes |
+| Produção intocada | ✅ |
+| **R10** | ✅ **FECHADO** |
+| **Achados novos resolvidos** | 🟡 R27 e R28 corrigidos; **R29 e R30 abertos** |
 
-**Gate: 📋 PREPARADO, NÃO INICIADO**
+**Gate: 🟡 PARCIAL**
 
-Preparação em `TRUST_1_2_PREP.md`: superfície medida (servidor, cliente, export,
-tooltip, a11y, cache) e contrato de testes definido antes de qualquer mudança de
-comportamento. Nenhuma alteração de privacidade foi implementada.
+O critério central está cumprido: o servidor não devolve mais nada abaixo do
+limiar, em nenhuma das duas superfícies de métrica, e isso foi provado por teste
+que falhava antes da correção. Duas ressalvas, ambas registradas e nenhuma
+bloqueante para o objetivo da onda:
+
+1. **R29 — arquivamento não é filtrado em leitura.** `schools.status` e
+   `classes.status` existem, mas nada define `archived` e nenhuma query o exclui.
+   Inócuo hoje; é o débito que a decisão do R23 deixa para a onda que expuser o
+   arquivamento.
+2. **R30 — roster administrativo fora do limiar, por decisão.** As contagens de
+   cadastro no PDF do piloto continuam exatas. São dados que o org_admin gerencia
+   diretamente, não analytics de comportamento. Estender o limiar a elas é decisão
+   de produto.
+
+Receipts: `TRUST_1_2_PRIVACY_CONTRACT.md`,
+`TRUST_1_2_PRIVACY_TEST_RECEIPT.md`,
+`TRUST_1_2_COMPLEMENTARY_SUPPRESSION.md`,
+`TRUST_1_2_EXPORT_SURFACE_RECEIPT.md`
 
 ## Homologação pós-merge (2026-08-26)
 

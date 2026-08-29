@@ -155,3 +155,81 @@ Dívida registrada: **R25 — o gate do CI não executa contrato de runtime.**
 | Deleção de tenant com ledger (R23) | P1 | Aguarda decisão |
 | Persistência da auditoria de negativa (R24) | P1 | Aguarda decisão |
 | Edge functions (Deno) sem teste | P2 | Fora de escopo TRUST-1 |
+
+---
+
+## Atualização da MACRO-ONDA D — 382 testes em 28 arquivos
+
+| Domínio | Arquivo | Testes | O que cobre |
+|---|---|---|---|
+| **Privacidade em runtime** | `privacy-runtime-contract.test.ts` | **23** | Cardinalidade n=0/1/4/5/6, não inferência por subtração nos dois canais, filtro temporal, payload serializado, superfície da organização |
+| **Arquivamento em runtime** | `archive-runtime-contract.test.ts` | **13** | Contrato de estado, erro de domínio, `service_role`, cross-tenant, entidade sem histórico |
+
+Total de contratos de runtime contra PostgreSQL real: **62**
+(26 RPC + 13 arquivamento + 23 privacidade).
+
+### O método: vermelho antes de verde
+
+Os testes de privacidade foram escritos **antes** da correção e executados contra
+o servidor vulnerável:
+
+```
+1ª execução (vulnerável):  6 falharam | 11 passaram
+2ª execução (corrigido) :  0 falharam | 17 passaram
+```
+
+As 6 falhas não foram "consertadas no teste" — o servidor foi corrigido. Cada uma
+provou um vazamento concreto, com payload medido registrado em
+`TRUST_1_2_PRIVACY_TEST_RECEIPT.md`.
+
+### Nota metodológica que vale guardar
+
+A primeira versão do varredor de payload procurava **dígitos no texto** da
+resposta, e acusou falso positivo: fragmentos de UUID (`4000`, `d201`) e de
+timestamp ISO contêm dígitos. Substituído por caminhada recursiva sobre os
+**valores numéricos** do JSON, com o caminho de cada ocorrência, excluindo as
+chaves de metadado (`days`, `minimum_group_size`) — que são públicas por design,
+porque o limiar precisa ser exibido para a supressão ser honesta.
+
+Quatro das falhas pós-correção eram defeito do teste, não vazamento. Confirmado
+inspecionando o payload real **antes** de mexer no varredor — a ordem importa: o
+contrário seria ajustar o teste até ficar verde.
+
+### Os contratos agora rodam no CI
+
+Job `runtime-db` em `.github/workflows/quality-gate.yml` (R25). Sobe o stack
+Supabase efêmero no runner, aplica as migrations desde banco vazio e **falha**
+diante de skip ou de menos de 50 contratos executados. Skip deixou de ser
+sucesso.
+
+Efeito colateral: o CI passou a travar o invariante da TRUST-1.1B — se a sequência
+histórica deixar de reconstruir o schema desde zero, `supabase start` falha.
+
+### Ajuste de timeout
+
+Cada chamada ao Postgres passa por `docker exec`, que custa centenas de
+milissegundos. O timeout padrão de 5s do Vitest era curto para suítes com dezenas
+de round-trips. Elevado a 120s **apenas nas três suítes de runtime**; o global não
+foi tocado, para que um teste de unidade que pendura continue falhando rápido.
+
+### Lacunas fechadas nesta onda
+
+| Lacuna | Status |
+|---|---|
+| ~~`eligible_universe` no payload quando suprimido (R10)~~ | ✅ **Fechada** |
+| ~~Contratos de runtime não rodam no CI (R25)~~ | ✅ **Fechada** |
+| ~~Deleção de tenant com ledger (R23)~~ | ✅ **Fechada** — contrato de arquivamento |
+| ~~Persistência da auditoria de negativa (R24)~~ | 🟡 **Aceita** — limitação arquitetural formalizada |
+
+### Lacunas remanescentes
+
+| Lacuna | Relevância | Corte |
+|---|---|---|
+| Zero teste de spoofing de `engagement_event` (R02) | P0 | TRUST-1.4 |
+| Zero teste de NPS com `organization_id` arbitrário (R11) | P1 | TRUST-1.4 |
+| Zero teste do consentimento com responsável independente (R06) | P0 | TRUST-1.6 |
+| Zero teste de contexto (troca de org durante query) | P1 | TRUST-1.3 |
+| Arquivamento não filtrado em leitura (R29) | P2 | Onda que expuser arquivamento |
+| Roster administrativo fora do limiar (R30) | P2 | Decisão de produto |
+| Sem snapshot visual de PDF ou gráfico | P2 | Aceito |
+| Edge functions (Deno) sem teste | P2 | Fora de escopo TRUST-1 |
