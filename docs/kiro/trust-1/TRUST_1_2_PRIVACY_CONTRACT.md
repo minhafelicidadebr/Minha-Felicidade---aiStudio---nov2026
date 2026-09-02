@@ -85,18 +85,30 @@ algoritmo do canal de headcount está em `TRUST_1_2_COMPLEMENTARY_SUPPRESSION.md
 | CSV / export | `toExportCell` → `"amostra insuficiente"` |
 | PDF | Bloco suprimido imprime texto explícito; `null` nunca vira `0` |
 
-## Escopo organizacional
+## Escopo organizacional e contributor gate
 
 `get_org_engagement_summary` alimenta o painel institucional **e** o PDF do
-relatório piloto, e não aplicava limiar nenhum. Devolvia contagens cruas de
-atividade e o bloco inteiro de NPS.
+relatório piloto. A TRUST-1.2 fechou a ausência completa de limiar; a
+TRUST-1.2.1 fechou a aproximação seguinte: roster elegível não é participação.
 
-Hoje o universo elegível da organização é o gate, com a mesma regra do nível da
-escola. Quando suprimido, as chaves derivadas de estudantes vêm `null`,
-acompanhadas de `analytics_suppressed` e `minimum_group_size`.
+Hoje **cada métrica** usa seus próprios contribuidores distintos. NPS, sessões,
+exercícios, interações com IA e usuários ativos são divulgados somente quando a
+métrica tem `count(DISTINCT user_id) >= metric_minimum_group_size()`. Cinco
+eventos da mesma pessoa continuam sendo um contribuidor. Métrica sem contribuinte
+é zero real; métrica com 1..k-1 vem `null` e aparece em `suppressed_metrics`.
 
+A série semanal segue a mesma regra por métrica e bucket na RPC
+`get_org_analytics_series`. Grupo suprimido não carrega `value` nem `count`.
 `null` e não `0`: zero fabricado é afirmação falsa, e o cliente precisa distinguir
 "ninguém" de "não podemos dizer".
+
+## Fronteira raw
+
+`org_admin` não lê mais linhas de `nps_responses` ou `engagement_events`. Policies
+administrativas de SELECT foram removidas por qualificador semântico; self-read
+do estudante e acesso operacional de `service_role` permanecem. O navegador
+institucional recebe somente as duas RPCs agregadoras. Cache e UI não são a
+fronteira de privacidade; o servidor é.
 
 ## O que este contrato NÃO afirma
 

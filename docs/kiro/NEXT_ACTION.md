@@ -1,66 +1,43 @@
 # NEXT_ACTION
 
-## Estado: redesenho de dashboards concluído — main corrente
+## Estado: TRUST-1.2.1 concluída localmente — parada obrigatória
 
-| Onda | PR | Entregas principais |
-|---|---|---|
-| UX-2 | #37 ✅ | /org sobre a casca, MetricCards, Recharts, multi-org |
-| UX-3 | #38 ✅ | /escola/:schoolId, limiar N=5, ledger append-only, DecisionQueue |
-| UX-4 | #39 ✅ | /alunos como home do estudante, code-split (882→49 kB) |
-| UX-5 | #40 ✅ | Estudante na casca compartilhada |
-| — | #41 ✅ | Remoção de `useOrganization`, `RequireInstitutionalRole` |
-| UX-6 | #42 | Dedupe de navegação, item de escola com href dinâmico |
+A Macro-Onda E fechou a fronteira de analytics institucional no replay local:
 
-`npm run quality` verde: **285 testes** em 24 arquivos, 0 lint warnings, build sem
-warning de chunk, security gate.
+- R31: `org_admin` não lê mais linhas raw de NPS/engagement;
+- R32: limiar por contribuidores distintos em cada métrica/bucket;
+- RPC server-side para série de 8 semanas e resumo de 30 dias;
+- UI/PDF com vazio, supressão parcial e divulgação distintos;
+- 46/46 migrations, 78/78 contratos runtime, 405/405 testes;
+- `npm run quality` verde;
+- produção e catálogo remoto intocados.
 
-Todos os cinco papéis rodam no `RoleAwareAppShell`. Nenhum painel usa
-`Navbar`/`Footer`. Nenhum item de navegação é link morto ou destino duplicado.
+Branch: `trust-1.2.1-server-analytics-boundary`.
 
-## Ações manuais bloqueantes
+## Bloqueio antes de produção — R22
 
-1. **Aplicar a migration** `20260727120000_ux3_school_metrics_and_governance.sql`
-   no SQL Editor do Lovable.
-2. Rodar as queries de verificação de privilégio registradas no runbook.
+Executar o checklist **read-only** em
+`TRUST_1_R22_PREFLIGHT_CHECKLIST.md` com credencial explicitamente autorizada.
+Comparar catálogo remoto, migrations aplicadas, policies, grants e assinaturas de
+função antes de promover #43–#46. Não usar `db push` ou `--linked` sem uma janela
+de mudança aprovada.
 
-## Dívidas restantes
+Migrations TRUST pendentes, nesta ordem:
 
-### Alta
+1. `20260824120000_trust1_dashboard_os_reconciled.sql`
+2. `20260826120000_trust1_5_ledger_read_rpc.sql`
+3. `20260828120000_trust1_2_privacy_and_archive.sql`
+4. `20260901120000_trust1_2_1_server_analytics_boundary.sql`
 
-Nenhuma. As duas entregas parciais da D65 foram fechadas (D71–D74):
+## Riscos ainda abertos
 
-- Escalonamento agora exige **duas leituras** fora da faixa. A leitura anterior é
-  reconstruída de `created_at`/`accepted_at`, sem tabela nova nem cron.
-  Limitação declarada: a reconstrução não vê remoções de membro.
-- `canResend` é derivado dos vínculos por organização, e quando o papel não
-  alcança a ação o controle **não é renderizado** — com uma linha explicando por
-  quê, para não parecer defeito da tela.
+- R02/R11: integridade de escrita de engagement/NPS — TRUST-1.4.
+- R06: consentimento verificável por responsável — TRUST-1.6.
+- R29: leituras ainda não filtram entidades arquivadas.
+- R30: roster administrativo permanece fora do limiar por decisão.
 
-### Média
+## Próxima ação
 
-- `/admin/operacao` não existe como rota separada; a Landing está em `/admin`.
-  `CANONICAL_ROLE_HOME.platform_admin` já aponta para a futura.
-- Dois vocabulários de papel no banco (D29) — dois guards
-  (`RequireRole` + `RequireInstitutionalRole`) refletem essa divisão de forma
-  honesta, mas unificar no banco simplificaria.
-- `school_admin` com duas ou mais escolas não tem item de menu para escola
-  (omitido por design, D70). Um submenu com a lista resolveria.
-
-### Baixa (backlog operacional)
-
-- Configurar `RESEND_API_KEY` + `PUBLIC_SITE_URL` nos secrets (e-mails).
-- Domínio: migrar para minhafelicidade.com.br.
-- Migrar react-router v6→v7 (advisory de audit; não bloqueia com critical).
-- Instrumentar mais ações de engajamento (debate, poesia, co-design).
-- Cron para `enqueue_engagement_reminders`.
-- Testes de banco executados em Postgres real (hoje são estruturais).
-
-## Próxima ação sugerida
-
-Nada de alta prioridade em aberto no código. As duas ações manuais (aplicar a
-migration e conferir privilégios) são o caminho crítico agora — sem elas o painel
-escolar não tem dados.
-
-Depois disso, o backlog é escolha de prioridade do humano: `/admin/operacao` como
-rota própria, submenu de escolas para `school_admin` com várias escolas, ou os
-itens operacionais (secrets, domínio, cron).
+**Parar aqui. Não iniciar TRUST-1.3 automaticamente.** Primeiro integrar esta
+branch com CI `quality` e `runtime-db` verdes; promoção remota somente após R22 e
+autorização humana explícita.

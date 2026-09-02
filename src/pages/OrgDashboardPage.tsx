@@ -102,7 +102,9 @@ export default function OrgDashboardPage() {
                 const e = eng as Record<string, unknown>;
                 const num = (v: unknown): number | null => (typeof v === "number" ? v : null);
                 engagementData = {
-                    suppressed: e.analytics_suppressed === true,
+                    suppressedMetrics: Array.isArray(e.suppressed_metrics)
+                        ? e.suppressed_metrics.filter((item): item is string => typeof item === "string")
+                        : [],
                     minimumGroupSize: num(e.minimum_group_size) ?? 0,
                     totalSessions: num(e.total_sessions),
                     totalExercises: num(e.total_exercises),

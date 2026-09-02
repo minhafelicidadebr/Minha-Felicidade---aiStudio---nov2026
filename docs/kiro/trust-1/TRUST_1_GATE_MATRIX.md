@@ -175,6 +175,34 @@ Receipts: `TRUST_1_2_PRIVACY_CONTRACT.md`,
 A propriedade `main limpo → dependências → replay de schema → tipos → typecheck →
 testes → build` foi verificada de ponta a ponta na branch integrada.
 
+## TRUST-1.2.1 — Privacy Boundary Closure & Server-Side Analytics
+
+| Critério | Status |
+|---|---|
+| Leitura institucional raw de NPS/engagement removida | ✅ policies removidas por semântica |
+| Self-read legítimo preservado | ✅ |
+| Analytics agregada no servidor | ✅ `get_org_analytics_series` + resumo |
+| Contributor gate por métrica/bucket | ✅ `count(DISTINCT user_id)` |
+| n=0 / n=1 / n=4 / n=5 distintos | ✅ |
+| Payload suprimido sem valor/count/PII | ✅ |
+| UI, tabela, ARIA e PDF preservam supressão | ✅ 7/7 |
+| Runtime contra PostgreSQL real | ✅ 78/78; TRUST-1.2.1 12/12 |
+| Replay desde zero | ✅ 46/46 migrations |
+| Quality | ✅ 30 arquivos, 405 testes, build e security gate |
+| Produção intocada | ✅ |
+| R31 / R32 | ✅ fechados |
+| R22 | 🔴 aberto e obrigatório antes de produção |
+
+**Gate: ✅ APROVADO LOCALMENTE**
+
+A fronteira técnica está fechada no replay local: o navegador institucional não
+recebe linhas brutas, e roster deixou de ser proxy de contribuição. Isto não
+homologa o remoto. Receipts: `TRUST_1_2_1_RAW_ACCESS_BOUNDARY_RECEIPT.md`,
+`TRUST_1_2_1_CONTRIBUTOR_GATE_RECEIPT.md`,
+`TRUST_1_2_1_SERVER_ANALYTICS_RECEIPT.md`,
+`TRUST_1_2_1_UI_EXPORT_RECEIPT.md` e
+`TRUST_1_2_1_REPLAY_QUALITY_RECEIPT.md`.
+
 ## TRUST-1.3 — Contexto Organizacional Único
 
 | Critério | Status |

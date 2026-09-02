@@ -44,6 +44,7 @@ export type Database = {
           name: string
           school_id: string
           semester: number | null
+          status: string
           year: number
         }
         Insert: {
@@ -53,6 +54,7 @@ export type Database = {
           name: string
           school_id: string
           semester?: number | null
+          status?: string
           year?: number
         }
         Update: {
@@ -62,6 +64,7 @@ export type Database = {
           name?: string
           school_id?: string
           semester?: number | null
+          status?: string
           year?: number
         }
         Relationships: [
@@ -757,6 +760,7 @@ export type Database = {
           name: string
           organization_id: string
           state_code: string | null
+          status: string
         }
         Insert: {
           created_at?: string
@@ -766,6 +770,7 @@ export type Database = {
           name: string
           organization_id: string
           state_code?: string | null
+          status?: string
         }
         Update: {
           created_at?: string
@@ -775,6 +780,7 @@ export type Database = {
           name?: string
           organization_id?: string
           state_code?: string | null
+          status?: string
         }
         Relationships: [
           {
@@ -983,6 +989,15 @@ export type Database = {
         Returns: Json
       }
       get_funnel_overview: { Args: { _days?: number }; Returns: Json }
+      get_institutional_decision_events: {
+        Args: {
+          _days?: number
+          _limit?: number
+          _offset?: number
+          _organization_id: string
+        }
+        Returns: Json
+      }
       get_learning_progress_overview: { Args: never; Returns: Json }
       get_my_guardian_consent_status: { Args: never; Returns: Json }
       get_my_learning_progress_summary: { Args: never; Returns: Json }
@@ -1005,6 +1020,7 @@ export type Database = {
         Args: { _organization_id: string }
         Returns: Json
       }
+      get_org_analytics_series: { Args: { _org_id: string }; Returns: Json }
       get_org_engagement_summary: { Args: { _org_id: string }; Returns: Json }
       get_school_metrics: {
         Args: { _period?: string; _school_id: string }

@@ -37,26 +37,28 @@ e o PDF afirmaria "0 respostas", o que é falso.
 
 ## Correção, em três camadas
 
-**Servidor** — `get_org_engagement_summary` passa a usar o universo elegível da
-organização como gate, com a mesma regra do nível da escola (0 divulgável,
-1..k-1 suprimido, ≥k divulgável). Quando suprimido, as dez chaves derivadas de
-estudantes vêm `null`, com `analytics_suppressed` e `minimum_group_size`.
+**Servidor** — `get_org_engagement_summary` aplica contributor gate independente
+por métrica, não por roster. Cada indicador conta `DISTINCT user_id`; zero é
+vazio real, 1..k-1 vem `null`, e apenas ≥k é divulgado. `suppressed_metrics`
+identifica exatamente os indicadores protegidos. A série semanal aplica a mesma
+regra em cada bucket por `get_org_analytics_series`.
 
-**Fronteira do cliente** — `OrgDashboardPage` deixa de usar `|| 0`. Passa a
-propagar `null` e o par `suppressed` / `minimumGroupSize` para o gerador.
+**Fronteira do cliente** — `OrgDashboardPage` não usa `|| 0`. Propaga `null`,
+`suppressedMetrics` e `minimumGroupSize` para o gerador. Métrica suprimida não é
+recalculada nem inferida no navegador.
 
-**PDF** — o tipo de `engagementData` passou de `number` para `number | null` nas
-chaves derivadas, com `suppressed: boolean` e `minimumGroupSize: number`.
+**PDF** — as chaves derivadas são `number | null`.
 
-- Bloco suprimido imprime texto explícito:
-  *"Amostra insuficiente para exibição segura."* mais a linha do limiar.
-- `null` individual imprime `—` via helper `cell()`, nunca `0`.
-- NPS só é desenhado quando `npsCount`, `npsPromotors` e `npsDetractors` são todos
-  números — antes o `> 0` bastava e um `null` teria virado NaN no cálculo.
+- Supressão parcial preserva indicadores permitidos e imprime `—` nos protegidos,
+  com texto que informa o limiar.
+- O bloco inteiro só vira *"Amostra insuficiente para exibição segura"* quando
+  nenhum indicador de analytics é divulgável.
+- `null` individual nunca vira `0` (`cell()`).
+- NPS só é desenhado quando `npsCount`, `npsPromotors` e `npsDetractors` foram
+  divulgados; caso contrário não há cálculo nem `NaN`.
 
-Efeito colateral corrigido: antes o bloco de engajamento simplesmente **não era
-desenhado** quando `totalSessions` era `0`, o que confundia "ninguém participou"
-com "não podemos dizer". Agora os dois têm saída distinta.
+Assim, "ninguém participou", "parte das métricas está protegida" e "nenhuma
+métrica é divulgável" têm saídas distintas.
 
 ## Tooltip e acessibilidade (§D9)
 

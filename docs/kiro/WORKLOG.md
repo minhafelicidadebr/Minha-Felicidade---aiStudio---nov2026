@@ -447,3 +447,27 @@ ficar verde.
 
 346 → **382 testes**, 26 → **28 arquivos**. 62 contratos de runtime contra
 PostgreSQL real, agora no CI. 45 migrations aplicam desde banco vazio.
+
+## 2026-09-02 — MACRO-ONDA E: TRUST-1.2.1 server-side analytics boundary
+
+O teste vermelho mediu dois defeitos: `org_admin` projetava linhas completas de
+NPS/engagement (R31), e o resumo usava roster elegível em vez de contribuidores
+por métrica (R32). Resultado inicial: **3/12 verdes, 9/12 vermelhos**.
+
+A arquitetura B foi adotada: `get_org_analytics_series(uuid)` agrega oito semanas
+no PostgreSQL; `get_org_engagement_summary(uuid)` aplica gate independente em
+cada indicador. Ambos resolvem tenant/papel no servidor, fixam `search_path`,
+têm grants mínimos e usam `count(DISTINCT user_id)`. Policies raw de org_admin
+foram removidas por qualificador semântico; self-read e `service_role` ficaram.
+
+No cliente, `useOrgAnalytics` substituiu SELECTs raw, com cache por organização.
+NPS, gráfico, cards, tabela acessível e PDF passaram a distinguir vazio,
+supressão parcial e divulgação. Valor suprimido não aparece em DOM/ARIA/export e
+nunca vira zero.
+
+Provas finais: TRUST-1.2.1 **12/12**, UI **7/7**, runtime **78/78**, replay
+**46/46**, suíte **405/405 em 30 arquivos**, `npm run quality` exit 0. O warning
+de tamanho zero do Recharts ocorre apenas no jsdom e não falha o contrato.
+
+Nenhum remoto foi acessado; nenhuma migration foi promovida. R22 continua
+obrigatório. Trabalho encerrado antes da TRUST-1.3.

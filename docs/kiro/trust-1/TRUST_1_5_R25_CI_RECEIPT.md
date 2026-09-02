@@ -37,7 +37,7 @@ checkout → Node + dependências → Supabase CLI → stack local
 | `supabase migration list --local` | Registra e exige contagem > 0 |
 | Verificação do container | Confere `supabase_db_ctjwyybmlwhynherikqy` de pé |
 | `vitest run` dos três arquivos de contrato | Executa |
-| Verificação anti-skip | Falha se houver skip **ou** se menos de 50 contratos executarem |
+| Verificação anti-skip | Falha se houver skip **ou** se menos de 75 contratos executarem (piso atualizado na TRUST-1.2.1; baseline 78) |
 | `supabase stop --no-backup` (`if: always()`) | Limpeza |
 
 ## Skip não é sucesso

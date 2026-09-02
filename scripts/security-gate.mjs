@@ -149,6 +149,7 @@ for (const workerFn of [
 const frontendFiles = walkFiles("src").filter((file) => /\.(ts|tsx)$/.test(file));
 for (const file of frontendFiles) {
   const text = readFileSync(file, "utf8");
+  const normalized = file.replace(/\\/g, "/");
   if (/Authorization[\s\S]{0,120}VITE_SUPABASE_PUBLISHABLE_KEY|VITE_SUPABASE_PUBLISHABLE_KEY[\s\S]{0,120}Authorization/.test(text)) {
     fail(`Frontend must not use the Supabase publishable key as a bearer token: ${file}`);
   }
@@ -157,6 +158,16 @@ for (const file of frontendFiles) {
   }
   if (/from\(["']user_roles["']\)/.test(text)) {
     fail(`Frontend must not read user_roles directly; use get_my_profile self-scoped RPC: ${file}`);
+  }
+  const institutionalAnalyticsConsumer =
+    normalized.startsWith("src/components/org/") ||
+    normalized === "src/pages/OrgDashboardPage.tsx" ||
+    normalized === "src/hooks/useOrgAnalytics.ts";
+  if (
+    institutionalAnalyticsConsumer &&
+    /from\(["'](?:nps_responses|engagement_events)["']\)/.test(text)
+  ) {
+    fail(`Institutional analytics must use server-side aggregate RPCs, never raw tables: ${file}`);
   }
   if (
     /from\(["'](?:user_subscriptions|organization_subscriptions)["']\)\s*\.\s*(?:insert|update|upsert|delete)\s*\(/.test(
@@ -559,6 +570,24 @@ if (!existsSync(ux3Migration)) {
   // Antiburla do reenvio (§D8/D56): contagem por organização + destinatário.
   if (!text.includes("recipient_hash")) {
     fail("resend_invitation must count resends per organization and recipient, not per invitation row");
+  }
+}
+
+const analyticsBoundaryMigration = "supabase/migrations/20260901120000_trust1_2_1_server_analytics_boundary.sql";
+if (!existsSync(analyticsBoundaryMigration)) {
+  fail(`Missing TRUST-1.2.1 analytics boundary migration: ${analyticsBoundaryMigration}`);
+} else {
+  const text = readIfExists(analyticsBoundaryMigration);
+  // Semântica, não policyname: renomear a policy administrativa não pode
+  // contornar o fechamento. A migration varre pg_policies/qual por is_org_admin.
+  if (!text.includes("FROM pg_policies") || !text.includes("coalesce(qual,'') ~* 'is_org_admin")) {
+    fail("Analytics boundary must remove administrative raw SELECT policies by semantic qualifier");
+  }
+  if (!text.includes("CREATE OR REPLACE FUNCTION public.get_org_analytics_series(_org_id uuid)")) {
+    fail("Analytics boundary must expose the server-side aggregate series RPC");
+  }
+  if (!text.includes("count(DISTINCT user_id)") || !text.includes("metric_minimum_group_size()")) {
+    fail("Institutional analytics must gate each metric by distinct contributors and the canonical threshold");
   }
 }
 

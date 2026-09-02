@@ -517,7 +517,41 @@ fase de requisitos levantou em vez de resolver sozinha. Estão registradas em
   persistem, porque são o ponto de captura correto no futuro.
 
 - **D95. Skip não é sucesso no CI.** O job `runtime-db` sobe Postgres real, aplica
-  as migrations desde zero e falha diante de skip ou de menos de 50 contratos
-  executados. Antes, "0 testes executados" aparecia verde — o que esvazia a razão
-  de existir da categoria, criada justamente porque o R20 passou por todo teste que
-  apenas lia o SQL.
+  as migrations desde zero e falha diante de skip ou de menos de 75 contratos
+  executados (piso elevado pela D102; baseline atual 78). Antes, "0 testes
+  executados" aparecia verde — o que esvazia a razão de existir da categoria,
+  criada justamente porque o R20 passou por todo teste que apenas lia o SQL.
+
+## TRUST-1.2.1 — Privacy Boundary Closure & Server-Side Analytics
+
+- **D96. Analytics institucional é RPC agregadora server-side (ramo B).** SELECT
+  direto + agregação no cliente foi rejeitado porque o navegador não é fronteira
+  de privacidade. View/materialized view/Edge Function teria mais operação e
+  menos testabilidade para o mesmo contrato.
+
+- **D97. Policies raw são removidas por semântica, não por nome.** A migration
+  procura `is_org_admin` no qualificador de SELECT. Renomear a policy não pode
+  restaurar acesso administrativo a linhas de NPS/engagement. Self-read do autor
+  e `service_role` permanecem por necessidades distintas e testadas.
+
+- **D98. Roster não é contribuição.** Cada métrica e bucket contam
+  `DISTINCT user_id`. NPS, sessões, exercícios e IA têm gates independentes;
+  cinco respostas da mesma pessoa continuam sendo um contribuidor.
+
+- **D99. Zero real continua diferente de amostra insuficiente.** n=0 divulga
+  grupo vazio; 1..k-1 suprime sem `value`/`count`; ≥k divulga. A regra vale por
+  semana e no resumo de 30 dias.
+
+- **D100. Supressão organizacional é parcial por padrão.** `suppressed_metrics`
+  identifica somente os indicadores protegidos. UI e PDF preservam métricas
+  permitidas e representam as suprimidas com texto/travessão, nunca zero. O bloco
+  inteiro só é ocultado quando nenhum indicador é divulgável.
+
+- **D101. Query key segregada não é autorização.** O cache inclui
+  `organizationId` para não misturar tenants, mas o banco revalida `auth.uid()` e
+  `is_org_admin()` em toda chamada. TRUST-1.3 não foi iniciada por isso.
+
+- **D102. Baseline runtime sobe para 78 e o piso do CI para 75.** O job executa
+  RPC, archive, privacy e server analytics, e falha diante de skip. R22 permanece
+  obrigatório antes de produção; encerrar esta onda não autoriza promoção nem o
+  início automático da TRUST-1.3.

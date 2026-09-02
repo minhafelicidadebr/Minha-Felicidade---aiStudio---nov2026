@@ -1,136 +1,92 @@
-import { useState, useEffect } from "react";
 import { Star } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 import DashboardEmptyState from "@/components/dashboard/DashboardEmptyState";
+import DashboardErrorState from "@/components/dashboard/DashboardErrorState";
+import { useOrgAnalyticsSeries } from "@/hooks/useOrgAnalytics";
+import { describeSuppression, isEmptyGroup, isSuppressed } from "@/lib/metric-privacy";
 
-interface WeeklyNps {
-    week: string;
-    avg: number;
-    count: number;
-}
+interface Props { organizationId: string }
 
-interface Props {
-    organizationId: string;
-}
-
-/**
- * NPS evolution over weeks — sparkline style visualization.
- * Shows average NPS score per week with trend indicator.
- */
 export default function NpsEvolution({ organizationId }: Props) {
-    const [data, setData] = useState<WeeklyNps[]>([]);
-    const [loading, setLoading] = useState(true);
+    const query = useOrgAnalyticsSeries(organizationId);
 
-    useEffect(() => {
-        async function fetch() {
-            try {
-                const eightWeeksAgo = new Date(Date.now() - 56 * 86400000).toISOString();
-                const { data: responses } = await supabase
-                    .from("nps_responses")
-                    .select("score, created_at")
-                    .eq("organization_id", organizationId)
-                    .gte("created_at", eightWeeksAgo)
-                    .order("created_at", { ascending: true });
-
-                if (!responses || responses.length === 0) {
-                    setData([]);
-                    setLoading(false);
-                    return;
-                }
-
-                const startDate = new Date(eightWeeksAgo);
-                const weeks: Map<number, number[]> = new Map();
-
-                responses.forEach((r) => {
-                    const weekNum = Math.floor((new Date(r.created_at).getTime() - startDate.getTime()) / (7 * 86400000));
-                    if (!weeks.has(weekNum)) weeks.set(weekNum, []);
-                    weeks.get(weekNum)!.push(r.score);
-                });
-
-                const points: WeeklyNps[] = [];
-                for (let i = 0; i < 8; i++) {
-                    const scores = weeks.get(i) || [];
-                    points.push({
-                        week: `S${i + 1}`,
-                        avg: scores.length > 0 ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10 : 0,
-                        count: scores.length,
-                    });
-                }
-                setData(points);
-            } catch {
-                setData([]);
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetch();
-    }, [organizationId]);
-
-    if (loading) {
-        return (
-            <section className="mt-4">
-                <DashboardSkeleton variant="chart" label="Carregando evolução NPS" />
-            </section>
-        );
+    if (query.isLoading) {
+        return <section className="mt-4"><DashboardSkeleton variant="chart" label="Carregando evolução NPS" /></section>;
     }
-
-    if (data.every(d => d.count === 0)) {
+    if (query.isError || !query.data) {
         return (
             <section className="mt-4">
-                <DashboardEmptyState
-                    variant="empty"
-                    title="Sem dados de NPS"
-                    description="As respostas NPS aparecerão aqui quando os alunos avaliarem a plataforma."
-                    icon={Star}
+                <DashboardErrorState
+                    title="Não foi possível carregar a evolução NPS"
+                    detail={query.error instanceof Error ? query.error.message : undefined}
+                    onRetry={() => void query.refetch()}
                 />
             </section>
         );
     }
 
-    const filledWeeks = data.filter(d => d.count > 0);
-    const trend = filledWeeks.length >= 2
-        ? filledWeeks[filledWeeks.length - 1].avg - filledWeeks[0].avg
-        : 0;
+    const rows = query.data.nps;
+    const disclosedValues = rows.flatMap((row) =>
+        isSuppressed(row.group) || isEmptyGroup(row.group) ? [] : [row.group.value],
+    );
+    const disclosedCount = disclosedValues.length;
+    const suppressed = rows.filter((row) => isSuppressed(row.group));
 
+    if (disclosedCount === 0 && suppressed.length === 0) {
+        return (
+            <section className="mt-4">
+                <DashboardEmptyState variant="empty" title="Sem dados de NPS"
+                    description="As respostas NPS aparecerão aqui quando os alunos avaliarem a plataforma." icon={Star} />
+            </section>
+        );
+    }
+
+    const trend = disclosedCount >= 2
+        ? disclosedValues.at(-1)! - disclosedValues[0]
+        : 0;
     const trendLabel = trend > 0.5 ? "↑ melhorando" : trend < -0.5 ? "↓ atenção" : "→ estável";
     const trendColor = trend > 0.5 ? "text-emerald-400" : trend < -0.5 ? "text-rose-400" : "text-yellow-400";
 
     return (
         <section className="mt-4">
-            <div className="p-4 rounded-2xl glass-card">
-                <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                        <Star className="w-3.5 h-3.5" /> Evolução NPS
+            <div className="rounded-2xl p-4 glass-card">
+                <div className="mb-3 flex items-center justify-between">
+                    <h3 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        <Star className="h-3.5 w-3.5" /> Evolução NPS
                     </h3>
                     <span className={`text-xs font-bold ${trendColor}`}>{trendLabel}</span>
                 </div>
 
-                {/* Sparkline bars */}
-                <div className="flex items-end gap-1 h-12">
-                    {data.map((d, i) => {
-                        const height = d.count > 0 ? Math.max((d.avg / 10) * 100, 10) : 5;
-                        const color = d.avg >= 9 ? "bg-emerald-400"
-                            : d.avg >= 7 ? "bg-yellow-400"
-                                : d.avg > 0 ? "bg-rose-400"
-                                    : "bg-muted/30";
+                {disclosedCount === 0 && suppressed.length > 0 && (
+                    <p role="status" className="mb-3 text-xs text-muted-foreground">
+                        Amostra insuficiente para exibição segura. Limiar mínimo de {query.data.minimum_group_size} participantes por semana.
+                    </p>
+                )}
+
+                <div className="flex h-16 items-end gap-1" aria-label="Evolução semanal de NPS com supressão por contribuidores">
+                    {rows.map((row) => {
+                        const empty = isEmptyGroup(row.group);
+                        const value = isSuppressed(row.group) || empty ? null : row.group.value;
+                        const height = value === null ? 5 : Math.max((value / 10) * 100, 10);
+                        const color = value === null ? "bg-muted/30"
+                            : value >= 9 ? "bg-emerald-400" : value >= 7 ? "bg-yellow-400" : "bg-rose-400";
+                        const label = row.bucket_start.slice(5);
+                        const aria = isSuppressed(row.group)
+                            ? `${label}: ${describeSuppression(row.group)}`
+                            : empty ? `${label}: sem respostas` : `${label}: média ${value}`;
                         return (
-                            <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
-                                {d.count > 0 && (
-                                    <span className="text-[9px] font-bold text-muted-foreground">{d.avg}</span>
-                                )}
-                                <div
-                                    className={`w-full rounded-t-sm ${color} transition-all`}
-                                    style={{ height: `${height}%`, minHeight: "2px", opacity: d.count > 0 ? 1 : 0.2 }}
-                                />
-                                <span className="text-[8px] text-muted-foreground">{d.week}</span>
+                            <div key={row.bucket_start} className="flex flex-1 flex-col items-center gap-0.5" aria-label={aria}>
+                                {value !== null && <span className="text-[9px] font-bold text-muted-foreground">{value}</span>}
+                                <div className={`w-full rounded-t-sm ${color}`} style={{ height: `${height}%`, minHeight: "2px", opacity: value === null ? 0.25 : 1 }} />
+                                <span className="text-[8px] text-muted-foreground">{label}</span>
                             </div>
                         );
                     })}
                 </div>
 
-                <p className="text-[10px] text-muted-foreground mt-2">
-                    {filledWeeks.length} semana(s) com respostas · Total: {data.reduce((a, d) => a + d.count, 0)} avaliações
+                <p className="mt-2 text-[10px] text-muted-foreground">
+                    {disclosedCount} semana(s) divulgada(s)
+                    {suppressed.length > 0 ? ` · ${suppressed.length} protegida(s) pelo limiar` : ""}
                 </p>
             </div>
         </section>

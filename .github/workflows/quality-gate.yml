@@ -123,6 +123,7 @@ jobs:
             src/lib/rpc-runtime-contract.test.ts \
             src/lib/archive-runtime-contract.test.ts \
             src/lib/privacy-runtime-contract.test.ts \
+            src/lib/server-analytics-runtime-contract.test.ts \
             --reporter=verbose 2>&1 | tee runtime-db.raw.log
 
           # Remove qualquer escape ANSI remanescente antes de medir.
@@ -136,8 +137,8 @@ jobs:
           PASSED=$(grep -oE 'Tests[[:space:]]+[0-9]+[[:space:]]+passed' runtime-db.log \
                    | tail -1 | grep -oE '[0-9]+' || echo 0)
           echo "Contratos de runtime executados: $PASSED"
-          if [ "$PASSED" -lt 50 ]; then
-            echo "::error::Apenas $PASSED contratos executados; esperado ao menos 50."
+          if [ "$PASSED" -lt 75 ]; then
+            echo "::error::Apenas $PASSED contratos executados; esperado ao menos 75 (baseline TRUST-1.2.1: 78)."
             exit 1
           fi
 

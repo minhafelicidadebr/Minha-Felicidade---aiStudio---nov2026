@@ -443,17 +443,23 @@ suite("PRIVACY â€” get_org_engagement_summary (superfÃ­cie de export)", (
         ].join("\n"));
     });
 
-    it("rede com 2 estudantes: bloco SUPRIMIDO e nenhum nÃºmero derivado no payload", () => {
+    it("rede com 2 contribuidores: cada métrica decide entre supressão e zero legítimo", () => {
         const { json } = orgSummary(SMALL_ORG, SMALL_ADMIN);
         expect(json.analytics_suppressed).toBe(true);
         for (const key of [
-            "total_sessions", "total_exercises", "total_ai_interactions",
-            "active_users_7d", "active_users_30d",
+            "total_sessions", "active_users_7d", "active_users_30d",
             "nps_avg", "nps_count", "nps_promoters", "nps_detractors",
             "eligible_universe",
         ]) {
             expect(json[key], `${key} deveria vir null quando suprimido`).toBeNull();
         }
+        // Ninguém contribuiu para estes dois indicadores: zero é dado real e
+        // não pode ser convertido em "amostra insuficiente" pelo gate de outro.
+        expect(json.total_exercises).toBe(0);
+        expect(json.total_ai_interactions).toBe(0);
+        expect(json.suppressed_metrics).toEqual(expect.arrayContaining([
+            "total_sessions", "active_users_7d", "active_users_30d", "nps",
+        ]));
     });
 
     it("rede pequena: mÃ©dia e distribuiÃ§Ã£o de NPS nÃ£o trafegam (Â§D5)", () => {

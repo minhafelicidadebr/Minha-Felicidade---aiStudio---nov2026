@@ -1,5 +1,26 @@
 # TRUST-1 — MATRIZ DE TESTES
 
+**Estado corrente: 405 testes em 30 arquivos, todos verdes na TRUST-1.2.1.**
+(Baseline TRUST-1.0: 301/24; TRUST-1.1B: 320/25; TRUST-1.5: 346/26;
+TRUST-1.2: 382/28.)
+
+## Atualização TRUST-1.2.1 — fronteira server-side
+
+| Domínio | Arquivo | Testes | O que cobre |
+|---|---|---:|---|
+| Analytics server-side | `server-analytics-runtime-contract.test.ts` | 12 | R31 raw boundary; R32 contributor gate por métrica/bucket |
+| UI da fronteira | `server-analytics-boundary.test.tsx` | 7 | loading, erro, vazio, suprimido, divulgado, tabela e supressão parcial |
+| Privacidade runtime (ampliada) | `privacy-runtime-contract.test.ts` | 27 | escola + resumo organizacional por métrica |
+
+Contratos contra PostgreSQL real: **78/78** = 26 RPC + 13 archive + 27 privacy
++ 12 server analytics. Método vermelho→verde da TRUST-1.2.1: **3/12 verdes e
+9/12 vermelhos antes; 12/12 depois**. Replay: **46/46 migrations**.
+
+O job `runtime-db` executa os quatro arquivos, falha diante de skip e exige no
+mínimo 75 contratos (baseline observado: 78). Produção não participa do teste.
+
+## Baseline histórico da TRUST-1.1B
+
 **320 testes em 25 arquivos.** Todos passando após a TRUST-1.1B.
 (Baseline da TRUST-1.0: 301 em 24 arquivos, commit `7e09493`.)
 
@@ -199,8 +220,8 @@ contrário seria ajustar o teste até ficar verde.
 
 Job `runtime-db` em `.github/workflows/quality-gate.yml` (R25). Sobe o stack
 Supabase efêmero no runner, aplica as migrations desde banco vazio e **falha**
-diante de skip ou de menos de 50 contratos executados. Skip deixou de ser
-sucesso.
+diante de skip ou de menos de 75 contratos executados (baseline atual: 78). Skip
+deixou de ser sucesso.
 
 Efeito colateral: o CI passou a travar o invariante da TRUST-1.1B — se a sequência
 histórica deixar de reconstruir o schema desde zero, `supabase start` falha.

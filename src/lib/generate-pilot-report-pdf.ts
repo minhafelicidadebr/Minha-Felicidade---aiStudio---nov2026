@@ -19,8 +19,8 @@ export interface PilotReportData {
      * organização por e-mail.
      */
     engagementData?: {
-        /** True quando o servidor suprimiu o bloco por amostra insuficiente. */
-        suppressed: boolean;
+        /** Chaves que o servidor suprimiu por contributor gate. */
+        suppressedMetrics: string[];
         /** Limiar aplicado pelo servidor, para o texto ser honesto. */
         minimumGroupSize: number;
         totalSessions: number | null;
@@ -237,11 +237,16 @@ export function generatePilotReportPDF(data: PilotReportData): jsPDF {
         doc.text("ENGAJAMENTO (últimos 30 dias)", margin, y);
         y += 10;
 
-        // TRUST-1.2 (§D8): amostra insuficiente aparece como TEXTO explícito no
-        // PDF. Antes, o bloco simplesmente não era desenhado quando
-        // `totalSessions` era 0 — o que confundia "ninguém participou" com
-        // "não podemos dizer", e imprimia números quando o servidor os enviava.
-        if (ed.suppressed) {
+        const allAnalyticsSuppressed = ed.suppressedMetrics.length > 0 && [
+            ed.totalSessions, ed.totalExercises, ed.totalAiInteractions,
+            ed.activeUsers7d, ed.activeUsers30d, ed.npsCount,
+        ].every((value) => value === null);
+
+        // TRUST-1.2.1: a supressão agora é por métrica/contribuidores. Só
+        // substituímos o bloco inteiro quando nenhum indicador é divulgável;
+        // em supressão parcial os permitidos continuam visíveis e os demais
+        // usam travessão, nunca zero fabricado.
+        if (allAnalyticsSuppressed) {
             doc.setFillColor(...COLORS.darkCard);
             doc.roundedRect(margin, y, contentW, 22, 3, 3, "F");
             doc.setFont("helvetica", "normal");
@@ -263,6 +268,18 @@ export function generatePilotReportPDF(data: PilotReportData): jsPDF {
             drawMetricCard(doc, margin, y, halfW, cell(ed.totalAiInteractions), "Interações com IA", COLORS.violet);
             drawMetricCard(doc, margin + halfW + 3, y, halfW, `${cell(ed.activeUsers7d)}/${cell(ed.activeUsers30d)}`, "Ativos 7d / 30d", COLORS.sky);
             y += 33;
+
+            if (ed.suppressedMetrics.length > 0) {
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(8);
+                doc.setTextColor(...COLORS.textMuted);
+                doc.text(
+                    `Indicadores com travessão: amostra abaixo do limiar de ${ed.minimumGroupSize} contribuidores.`,
+                    margin,
+                    y,
+                );
+                y += 6;
+            }
 
             // NPS — só quando há respostas E os números não estão suprimidos.
             if (ed.npsCount !== null && ed.npsCount > 0 && ed.npsPromotors !== null && ed.npsDetractors !== null) {

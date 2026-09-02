@@ -1,6 +1,33 @@
 # TRUST-1 — LEDGER DE MIGRATIONS
 
-41 arquivos em `supabase/migrations/`. Classificação por domínio e status.
+46 arquivos em `supabase/migrations/`. Classificação por domínio e status.
+
+## Estado corrente — TRUST-1.2.1
+
+| # | Migration | Domínio | Classificação |
+|---|---|---|---|
+| 46 | `20260901120000_trust1_2_1_server_analytics_boundary.sql` | Privacidade / Analytics | **RECONCILED, forward-only, NOT_YET_APPLIED_REMOTELY** |
+
+A #46 remove policies administrativas de SELECT raw em `nps_responses` e
+`engagement_events` por semântica, cria `get_org_analytics_series(uuid)` e
+redefine `get_org_engagement_summary(uuid)` com contributor gate independente
+por métrica. Preserva self-read e acesso operacional. Sem `DROP ... CASCADE` e
+sem remoção de linhas.
+
+`db reset --local`: **46/46 migrations desde banco vazio**. Contratos específicos:
+**12/12**; runtime completo: **78/78**.
+
+### Migrations TRUST pendentes de promoção remota
+
+| # | Migration | Onda |
+|---|---|---|
+| 43 | `20260824120000_trust1_dashboard_os_reconciled.sql` | 1.1B |
+| 44 | `20260826120000_trust1_5_ledger_read_rpc.sql` | 1.5 |
+| 45 | `20260828120000_trust1_2_privacy_and_archive.sql` | 1.2 |
+| 46 | `20260901120000_trust1_2_1_server_analytics_boundary.sql` | 1.2.1 |
+
+Nenhuma foi aplicada remotamente. Ordem obrigatória = timestamps; antes de
+produção, executar o preflight read-only do R22.
 
 ## Legenda de status
 

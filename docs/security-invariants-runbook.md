@@ -596,3 +596,42 @@ O gate de tipos passou a verificar os arquivos reais:
 
 Antes era `tsc --noEmit` sobre um `tsconfig.json` com `files: []` e só
 `references`, o que compilava **zero arquivo**.
+
+## Ordem de aplicação — migrations TRUST #45 e #46
+
+45. `supabase/migrations/20260828120000_trust1_2_privacy_and_archive.sql` —
+    TRUST-1.2. Fecha R10/R23/R27/R28: contrato de arquivamento, supressão do
+    universo elegível e do canal de headcount, zero real e proteção do resumo
+    organizacional/PDF. `SECURITY DEFINER` com `search_path = public`, grants
+    mínimos e sem remoção de dados. Aplicar depois da #44.
+
+46. `supabase/migrations/20260901120000_trust1_2_1_server_analytics_boundary.sql`
+    — TRUST-1.2.1. Fecha R31/R32. Remove policies administrativas de SELECT raw
+    em NPS/engagement pela semântica de `pg_policies.qual`, preserva self-read e
+    `service_role`, cria `get_org_analytics_series(uuid)` e redefine
+    `get_org_engagement_summary(uuid)` com `count(DISTINCT user_id)` por
+    métrica/bucket. Aplicar depois da #45.
+
+    Verificação após aplicar:
+    ```sql
+    -- nenhuma policy administrativa raw (esperado: 0)
+    SELECT count(*) FROM pg_policies
+     WHERE schemaname='public'
+       AND tablename IN ('nps_responses','engagement_events')
+       AND cmd='SELECT' AND coalesce(qual,'') ~* 'is_org_admin';
+
+    -- grants mínimos da série (esperado: false | true)
+    SELECT has_function_privilege('anon',
+             'public.get_org_analytics_series(uuid)','EXECUTE'),
+           has_function_privilege('authenticated',
+             'public.get_org_analytics_series(uuid)','EXECUTE');
+
+    -- pinning (esperado: search_path=public)
+    SELECT array_to_string(proconfig, ',') FROM pg_proc p
+      JOIN pg_namespace n ON n.oid=p.pronamespace
+     WHERE n.nspname='public' AND p.proname='get_org_analytics_series';
+    ```
+
+As quatro migrations TRUST (#43–#46) continuam **não aplicadas remotamente**.
+Antes de qualquer promoção, executar integralmente o checklist read-only do R22.
+O replay local pinado em Supabase CLI 2.115.0 aplicou **46/46** desde banco vazio.

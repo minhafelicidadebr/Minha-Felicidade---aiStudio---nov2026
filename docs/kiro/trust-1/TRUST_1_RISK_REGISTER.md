@@ -78,7 +78,7 @@ Todos comprovados em **execução real** contra PostgreSQL, não por leitura.
 | R10 | **`eligible_universe` transportava o tamanho exato do grupo.** Escola com 4 estudantes devolvia `"eligible_universe": 4` junto de `analytics_suppressed: true` — a supressão escondia os valores e revelava o tamanho do grupo. Segundo canal, descoberto nesta onda: escola de 20 com turma de 17 (divulgada, `count: 17`) e turma de 3 (suprimida) permitia `20 − 17 = 3`. A supressão complementar da UX-3 protegia o `value` e deixava o `count` aberto. | P1 | ✅ **FECHADO.** `eligible_universe` passou a ser um `MetricGroup`; o canal de headcount recebeu supressão complementar determinística. 23 contratos de execução real, escritos vermelhos antes da correção. Ver `TRUST_1_2_PRIVACY_TEST_RECEIPT.md`. |
 | R23 | O ledger tornava organizações, escolas e turmas indeletáveis, com mensagem obscura de append-only. | P1 | ✅ **FECHADO / ARCHIVE_CONTRACT.** `schools` e `classes` ganharam `status` espelhando `organizations`; gatilho `BEFORE DELETE` devolve erro de domínio (`ERRCODE 23001`) apontando o arquivamento. 13 contratos. Ver `TRUST_1_5_R23_DECISION.md`. |
 | R24 | A auditoria da negativa nunca persiste: o `RAISE EXCEPTION` desfaz o INSERT. | P1 | 🟡 **ACCEPTED_ARCHITECTURAL_LIMITATION / FAIL_CLOSED_PRESERVED.** `data_access_logs` formalizado como registro de acessos **concedidos**. Negativas pertencem a `security_denied_access_events`, canal externo à transação, ainda inexistente. Fail-closed preservado; não se troca segurança por completude de log. Ver `TRUST_1_5_R24_DECISION.md`. |
-| R25 | Contratos de runtime não rodavam no CI; skip aparecia como verde. | P1 | ✅ **FECHADO.** Job `runtime-db` sobe o stack Supabase efêmero no runner, aplica as migrations desde zero e **falha** diante de skip ou de menos de 50 contratos executados. Ver `TRUST_1_5_R25_CI_RECEIPT.md`. |
+| R25 | Contratos de runtime não rodavam no CI; skip aparecia como verde. | P1 | ✅ **FECHADO.** Job `runtime-db` sobe o stack Supabase efêmero no runner, aplica as migrations desde zero e **falha** diante de skip ou de menos de 75 contratos executados (baseline TRUST-1.2.1: 78). Ver `TRUST_1_5_R25_CI_RECEIPT.md`. |
 | R22 | Schema remoto inferido, não consultado. | P1 | 🔴 **OPEN / REQUIRED_BEFORE_PRODUCTION.** Checklist read-only de 10 seções criado em `TRUST_1_R22_PREFLIGHT_CHECKLIST.md`. Nada executado; nenhuma credencial remota usada; nenhum `db push` em nenhuma onda. |
 
 ### Novos desta onda
@@ -97,3 +97,20 @@ Todos comprovados em **execução real** contra PostgreSQL, não por leitura.
 | R13 | **Pago.** 62 contratos de runtime contra PostgreSQL real, e agora **no CI**. A dívida que restava era o runner (R25), fechada nesta onda. |
 | R05 | **Mitigado com mais força.** O staging local reproduzível agora é exercitado pelo CI em cada PR, não só na máquina de quem lembra de rodar. |
 | R02 / R11 | **Inalterados.** `engagement_events` e `nps_responses` continuam aceitando INSERT direto com `organization_id` arbitrário. A supressão desta onda protege a **leitura**; a integridade da **escrita** é TRUST-1.4. Vale registrar a interação: um atacante pode inflar contagens de uma organização alheia e, com isso, tirar um grupo do limiar. |
+
+## Atualização da MACRO-ONDA E — TRUST-1.2.1
+
+| # | Risco | Severidade | Evidência | Status |
+|---|---|---|---|---|
+| R31 | **`org_admin` lia linhas brutas de NPS e engajamento.** As policies administrativas permitiam projetar `user_id`, feedback, contexto e metadata; o navegador fazia a agregação. | P1 | Comprovado em PostgreSQL real: teste vermelho inicial conseguia selecionar as linhas completas. | ✅ **FECHADO.** Policies raw removidas por qualificador semântico; self-read e `service_role` preservados; analytics institucional somente por RPC. |
+| R32 | **Roster elegível era usado como proxy de contribuição.** Uma organização com cinco cadastrados podia divulgar métrica produzida por uma pessoa; múltiplas respostas/eventos da mesma pessoa inflavam o valor sem aumentar anonimato. | P1 | Comprovado em PostgreSQL real nos casos n=1, n=4 e respostas repetidas. | ✅ **FECHADO.** Gate independente por métrica/bucket com `count(DISTINCT user_id)` e limiar canônico. |
+
+### Resultado e riscos preservados
+
+Antes da correção, os 12 contratos específicos tiveram **3 verdes e 9
+vermelhos**; depois, **12/12 verdes**. O conjunto runtime completo ficou
+**78/78**, o replay em **46/46 migrations** e o quality em **405 testes**.
+
+R02/R11 permanecem abertos para TRUST-1.4: esta onda fecha a fronteira de
+**leitura**, não a integridade de escrita. R22 permanece
+`OPEN / REQUIRED_BEFORE_PRODUCTION`; nenhum catálogo remoto foi consultado.

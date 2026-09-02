@@ -94,6 +94,8 @@ suite("RPC_RUNTIME_CONTRACT â€” resoluÃ§Ã£o de funÃ§Ã£o e search_pa
         "get_school_metrics",
         "escalate_indicator",
         "get_institutional_decision_events",
+        "get_org_engagement_summary",
+        "get_org_analytics_series",
     ];
 
     for (const fn of RPCS) {
