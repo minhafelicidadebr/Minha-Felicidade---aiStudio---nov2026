@@ -49,9 +49,9 @@ async function loadPdfGenerator() {
 
 export default function OrgDashboardPage() {
     // Organização ativa vem do ContextSwitcher (shell) — reage à troca no switcher.
-    const { activeOrganization, memberships } = useDashboardContext();
+    const { activeOrganization, memberships, userId, selectionRequired } = useDashboardContext();
     const { org, schools, classes, members, invitations, loading, error, refetch } =
-        useOrganizationDetail(activeOrganization?.id);
+        useOrganizationDetail(userId, activeOrganization?.id);
     const { resendInvitations, escalateIndicator } = useDecisionActions();
     const { toast } = useToast();
 
@@ -213,6 +213,21 @@ export default function OrgDashboardPage() {
             setInviting(false);
         }
     };
+
+    // Uma seleção persistida que perdeu autorização não cai silenciosamente em
+    // outro tenant. O switcher do shell permanece disponível para escolha explícita.
+    if (selectionRequired) {
+        return (
+            <RoleAwareAppShell title="Visão da rede" subtitle="Selecione uma organização">
+                <DashboardEmptyState
+                    variant="denied"
+                    title="O contexto anterior não está mais disponível"
+                    description="Selecione no cabeçalho uma organização que sua conta ainda pode acessar."
+                    icon={Building2}
+                />
+            </RoleAwareAppShell>
+        );
+    }
 
     // ── Loading state (canonical) ─────────────────────────────────────────────
     if (loading) {
@@ -653,16 +668,16 @@ export default function OrgDashboardPage() {
                 )}
 
                 {/* Engagement Metrics */}
-                <EngagementMetrics organizationId={org.id} />
+                <EngagementMetrics userId={userId} organizationId={org.id} />
 
                 {/* Engagement Evolution Chart — lazy loaded para code-split (D48) */}
                 <Suspense fallback={null}>
-                    <EngagementChart organizationId={org.id} />
-                    <NpsEvolution organizationId={org.id} />
+                    <EngagementChart userId={userId} organizationId={org.id} />
+                    <NpsEvolution userId={userId} organizationId={org.id} />
                 </Suspense>
 
                 {/* Operational Metrics */}
-                <OperationalMetrics organizationId={org.id} />
+                <OperationalMetrics userId={userId} organizationId={org.id} />
             </motion.div>
         </RoleAwareAppShell>
     );

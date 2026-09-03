@@ -1,14 +1,9 @@
-// UX-2 — Dados de detalhe de uma organização (escolas, turmas, membros, convites).
-//
-// Substitui `useOrganization` (que faz .limit(1).maybeSingle()) nas telas do
-// shell role-aware: aqui o organizationId vem do ContextSwitcher via
-// useDashboardContext, e não de uma consulta fixa. A troca de organização no
-// switcher causa refetch automático via queryKey.
-//
-// Mantém a mesma interface de dados para minimizar quebra na página.
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import {
+    assertInstitutionalPayload,
+    institutionalQueryKeys,
+} from "@/lib/institutional-query-keys";
 
 export interface Organization {
     id: string;
@@ -24,6 +19,7 @@ export interface School {
     name: string;
     municipality: string | null;
     state_code: string | null;
+    status: string;
 }
 
 export interface ClassRoom {
@@ -32,6 +28,7 @@ export interface ClassRoom {
     name: string;
     year: number;
     semester: number | null;
+    status: string;
 }
 
 export interface Membership {
@@ -56,7 +53,7 @@ export interface Invitation {
 }
 
 interface OrganizationDetailData {
-    org: Organization | null;
+    org: Organization;
     schools: School[];
     classes: ClassRoom[];
     members: Membership[];
@@ -64,43 +61,58 @@ interface OrganizationDetailData {
 }
 
 async function fetchOrganizationDetail(organizationId: string): Promise<OrganizationDetailData> {
-    // Fetch the organization record itself
-    const { data: orgData, error: orgErr } = await supabase
+    const { data: orgData, error: orgError } = await supabase
         .from("organizations")
         .select("*")
         .eq("id", organizationId)
         .eq("status", "active")
         .maybeSingle();
 
-    if (orgErr || !orgData) {
-        return { org: null, schools: [], classes: [], members: [], invitations: [] };
-    }
+    if (orgError) throw orgError;
+    if (!orgData) throw new Error("Organização não disponível para esta conta.");
+    assertInstitutionalPayload(organizationId, orgData.id, "organization");
 
-    const org = orgData as Organization;
-
-    // Fetch related data in parallel
-    const [schoolsRes, membersRes, invitationsRes] = await Promise.all([
-        supabase.from("schools").select("*").eq("organization_id", organizationId),
-        supabase.from("institutional_memberships").select("*").eq("organization_id", organizationId).eq("status", "active"),
-        supabase.from("institutional_invitations").select("*").eq("organization_id", organizationId).is("accepted_at", null),
+    const [schoolsResult, membersResult, invitationsResult] = await Promise.all([
+        supabase
+            .from("schools")
+            .select("*")
+            .eq("organization_id", organizationId)
+            .eq("status", "active"),
+        supabase
+            .from("institutional_memberships")
+            .select("*")
+            .eq("organization_id", organizationId)
+            .eq("status", "active"),
+        supabase
+            .from("institutional_invitations")
+            .select("*")
+            .eq("organization_id", organizationId)
+            .is("accepted_at", null),
     ]);
 
-    const schoolData = (schoolsRes.data || []) as School[];
-    const members = (membersRes.data || []) as Membership[];
-    const invitations = (invitationsRes.data || []) as Invitation[];
+    if (schoolsResult.error) throw schoolsResult.error;
+    if (membersResult.error) throw membersResult.error;
+    if (invitationsResult.error) throw invitationsResult.error;
 
-    // Fetch classes for all schools
+    const schools = (schoolsResult.data ?? []) as School[];
     let classes: ClassRoom[] = [];
-    if (schoolData.length > 0) {
-        const schoolIds = schoolData.map(s => s.id);
-        const { data: classData } = await supabase
+    if (schools.length > 0) {
+        const { data, error } = await supabase
             .from("classes")
             .select("*")
-            .in("school_id", schoolIds);
-        classes = (classData || []) as ClassRoom[];
+            .in("school_id", schools.map((school) => school.id))
+            .eq("status", "active");
+        if (error) throw error;
+        classes = (data ?? []) as ClassRoom[];
     }
 
-    return { org, schools: schoolData, classes, members, invitations };
+    return {
+        org: orgData as Organization,
+        schools,
+        classes,
+        members: (membersResult.data ?? []) as Membership[],
+        invitations: (invitationsResult.data ?? []) as Invitation[],
+    };
 }
 
 export interface UseOrganizationDetailResult {
@@ -114,17 +126,16 @@ export interface UseOrganizationDetailResult {
     refetch: () => void;
 }
 
-/**
- * Dados de detalhe de uma organização específica. Reage à troca de ID
- * (ContextSwitcher → useDashboardContext → activeOrganization.id).
- *
- * @param organizationId — ID da organização ativa (null/undefined desabilita a query).
- */
-export function useOrganizationDetail(organizationId: string | null | undefined): UseOrganizationDetailResult {
+/** Dados operacionais da organização ativa, particionados por identidade e tenant. */
+export function useOrganizationDetail(
+    userId: string | null,
+    organizationId: string | null | undefined,
+): UseOrganizationDetailResult {
+    const enabled = Boolean(userId && organizationId);
     const query = useQuery({
-        queryKey: ["organization-detail", organizationId],
+        queryKey: institutionalQueryKeys.organization(userId, organizationId),
         queryFn: () => fetchOrganizationDetail(organizationId!),
-        enabled: Boolean(organizationId),
+        enabled,
         staleTime: 30_000,
         retry: false,
     });
@@ -135,7 +146,7 @@ export function useOrganizationDetail(organizationId: string | null | undefined)
         classes: query.data?.classes ?? [],
         members: query.data?.members ?? [],
         invitations: query.data?.invitations ?? [],
-        loading: query.isLoading,
+        loading: enabled && query.isLoading,
         error: query.error ? (query.error as Error).message : null,
         refetch: () => void query.refetch(),
     };

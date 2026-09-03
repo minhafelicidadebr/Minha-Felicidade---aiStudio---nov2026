@@ -6,6 +6,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { assertInstitutionalPayload, institutionalQueryKeys } from "@/lib/institutional-query-keys";
 import type { DashboardPeriod } from "@/config/dashboard-filters";
 import type { MetricGroup, NamedGroup } from "@/lib/metric-privacy";
 
@@ -77,8 +78,9 @@ async function fetchSchoolMetrics(
         throw error;
     }
     if (!data) throw new SchoolAccessDeniedError();
-
-    return data as unknown as SchoolMetrics;
+    const metrics = data as unknown as SchoolMetrics;
+    assertInstitutionalPayload(schoolId, metrics.school_id, "school");
+    return metrics;
 }
 
 export interface UseSchoolMetricsResult {
@@ -97,13 +99,14 @@ export interface UseSchoolMetricsResult {
  *                 de rede (contrato §2 item 7).
  */
 export function useSchoolMetrics(
+    userId: string | null,
     schoolId: string | null,
     period: DashboardPeriod,
 ): UseSchoolMetricsResult {
     const query = useQuery({
-        queryKey: ["school-metrics", schoolId, period],
+        queryKey: institutionalQueryKeys.schoolMetrics(userId, schoolId, period),
         queryFn: () => fetchSchoolMetrics(schoolId!, period),
-        enabled: Boolean(schoolId),
+        enabled: Boolean(userId && schoolId),
         staleTime: 30_000,
         retry: false,
     });

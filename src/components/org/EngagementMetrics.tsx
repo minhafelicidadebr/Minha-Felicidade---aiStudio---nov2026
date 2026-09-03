@@ -4,10 +4,10 @@ import DashboardEmptyState from "@/components/dashboard/DashboardEmptyState";
 import DashboardErrorState from "@/components/dashboard/DashboardErrorState";
 import { useOrgEngagementSummary } from "@/hooks/useOrgAnalytics";
 
-interface Props { organizationId: string }
+interface Props { userId: string | null; organizationId: string }
 
-export default function EngagementMetrics({ organizationId }: Props) {
-    const query = useOrgEngagementSummary(organizationId);
+export default function EngagementMetrics({ userId, organizationId }: Props) {
+    const query = useOrgEngagementSummary(userId, organizationId);
 
     if (query.isLoading) {
         return (
