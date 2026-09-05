@@ -144,19 +144,36 @@ function RailMarker({ index, day, scrollYProgress }: { index: number; day: strin
   );
 }
 
-function ScrollHint({ scrollYProgress }: { scrollYProgress: MotionValue<number> }) {
-  const opacity = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
+function BottomCTA({ scrollYProgress, onStart }: { scrollYProgress: MotionValue<number>; onStart: () => void }) {
+  const hintOpacity = useTransform(scrollYProgress, [0, 0.08], [1, 0]);
+  const ctaOpacity = useTransform(scrollYProgress, [0.82, 0.95], [0, 1]);
+  const ctaY = useTransform(scrollYProgress, [0.82, 0.95], [24, 0]);
 
   return (
-    <motion.div
-      className="absolute bottom-24 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground uppercase tracking-[0.3em] flex items-center gap-2 pointer-events-none"
-      style={{ opacity }}
-    >
-      <span>Role para viver a jornada</span>
-      <motion.span animate={{ y: [0, 6, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>â†“</motion.span>
-    </motion.div>
+    <div className="absolute bottom-10 inset-x-0 z-30 flex flex-col items-center gap-3 pointer-events-none">
+      {/* Scroll hint — only while at the top of the story */}
+      <motion.div
+        className="text-[10px] text-muted-foreground uppercase tracking-[0.32em] flex items-center gap-2"
+        style={{ opacity: hintOpacity }}
+      >
+        <span>Role para viver a jornada</span>
+        <motion.span animate={{ y: [0, 6, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>↓</motion.span>
+      </motion.div>
+
+      {/* Final CTA — emerges as the user reaches the last act */}
+      <motion.div style={{ opacity: ctaOpacity, y: ctaY }} className="pointer-events-auto">
+        <button
+          onClick={onStart}
+          className="group flex items-center gap-2 px-7 py-3.5 rounded-2xl gradient-institute text-primary-foreground font-bold text-sm md:text-base shadow-float hover:shadow-glow transition-all hover:scale-[1.04]"
+        >
+          <span>Começar meus 30 dias</span>
+          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+        </button>
+      </motion.div>
+    </div>
   );
 }
+
 
 /**
  * Innovation #3 (v2) — Scroll-driven 4-act narrative with quote cards,
@@ -174,8 +191,7 @@ export default function WellbeingScrollStory() {
   const hue = useTransform(scrollYProgress, [0, 1], [0, 280]);
   const bgGlow = useTransform(hue, (h) => `radial-gradient(circle at 50% 50%, hsl(${h}, 70%, 50%, 0.18), transparent 60%)`);
   const railProgress = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
-  const ctaOpacity = useTransform(scrollYProgress, [0.85, 0.98], [0, 1]);
-  const ctaY = useTransform(scrollYProgress, [0.85, 0.98], [30, 0]);
+
 
   return (
     <section
@@ -210,32 +226,11 @@ export default function WellbeingScrollStory() {
           ))}
         </div>
 
-        {/* Final CTA — emerges on last act */}
+        {/* Symmetric bottom CTA + scroll hint */}
         {!reduce && (
-          <motion.div
-            className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30"
-            style={{ opacity: ctaOpacity, y: ctaY }}
-          >
-            <button
-              onClick={() => navigate("/auth")}
-              className="group flex items-center gap-2 px-6 py-3.5 rounded-2xl gradient-institute text-primary-foreground font-bold shadow-float hover:shadow-glow transition-all hover:scale-[1.04]"
-            >
-              Começar meus 30 dias
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </motion.div>
+          <BottomCTA scrollYProgress={scrollYProgress} onStart={() => navigate("/auth")} />
         )}
 
-        {/* Scroll hint (first act only) */}
-        {!reduce && (
-          <motion.div
-            className="absolute bottom-24 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground uppercase tracking-[0.3em] flex items-center gap-2 pointer-events-none"
-            style={{ opacity: 1 }}
-          >
-            <span>Role para viver a jornada</span>
-            <motion.span animate={{ y: [0, 6, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>↓</motion.span>
-          </motion.div>
-        )}
       </div>
 
       {/* Reduced-motion fallback CTA */}
