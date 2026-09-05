@@ -434,7 +434,9 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <FloatingCourseCTA />
       <Footer />
     </div>
   );
 }
+
