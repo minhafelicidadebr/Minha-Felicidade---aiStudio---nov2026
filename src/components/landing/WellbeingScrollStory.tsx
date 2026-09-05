@@ -227,32 +227,11 @@ export default function WellbeingScrollStory() {
           ))}
         </div>
 
-        {/* Final CTA — emerges on last act */}
+        {/* Symmetric bottom CTA + scroll hint */}
         {!reduce && (
-          <motion.div
-            className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30"
-            style={{ opacity: ctaOpacity, y: ctaY }}
-          >
-            <button
-              onClick={() => navigate("/auth")}
-              className="group flex items-center gap-2 px-6 py-3.5 rounded-2xl gradient-institute text-primary-foreground font-bold shadow-float hover:shadow-glow transition-all hover:scale-[1.04]"
-            >
-              Começar meus 30 dias
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </motion.div>
+          <BottomCTA scrollYProgress={scrollYProgress} onStart={() => navigate("/auth")} />
         )}
 
-        {/* Scroll hint (first act only) */}
-        {!reduce && (
-          <motion.div
-            className="absolute bottom-24 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground uppercase tracking-[0.3em] flex items-center gap-2 pointer-events-none"
-            style={{ opacity: 1 }}
-          >
-            <span>Role para viver a jornada</span>
-            <motion.span animate={{ y: [0, 6, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>↓</motion.span>
-          </motion.div>
-        )}
       </div>
 
       {/* Reduced-motion fallback CTA */}
