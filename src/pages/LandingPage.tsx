@@ -22,7 +22,9 @@ import SocialProofBar from "@/components/landing/SocialProofBar";
 import HeroAlegriaLive from "@/components/landing/HeroAlegriaLive";
 import MoodCheckIn from "@/components/landing/MoodCheckIn";
 import WellbeingScrollStory from "@/components/landing/WellbeingScrollStory";
+import FloatingCourseCTA from "@/components/landing/FloatingCourseCTA";
 import Footer from "@/components/Footer";
+
 
 // Benefit pillars — honest value props, no fabricated metrics
 const pillars = [
