@@ -191,8 +191,7 @@ export default function WellbeingScrollStory() {
   const hue = useTransform(scrollYProgress, [0, 1], [0, 280]);
   const bgGlow = useTransform(hue, (h) => `radial-gradient(circle at 50% 50%, hsl(${h}, 70%, 50%, 0.18), transparent 60%)`);
   const railProgress = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
-  const ctaOpacity = useTransform(scrollYProgress, [0.85, 0.98], [0, 1]);
-  const ctaY = useTransform(scrollYProgress, [0.85, 0.98], [30, 0]);
+
 
   return (
     <section
