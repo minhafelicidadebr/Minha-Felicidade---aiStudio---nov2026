@@ -226,9 +226,6 @@ export default function LandingPage() {
       <SocialProofBar />
 
       {/* Crisis section — neuromarketing data storytelling with sourced stats */}
-      {/* Innovation #2 — Mood-driven personalization */}
-      <MoodCheckIn />
-
       <CrisisDataSection />
 
       {/* Innovation #3 — Scroll-driven transformation narrative */}
