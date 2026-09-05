@@ -316,6 +316,10 @@ export default function LandingPage() {
 
       <CourseStructure />
       <DynamicsSection />
+
+      {/* Innovation #2 — Mood-driven personalization */}
+      <MoodCheckIn />
+
       <InteractiveToolsShowcase />
       <ImpactNumbers />
       <TestimonialsSection />
