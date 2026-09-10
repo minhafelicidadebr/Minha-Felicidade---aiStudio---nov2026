@@ -108,6 +108,28 @@ jobs:
           echo "Migrations aplicadas desde banco vazio: $COUNT"
           test "$COUNT" -gt 0
 
+      # ─────────────────────────────────────────────────────────────────────
+      # TRUST-1.3 — detecta generated types desincronizados do schema local.
+      #
+      # POR QUE ESTE PASSO EXISTE
+      # `src/integrations/supabase/types.ts` é artefato GERADO — a fonte de
+      # verdade é migrations → Postgres local → gen types. Já ocorreu (ver
+      # TRUST_1_5_SCHEMA_TYPE_CONTRACT.md e o achado UPSTREAM_GENERATED_TYPES_
+      # DRIFT da TRUST-1.3) de o arquivo versionado ser regenerado por outra
+      # ferramenta (Lovable) contra um schema REMOTO que ainda não tinha
+      # recebido as migrations TRUST, removendo colunas e RPCs válidas em
+      # silêncio. O CI deve DETECTAR essa divergência, nunca escondê-la
+      # regenerando e commitando por conta própria.
+      - name: Detect generated types drift against local schema
+        run: |
+          npx supabase gen types typescript --local --schema public > /tmp/types.generated.ts
+          if ! diff -q src/integrations/supabase/types.ts /tmp/types.generated.ts > /dev/null; then
+            echo "::error::src/integrations/supabase/types.ts está desincronizado do schema local (migrations aplicadas). Regenere com 'npx supabase gen types typescript --local --schema public > src/integrations/supabase/types.ts' e commit o resultado."
+            diff -u src/integrations/supabase/types.ts /tmp/types.generated.ts || true
+            exit 1
+          fi
+          echo "generated types já refletem o schema local reconstruído."
+
       # NÃO aceitar skip como sucesso: o número de contratos executados é
       # verificado. Se a suíte pular por ausência de banco, o job falha.
       - name: Runtime contracts (RPC, privacy, archive)

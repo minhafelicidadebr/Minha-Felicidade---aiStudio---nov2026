@@ -43,8 +43,7 @@ export interface OrgEngagementSummary {
     nps_detractors: number | null;
 }
 async function fetchSeries(organizationId: string): Promise<OrgAnalyticsSeries> {
-    // Type-asserted while generated Supabase types are out of sync with this RPC.
-    const { data, error } = await (supabase as any).rpc("get_org_analytics_series", { _org_id: organizationId });
+    const { data, error } = await supabase.rpc("get_org_analytics_series", { _org_id: organizationId });
     if (error) throw error;
     if (!data || typeof data !== "object" || Array.isArray(data)) {
         throw new Error("Resposta inválida da série institucional.");

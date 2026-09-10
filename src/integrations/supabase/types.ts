@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   public: {
     Tables: {
       ai_usage_limits: {
@@ -49,6 +44,7 @@ export type Database = {
           name: string
           school_id: string
           semester: number | null
+          status: string
           year: number
         }
         Insert: {
@@ -58,6 +54,7 @@ export type Database = {
           name: string
           school_id: string
           semester?: number | null
+          status?: string
           year?: number
         }
         Update: {
@@ -67,6 +64,7 @@ export type Database = {
           name?: string
           school_id?: string
           semester?: number | null
+          status?: string
           year?: number
         }
         Relationships: [
@@ -762,6 +760,7 @@ export type Database = {
           name: string
           organization_id: string
           state_code: string | null
+          status: string
         }
         Insert: {
           created_at?: string
@@ -771,6 +770,7 @@ export type Database = {
           name: string
           organization_id: string
           state_code?: string | null
+          status?: string
         }
         Update: {
           created_at?: string
@@ -780,6 +780,7 @@ export type Database = {
           name?: string
           organization_id?: string
           state_code?: string | null
+          status?: string
         }
         Relationships: [
           {
@@ -981,6 +982,7 @@ export type Database = {
         Args: { _function_name: string }
         Returns: Json
       }
+      enqueue_engagement_reminders: { Args: never; Returns: Json }
       escalate_indicator: {
         Args: {
           _indicator: string
@@ -991,6 +993,15 @@ export type Database = {
         Returns: Json
       }
       get_funnel_overview: { Args: { _days?: number }; Returns: Json }
+      get_institutional_decision_events: {
+        Args: {
+          _days?: number
+          _limit?: number
+          _offset?: number
+          _organization_id: string
+        }
+        Returns: Json
+      }
       get_learning_progress_overview: { Args: never; Returns: Json }
       get_my_guardian_consent_status: { Args: never; Returns: Json }
       get_my_learning_progress_summary: { Args: never; Returns: Json }
@@ -1013,6 +1024,7 @@ export type Database = {
         Args: { _organization_id: string }
         Returns: Json
       }
+      get_org_analytics_series: { Args: { _org_id: string }; Returns: Json }
       get_org_engagement_summary: { Args: { _org_id: string }; Returns: Json }
       get_school_metrics: {
         Args: { _period?: string; _school_id: string }
@@ -1090,12 +1102,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1119,11 +1131,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1144,11 +1156,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1169,11 +1181,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1186,11 +1198,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never) = never,
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1206,3 +1218,4 @@ export const Constants = {
     },
   },
 } as const
+

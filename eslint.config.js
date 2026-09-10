@@ -48,4 +48,13 @@ export default tseslint.config(
       "react-refresh/only-export-components": "off",
     },
   },
+  {
+    files: ["src/contexts/DashboardContext.tsx"],
+    rules: {
+      // TRUST-1.3: Provider e hook de acesso ficam intencionalmente no mesmo
+      // arquivo — é a fonte canônica única de contexto institucional, e o
+      // hook de compatibilidade (useDashboardContext.ts) só reexporta daqui.
+      "react-refresh/only-export-components": "off",
+    },
+  },
 );

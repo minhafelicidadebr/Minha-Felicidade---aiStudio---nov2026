@@ -261,3 +261,14 @@ A #47 fecha a frente DB/R29 sem editar o histórico:
 Validação local: Supabase CLI 2.116.0, `db reset --local` **47/47**; archive
 **28/28**; RPC **30/30**; privacy **23/23**; server analytics **12/12**; total
 runtime aplicável **93/93**.
+
+## Nota — reconciliação pós-rebase TRUST-1.3 (2026-09-09)
+
+Rebase de `trust-1.3-context-isolation` sobre `origin/main` não introduziu
+migration nova (nenhum arquivo em `supabase/migrations/` veio do upstream).
+`db reset --local` pós-rebase confirmou os mesmos **47/47** desde banco vazio,
+incluindo a #47 (R29). O que precisou de reconciliação foi
+`src/integrations/supabase/types.ts` — artefato gerado, não migration — que o
+upstream tinha regenerado contra schema remoto desatualizado. Ver
+`TRUST_1_3_UPSTREAM_TYPES_DRIFT_RECEIPT.md` para a análise completa e o gate de
+CI adicionado para detectar essa classe de drift automaticamente.
