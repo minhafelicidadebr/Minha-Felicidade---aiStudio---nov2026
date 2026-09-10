@@ -122,9 +122,9 @@ jobs:
       # regenerando e commitando por conta própria.
       - name: Detect generated types drift against local schema
         run: |
-          npx supabase gen types typescript --local --schema public > /tmp/types.generated.ts
+          supabase gen types typescript --local --schema public > /tmp/types.generated.ts
           if ! diff -q src/integrations/supabase/types.ts /tmp/types.generated.ts > /dev/null; then
-            echo "::error::src/integrations/supabase/types.ts está desincronizado do schema local (migrations aplicadas). Regenere com 'npx supabase gen types typescript --local --schema public > src/integrations/supabase/types.ts' e commit o resultado."
+            echo "::error::src/integrations/supabase/types.ts está desincronizado do schema local (migrations aplicadas). Regenere com 'supabase gen types typescript --local --schema public > src/integrations/supabase/types.ts' usando a MESMA versão do CLI pinada neste workflow (2.115.0) e commit o resultado."
             diff -u src/integrations/supabase/types.ts /tmp/types.generated.ts || true
             exit 1
           fi
