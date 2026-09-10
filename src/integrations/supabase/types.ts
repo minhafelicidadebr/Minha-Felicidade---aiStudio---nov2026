@@ -966,6 +966,10 @@ export type Database = {
         }
         Returns: Json
       }
+      archive_institutional_entity: {
+        Args: { _entity: string; _entity_id: string }
+        Returns: Json
+      }
       can_read_school: { Args: { _school_id: string }; Returns: boolean }
       claim_escolar_subscription: { Args: never; Returns: Json }
       claim_escolar_with_token: { Args: { _token: string }; Returns: Json }
@@ -1014,6 +1018,10 @@ export type Database = {
         Args: { _period?: string; _school_id: string }
         Returns: Json
       }
+      get_school_metrics_r29_base: {
+        Args: { _period?: string; _school_id: string }
+        Returns: Json
+      }
       get_user_plan: { Args: { _user_id: string }; Returns: Json }
       has_my_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
@@ -1037,7 +1045,12 @@ export type Database = {
         Returns: Json
       }
       is_org_admin: { Args: { _org_id: string }; Returns: boolean }
+      is_org_lifecycle_admin: { Args: { _org_id: string }; Returns: boolean }
       is_org_member: { Args: { _org_id: string }; Returns: boolean }
+      is_school_lifecycle_admin: {
+        Args: { _school_id: string }
+        Returns: boolean
+      }
       metric_minimum_group_size: { Args: never; Returns: number }
       record_guardian_consent: {
         Args: {

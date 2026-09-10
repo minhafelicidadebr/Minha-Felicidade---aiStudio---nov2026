@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Building2, School, Users, ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
+import { institutionalQueryKeys } from "@/lib/institutional-query-keys";
 
 interface OnboardingWizardProps {
     organizationId: string;
@@ -19,6 +22,8 @@ type Step = "school" | "class" | "invite" | "done";
  */
 export default function OnboardingWizard({ organizationId, orgName, onComplete }: OnboardingWizardProps) {
     const { toast } = useToast();
+    const { userId, activeOrganization } = useDashboardContext();
+    const queryClient = useQueryClient();
     const [step, setStep] = useState<Step>("school");
     const [schoolName, setSchoolName] = useState("");
     const [municipality, setMunicipality] = useState("");
@@ -28,8 +33,16 @@ export default function OnboardingWizard({ organizationId, orgName, onComplete }
     const [inviteRole, setInviteRole] = useState("educator");
     const [loading, setLoading] = useState(false);
 
+    const isCurrentOrganization = activeOrganization?.id === organizationId;
+    const invalidateOrganization = useCallback(
+        () => queryClient.invalidateQueries({
+            queryKey: institutionalQueryKeys.organization(userId, organizationId),
+        }),
+        [organizationId, queryClient, userId],
+    );
+
     const handleCreateSchool = async () => {
-        if (!schoolName.trim()) return;
+        if (!isCurrentOrganization || !schoolName.trim()) return;
         setLoading(true);
         try {
             const { data, error } = await supabase.from("schools").insert({
@@ -38,6 +51,7 @@ export default function OnboardingWizard({ organizationId, orgName, onComplete }
                 municipality: municipality.trim() || null,
             }).select("id").single();
             if (error) throw error;
+            await invalidateOrganization();
             setSchoolId(data.id);
             setStep("class");
             toast({ title: "Escola criada! 🏫" });
@@ -49,7 +63,7 @@ export default function OnboardingWizard({ organizationId, orgName, onComplete }
     };
 
     const handleCreateClass = async () => {
-        if (!className.trim() || !schoolId) return;
+        if (!isCurrentOrganization || !className.trim() || !schoolId) return;
         setLoading(true);
         try {
             const { error } = await supabase.from("classes").insert({
@@ -58,6 +72,7 @@ export default function OnboardingWizard({ organizationId, orgName, onComplete }
                 year: new Date().getFullYear(),
             });
             if (error) throw error;
+            await invalidateOrganization();
             setStep("invite");
             toast({ title: "Turma criada! 📚" });
         } catch (e) {
@@ -68,6 +83,7 @@ export default function OnboardingWizard({ organizationId, orgName, onComplete }
     };
 
     const handleInvite = async () => {
+        if (!isCurrentOrganization) return;
         if (!inviteEmail.trim()) { setStep("done"); return; }
         setLoading(true);
         try {
@@ -77,6 +93,7 @@ export default function OnboardingWizard({ organizationId, orgName, onComplete }
                 _role: inviteRole,
             });
             if (error) throw error;
+            await invalidateOrganization();
             toast({ title: "Convite enviado! ✉️" });
             setStep("done");
         } catch (e) {
