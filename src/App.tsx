@@ -11,6 +11,7 @@ import RequireRole from "@/components/routing/RequireRole";
 import RequireInstitutionalRole from "@/components/routing/RequireInstitutionalRole";
 import RequireGuardianConsent from "@/components/routing/RequireGuardianConsent";
 import RequireFeature from "@/components/routing/RequireFeature";
+import { DashboardContextProvider } from "@/contexts/DashboardContext";
 
 const queryClient = new QueryClient();
 
@@ -113,86 +114,102 @@ const privateRoutes: PrivateRoute[] = [
   { path: "/mirror", element: <CognitiveMirrorPage /> },
   { path: "/future-self", element: <FutureSelfPage /> },
   { path: "/strengths", element: <SignatureStrengthsPage /> },
-  { path: "/org", element: <OrgDashboardPage /> },
-  { path: "/escola/:schoolId", element: <SchoolDashboardPage /> },
+  {
+    path: "/org",
+    element: (
+      <RequireInstitutionalRole allowedRoles={["platform_admin", "org_admin"]}>
+        <OrgDashboardPage />
+      </RequireInstitutionalRole>
+    ),
+  },
+  {
+    path: "/escola/:schoolId",
+    element: (
+      <RequireInstitutionalRole allowedRoles={["platform_admin", "org_admin", "school_admin"]}>
+        <SchoolDashboardPage />
+      </RequireInstitutionalRole>
+    ),
+  },
 ];
 
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ScrollToTop />
-          <Suspense fallback={<RouteFallback />}>
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/escolas" element={<EscolasLandingPage />} />
-              <Route path="/aceitar-convite" element={<AcceptInvitePage />} />
-              <Route path="/auth" element={<AuthPage />} />
-              <Route
-                path="/consentimento-responsavel"
-                element={
-                  <RequireAuth>
-                    <GuardianConsentPage />
-                  </RequireAuth>
-                }
-              />
-              {/* Captura de data de nascimento para contas legadas (sem birth_date).
-                Atrás de RequireAuth, mas FORA do gate de consentimento — senão o
-                próprio needs_birth_date redirecionaria de volta em loop. */}
-              <Route
-                path="/completar-cadastro"
-                element={
-                  <RequireAuth>
-                    <BirthDateCompletionPage />
-                  </RequireAuth>
-                }
-              />
-              {/* Retorno do checkout: atrás de RequireAuth, mas fora do gate de
-                consentimento — quem acabou de pagar não deve ser bloqueado
-                aqui. A ativação real é confirmada via get_my_plan/webhook. */}
-              <Route
-                path="/assinatura/sucesso"
-                element={
-                  <RequireAuth>
-                    <SubscriptionSuccessPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/assinatura/pendente"
-                element={
-                  <RequireAuth>
-                    <SubscriptionPendingPage />
-                  </RequireAuth>
-                }
-              />
-              {privateRoutes.map((route) => (
+      <DashboardContextProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ScrollToTop />
+            <Suspense fallback={<RouteFallback />}>
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/escolas" element={<EscolasLandingPage />} />
+                <Route path="/aceitar-convite" element={<AcceptInvitePage />} />
+                <Route path="/auth" element={<AuthPage />} />
                 <Route
-                  key={route.path}
-                  path={route.path}
+                  path="/consentimento-responsavel"
                   element={
                     <RequireAuth>
-                      <RequireGuardianConsent>
-                        {route.roles ? (
-                          <RequireRole allowedRoles={route.roles}>{route.element}</RequireRole>
-                        ) : route.feature ? (
-                          <RequireFeature feature={route.feature}>{route.element}</RequireFeature>
-                        ) : (
-                          route.element
-                        )}
-                      </RequireGuardianConsent>
+                      <GuardianConsentPage />
                     </RequireAuth>
                   }
                 />
-              ))}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </TooltipProvider>
+                {/* Captura de data de nascimento para contas legadas (sem birth_date).
+                Atrás de RequireAuth, mas FORA do gate de consentimento — senão o
+                próprio needs_birth_date redirecionaria de volta em loop. */}
+                <Route
+                  path="/completar-cadastro"
+                  element={
+                    <RequireAuth>
+                      <BirthDateCompletionPage />
+                    </RequireAuth>
+                  }
+                />
+                {/* Retorno do checkout: atrás de RequireAuth, mas fora do gate de
+                consentimento — quem acabou de pagar não deve ser bloqueado
+                aqui. A ativação real é confirmada via get_my_plan/webhook. */}
+                <Route
+                  path="/assinatura/sucesso"
+                  element={
+                    <RequireAuth>
+                      <SubscriptionSuccessPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/assinatura/pendente"
+                  element={
+                    <RequireAuth>
+                      <SubscriptionPendingPage />
+                    </RequireAuth>
+                  }
+                />
+                {privateRoutes.map((route) => (
+                  <Route
+                    key={route.path}
+                    path={route.path}
+                    element={
+                      <RequireAuth>
+                        <RequireGuardianConsent>
+                          {route.roles ? (
+                            <RequireRole allowedRoles={route.roles}>{route.element}</RequireRole>
+                          ) : route.feature ? (
+                            <RequireFeature feature={route.feature}>{route.element}</RequireFeature>
+                          ) : (
+                            route.element
+                          )}
+                        </RequireGuardianConsent>
+                      </RequireAuth>
+                    }
+                  />
+                ))}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </TooltipProvider>
+      </DashboardContextProvider>
     </QueryClientProvider>
   </ErrorBoundary>
 );

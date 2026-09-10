@@ -1,21 +1,22 @@
 # TRUST-1 — LEDGER DE MIGRATIONS
 
-46 arquivos em `supabase/migrations/`. Classificação por domínio e status.
+47 arquivos em `supabase/migrations/`. Classificação por domínio e status.
 
-## Estado corrente — TRUST-1.2.1
+## Estado corrente — TRUST-1.3 / DB-R29
 
 | # | Migration | Domínio | Classificação |
 |---|---|---|---|
 | 46 | `20260901120000_trust1_2_1_server_analytics_boundary.sql` | Privacidade / Analytics | **RECONCILED, forward-only, NOT_YET_APPLIED_REMOTELY** |
+| 47 | `20260902120000_trust1_3_r29_archived_operational_visibility.sql` | Segurança institucional / Lifecycle | **RECONCILED, forward-only, NOT_YET_APPLIED_REMOTELY** |
 
-A #46 remove policies administrativas de SELECT raw em `nps_responses` e
-`engagement_events` por semântica, cria `get_org_analytics_series(uuid)` e
-redefine `get_org_engagement_summary(uuid)` com contributor gate independente
-por métrica. Preserva self-read e acesso operacional. Sem `DROP ... CASCADE` e
-sem remoção de linhas.
+A #47 separa autorização operacional de autorização de ciclo de vida. Entidades
+`archived`/`suspended` deixam de aparecer em leituras operacionais; o
+arquivamento tenant-scoped passa pela RPC `archive_institutional_entity`; e
+métricas/analytics negam ancestrais inativos e omitem classes não ativas. O
+ledger append-only e as linhas históricas são preservados.
 
-`db reset --local`: **46/46 migrations desde banco vazio**. Contratos específicos:
-**12/12**; runtime completo: **78/78**.
+`db reset --local`: **47/47 migrations desde banco vazio**. Contratos archive:
+**28/28**; runtime completo aplicável: **93/93**.
 
 ### Migrations TRUST pendentes de promoção remota
 
@@ -25,6 +26,7 @@ sem remoção de linhas.
 | 44 | `20260826120000_trust1_5_ledger_read_rpc.sql` | 1.5 |
 | 45 | `20260828120000_trust1_2_privacy_and_archive.sql` | 1.2 |
 | 46 | `20260901120000_trust1_2_1_server_analytics_boundary.sql` | 1.2.1 |
+| 47 | `20260902120000_trust1_3_r29_archived_operational_visibility.sql` | 1.3 / DB-R29 |
 
 Nenhuma foi aplicada remotamente. Ordem obrigatória = timestamps; antes de
 produção, executar o preflight read-only do R22.
@@ -227,3 +229,46 @@ remotamente:
 
 Ordem de aplicação é a ordem dos timestamps. O checklist read-only de preflight
 está em `TRUST_1_R22_PREFLIGHT_CHECKLIST.md` e **não foi executado**.
+
+
+---
+
+## Atualização TRUST-1.3 / DB-R29
+
+| # | Migration | Domínio | Classificação |
+|---|---|---|---|
+| 47 | `20260902120000_trust1_3_r29_archived_operational_visibility.sql` | Segurança institucional / Lifecycle | **RECONCILED, forward-only, NOT_YET_APPLIED_REMOTELY** |
+
+A #47 fecha a frente DB/R29 sem editar o histórico:
+
+- `organizations`, `schools` e `classes` `archived`/`suspended` não aparecem em
+  SELECT operacional de `authenticated`; policies `FOR ALL` administrativas não
+  sobrevivem no estado final.
+- `is_org_admin`/`is_org_member` exigem organization active. O helper separado
+  `is_org_lifecycle_admin` autoriza a RPC tenant-scoped
+  `archive_institutional_entity(text, uuid)` sem reabrir SELECT de archived.
+- `can_read_school` exige organization e school active. `get_school_metrics`
+  nega ancestrais inativos e filtra classes não active por wrapper fino sobre a
+  implementação TRUST-1.2 preservada, evitando outra cópia do corpo grande.
+- `get_org_analytics_series` e `get_org_engagement_summary` negam organization
+  inativa pela redefinição reutilizada de `is_org_admin`; seus corpos não foram
+  duplicados.
+- Ledger, FKs e eventos históricos permanecem intactos. Nenhum `DROP ...
+  CASCADE`, remoção de linha ou aplicação remota.
+- Funções `SECURITY DEFINER` novas/substituídas usam `SET search_path = public`,
+  `REVOKE`/`GRANT` explícitos e queries `has_function_privilege` documentadas.
+
+Validação local: Supabase CLI 2.116.0, `db reset --local` **47/47**; archive
+**28/28**; RPC **30/30**; privacy **23/23**; server analytics **12/12**; total
+runtime aplicável **93/93**.
+
+## Nota — reconciliação pós-rebase TRUST-1.3 (2026-09-09)
+
+Rebase de `trust-1.3-context-isolation` sobre `origin/main` não introduziu
+migration nova (nenhum arquivo em `supabase/migrations/` veio do upstream).
+`db reset --local` pós-rebase confirmou os mesmos **47/47** desde banco vazio,
+incluindo a #47 (R29). O que precisou de reconciliação foi
+`src/integrations/supabase/types.ts` — artefato gerado, não migration — que o
+upstream tinha regenerado contra schema remoto desatualizado. Ver
+`TRUST_1_3_UPSTREAM_TYPES_DRIFT_RECEIPT.md` para a análise completa e o gate de
+CI adicionado para detectar essa classe de drift automaticamente.

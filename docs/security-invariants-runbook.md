@@ -597,7 +597,7 @@ O gate de tipos passou a verificar os arquivos reais:
 Antes era `tsc --noEmit` sobre um `tsconfig.json` com `files: []` e só
 `references`, o que compilava **zero arquivo**.
 
-## Ordem de aplicação — migrations TRUST #45 e #46
+## Ordem de aplicação — migrations TRUST #45 a #47
 
 45. `supabase/migrations/20260828120000_trust1_2_privacy_and_archive.sql` —
     TRUST-1.2. Fecha R10/R23/R27/R28: contrato de arquivamento, supressão do
@@ -632,6 +632,46 @@ Antes era `tsc --noEmit` sobre um `tsconfig.json` com `files: []` e só
      WHERE n.nspname='public' AND p.proname='get_org_analytics_series';
     ```
 
-As quatro migrations TRUST (#43–#46) continuam **não aplicadas remotamente**.
+47. `supabase/migrations/20260902120000_trust1_3_r29_archived_operational_visibility.sql`
+    — TRUST-1.3 / DB-R29. Mantém o contrato archive-instead-of-delete e o ledger,
+    mas separa autorização operacional (`is_org_admin`/`is_org_member`, somente
+    com organization active) de autorização de ciclo de vida. Policies SELECT de
+    `organizations`/`schools`/`classes` exigem estado active e as antigas policies
+    `FOR ALL` foram substituídas por operação, evitando SELECT administrativo que
+    reexponha archived. `can_read_school` exige organization+school active.
+    `get_school_metrics` nega ancestrais inativos e omite classes não active; as
+    RPCs organizacionais herdam a negativa pelo helper operacional, sem copiar
+    seus corpos. Arquivamento explícito por `archive_institutional_entity(text,
+    uuid)`, tenant-scoped, preserva linhas, FKs e eventos do ledger. Toda função
+    `SECURITY DEFINER` nova/substituída fixa `search_path = public`, revoga
+    `PUBLIC`/`anon` e concede somente os papéis documentados. Aplicar depois da
+    #46.
+
+    Verificação após aplicar:
+    ```sql
+    -- nenhuma policy FOR ALL nas entidades operacionais (esperado: 0)
+    SELECT count(*) FROM pg_policies
+     WHERE schemaname='public'
+       AND tablename IN ('organizations','schools','classes')
+       AND cmd='ALL';
+
+    -- grants da RPC de archive (esperado: false | true)
+    SELECT has_function_privilege('anon',
+             'public.archive_institutional_entity(text,uuid)','EXECUTE'),
+           has_function_privilege('authenticated',
+             'public.archive_institutional_entity(text,uuid)','EXECUTE');
+
+    -- helpers/RPCs R29 pinados (esperado: search_path=public em todas)
+    SELECT proname, array_to_string(proconfig, ',')
+      FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+     WHERE n.nspname='public'
+       AND proname IN ('is_org_lifecycle_admin','is_org_admin','is_org_member',
+                       'is_school_lifecycle_admin','can_read_school',
+                       'get_school_metrics','archive_institutional_entity')
+     ORDER BY proname;
+    ```
+
+As cinco migrations TRUST (#43–#47) continuam **não aplicadas remotamente**.
 Antes de qualquer promoção, executar integralmente o checklist read-only do R22.
-O replay local pinado em Supabase CLI 2.115.0 aplicou **46/46** desde banco vazio.
+O replay local com Supabase CLI 2.116.0 aplicou **47/47** desde banco vazio;
+os quatro arquivos runtime aplicáveis passaram **93/93**.
