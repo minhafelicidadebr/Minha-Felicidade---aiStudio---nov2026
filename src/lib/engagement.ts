@@ -15,8 +15,11 @@ export type EngagementEventType =
 
 /**
  * Track a user engagement event. Best-effort: never throws, never blocks UI.
- * Inserts into engagement_events table (ledger, INSERT-only via RLS).
- * If user belongs to an org, the org_id is resolved from institutional_memberships.
+ *
+ * TRUST-1.4 (R02): grava via RPC `record_engagement_event`, não via INSERT
+ * direto — o INSERT client-side foi revogado. A RPC resolve `auth.uid()` e
+ * valida a membership do organization_id requisitado no servidor; o valor
+ * resolvido aqui é só a intenção do cliente, nunca a autoridade final.
  */
 export async function trackEngagement(
     eventType: EngagementEventType,
@@ -28,15 +31,15 @@ export async function trackEngagement(
 
         const userId = session.user.id;
 
-        // Resolve org_id (best-effort, cached per session)
+        // Organização requisitada (best-effort, cached per session).
+        // A RPC revalida a membership; isto é só intenção, não autorização.
         const orgId = await getOrgId(userId);
 
-        await supabase.from("engagement_events").insert([{
-            user_id: userId,
-            organization_id: orgId,
-            event_type: eventType,
-            metadata: metadata ? sanitize(metadata) : {},
-        }]);
+        await supabase.rpc("record_engagement_event", {
+            _organization_id: orgId,
+            _event_type: eventType,
+            _metadata: metadata ? sanitize(metadata) : {},
+        });
     } catch {
         // Silencioso: instrumentação nunca atrapalha o usuário.
     }

@@ -272,3 +272,48 @@ incluindo a #47 (R29). O que precisou de reconciliação foi
 upstream tinha regenerado contra schema remoto desatualizado. Ver
 `TRUST_1_3_UPSTREAM_TYPES_DRIFT_RECEIPT.md` para a análise completa e o gate de
 CI adicionado para detectar essa classe de drift automaticamente.
+
+## Atualização TRUST-1.4 / DB-R02, R11
+
+| # | Migration | Domínio | Classificação |
+|---|---|---|---|
+| 48 | `20260909120000_trust1_4_tenant_safe_writes.sql` | Segurança de escrita / Integridade institucional | **RECONCILED, forward-only, NOT_YET_APPLIED_REMOTELY** |
+
+A #48 fecha a frente de escrita deixada aberta pela #37/#28
+(`20260725100000_nps_and_engagement_metrics.sql`), sem editar o histórico:
+
+- `record_engagement_event(uuid, text, jsonb)` e
+  `submit_nps_response(smallint, uuid, text, text)`, ambas `SECURITY DEFINER`
+  com `search_path = public`, resolvem `auth.uid()` internamente — `user_id`
+  nunca é parâmetro aceito do chamador — e validam `is_org_member(_organization_id)`
+  antes de gravar. Reuso direto do helper hardened pela R29: organização
+  archived/suspended e membership inativa já são negadas sem duplicar lógica.
+- `organization_id` nulo permanece aceito (uso individual sem organização);
+  usuário com múltiplas memberships continua podendo escrever em qualquer
+  organização de que seja membro ativo.
+- `score`/`event_type`/`context` continuam validados pelos `CHECK` constraints
+  originais da tabela — não duplicados na RPC. `metadata`/`feedback` recebem
+  limite de tamanho na própria RPC (defesa em profundidade contra chamador que
+  ignore o filtro client-side).
+- As duas policies de INSERT originais (`"Users can log own engagement"`,
+  `"Users can submit own NPS"`) são removidas e `REVOKE INSERT` explícito é
+  aplicado a `authenticated` nas duas tabelas — o INSERT direto client-side
+  deixa de ser um caminho possível, não só indesejado.
+- Nenhum `DROP ... CASCADE`, remoção de linha, nem aplicação remota. SELECT
+  (self-read) não é alterado.
+
+RED comprovado contra Postgres local antes da migration: membro de uma
+organização inseria com sucesso `organization_id` de organização alheia nas
+duas tabelas (linha persistida e devolvida por `RETURNING`). `user_id` spoof já
+estava bloqueado pela policy original — só `organization_id` era vulnerável.
+
+Validação local: Supabase CLI 2.115.0, `db reset --local` **48/48**;
+`input-integrity-runtime-contract.test.ts` **28/28** (cross-tenant engagement,
+cross-tenant NPS, archived org, org inexistente, sem membership, INSERT direto
+fechado, threshold poisoning 4→5); total runtime aplicável **121/121**
+(93 herdados da TRUST-1.3 + 28 novos).
+
+Frontend migrado na mesma onda: `src/lib/engagement.ts` e
+`src/components/NpsSurvey.tsx` passaram de `.insert()` direto para as RPCs.
+Guard estático em `trust1-4-static-guards.test.ts` impede regressão para
+INSERT direto em código de aplicação.

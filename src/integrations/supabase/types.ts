@@ -1064,6 +1064,14 @@ export type Database = {
         Returns: boolean
       }
       metric_minimum_group_size: { Args: never; Returns: number }
+      record_engagement_event: {
+        Args: {
+          _event_type: string
+          _metadata?: Json
+          _organization_id: string
+        }
+        Returns: Json
+      }
       record_guardian_consent: {
         Args: {
           _guardian_email: string
@@ -1079,6 +1087,15 @@ export type Database = {
         Returns: Json
       }
       set_my_birth_date: { Args: { _birth_date: string }; Returns: Json }
+      submit_nps_response: {
+        Args: {
+          _context?: string
+          _feedback?: string
+          _organization_id?: string
+          _score: number
+        }
+        Returns: Json
+      }
       user_has_feature: {
         Args: { _feature: string; _user_id: string }
         Returns: boolean
