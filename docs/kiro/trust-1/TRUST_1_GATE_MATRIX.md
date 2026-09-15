@@ -219,13 +219,21 @@ homologa o remoto. Receipts: `TRUST_1_2_1_RAW_ACCESS_BOUNDARY_RECEIPT.md`,
 
 | Critério | Status |
 |---|---|
-| Writes diretos revogados | ⬜ |
-| RPCs resolvem contexto | ⬜ |
-| Spoofing falha | ⬜ |
-| Eventos legítimos funcionam | ⬜ |
-| Relatórios não aceitam contaminação | ⬜ |
+| Writes diretos revogados | ✅ `REVOKE INSERT` + policy de INSERT removida em `engagement_events`/`nps_responses` |
+| RPCs resolvem contexto | ✅ `record_engagement_event`/`submit_nps_response`, `auth.uid()` server-side, `user_id` nunca é parâmetro |
+| Spoofing falha | ✅ cross-tenant, sem membership, org archived, org inexistente — todos negados em execução real |
+| Eventos legítimos funcionam | ✅ membro único e multi-org gravam corretamente; `organization_id` nulo preservado |
+| Relatórios não aceitam contaminação | ✅ threshold poisoning 4→5 bloqueado antes de qualquer INSERT; contributor distinctness (TRUST-1.2.1) intocado |
 
-**Gate: ⬜ NÃO INICIADO**
+**Gate: ✅ APROVADO LOCALMENTE**
+
+RED reproduzido contra Postgres local antes da correção: membro de `ORG_A`
+inseria com sucesso em `ORG_B`. GREEN: 28 contratos de runtime em
+`input-integrity-runtime-contract.test.ts` + 4 guards estáticos em
+`trust1-4-static-guards.test.ts`. Replay 48/48 migrations desde banco vazio.
+Quality: 38 arquivos, 475 testes, build e security gate verdes. Isto não
+homologa o remoto — R22 continua `OPEN / REQUIRED_BEFORE_PRODUCTION`. Receipt:
+`TRUST_1_4_GATE.md`.
 
 ## TRUST-1.6 — Consentimento Verificável
 

@@ -114,3 +114,40 @@ vermelhos**; depois, **12/12 verdes**. O conjunto runtime completo ficou
 R02/R11 permanecem abertos para TRUST-1.4: esta onda fecha a fronteira de
 **leitura**, não a integridade de escrita. R22 permanece
 `OPEN / REQUIRED_BEFORE_PRODUCTION`; nenhum catálogo remoto foi consultado.
+
+## Atualização da MACRO-ONDA F — TRUST-1.4
+
+RED comprovado contra PostgreSQL local antes da correção: um usuário
+autenticado, membro apenas de `ORG_A`, conseguia inserir com sucesso
+`engagement_events`/`nps_responses` com `organization_id = ORG_B` (linha
+persistida e devolvida por `RETURNING`, revertida só porque o teste manual
+usou `ROLLBACK`). `user_id` spoof já estava bloqueado desde a migration
+original (`WITH CHECK (user_id = auth.uid())`); só `organization_id` era
+vulnerável.
+
+| # | Risco | Severidade | Evidência | Status |
+|---|---|---|---|---|
+| R02 | `engagement_events` aceitava INSERT direto com `organization_id` arbitrário, sem validar membership. | P0 | **RED comprovado em execução** contra Postgres local (ver acima) antes da correção; **GREEN comprovado** depois — 28 contratos de runtime em `input-integrity-runtime-contract.test.ts`. | ✅ **FECHADO.** Escrita passou a ser exclusivamente pela RPC `record_engagement_event` (`SECURITY DEFINER`, resolve `auth.uid()`, valida `is_org_member(_organization_id)` — que já nega membership inativa e organização archived/suspended via R29). `INSERT` direto revogado de `authenticated` (`REVOKE INSERT`, policy de INSERT removida). |
+| R11 | `nps_responses` aceitava INSERT direto com `organization_id` arbitrário, sem validar membership. | P0 | **RED comprovado em execução** contra Postgres local antes da correção; **GREEN comprovado** depois — mesmos 28 contratos. | ✅ **FECHADO.** Mesma forma: RPC `submit_nps_response`, `INSERT` direto revogado. |
+
+**Ataques de data poisoning provados bloqueados, todos em execução real:**
+
+| Ataque | Resultado |
+|---|---|
+| Cross-tenant engagement write (membro de A grava em B) | `Organization not available for this account` (42501) |
+| Cross-tenant NPS write (membro de A grava em B) | `Organization not available for this account` (42501) |
+| `organization_id` de organização `archived` | Negado — integra R29, sem duplicar a checagem |
+| `organization_id` inexistente | Negado, mesma mensagem — não serve de sonda |
+| Usuário sem nenhuma membership | Negado |
+| INSERT direto client-side com `organization_id` arbitrário | `permission denied for table` — bloqueado por `GRANT`, não só por RLS |
+| Threshold poisoning (4→5 contribuidores via organização alheia) | Bloqueado antes de qualquer linha ser gravada; organização permanece com 4 contribuidores e a métrica continua suprimida |
+
+Preservado sem regressão: usuário legítimo com múltiplas memberships continua
+gravando em qualquer organização de que seja membro ativo; `organization_id`
+nulo (uso individual sem organização) continua aceito nas duas RPCs;
+`user_id` nunca é parâmetro aceito pelo chamador (confirmado por guard
+estático); `score`/`event_type`/`context` continuam validados pelos `CHECK`
+constraints existentes, sem duplicação de vocabulário na RPC.
+
+R22 continua `OPEN / REQUIRED_BEFORE_PRODUCTION`; nenhuma migration TRUST foi
+promovida remotamente nesta onda.

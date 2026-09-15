@@ -400,10 +400,11 @@ ordem real de aplicação.
 
 28. `supabase/migrations/20260725100000_nps_and_engagement_metrics.sql` — Cria
     `nps_responses` e `engagement_events` com RLS, e as RPCs de leitura agregada.
-    **Invariante conhecido em aberto (R02/R11):** as policies de INSERT validam
-    apenas `user_id = auth.uid()`, não o `organization_id`, então um usuário pode
-    gravar evento ou NPS em organização alheia. Tratamento previsto na TRUST-1.4.
-    Idempotente.
+    **Invariante que existiu em aberto (R02/R11) até a TRUST-1.4:** as policies
+    de INSERT desta migration validavam apenas `user_id = auth.uid()`, não o
+    `organization_id`. Fechado pela migration #48 (`REVOKE INSERT` +
+    RPCs `record_engagement_event`/`submit_nps_response`) — esta migration
+    permanece como está, por imutabilidade histórica. Idempotente.
 
 29. `supabase/migrations/20260725200000_engagement_reminders.sql` —
     `enqueue_engagement_reminders()`, SECURITY DEFINER, `search_path = public`,
@@ -675,3 +676,44 @@ As cinco migrations TRUST (#43–#47) continuam **não aplicadas remotamente**.
 Antes de qualquer promoção, executar integralmente o checklist read-only do R22.
 O replay local com Supabase CLI 2.116.0 aplicou **47/47** desde banco vazio;
 os quatro arquivos runtime aplicáveis passaram **93/93**.
+
+48. `supabase/migrations/20260909120000_trust1_4_tenant_safe_writes.sql` —
+    TRUST-1.4/R02-R11. Fecha a fronteira de escrita de `engagement_events`/
+    `nps_responses`, deixada aberta pela migration #28. Cria
+    `record_engagement_event(uuid, text, jsonb)` e
+    `submit_nps_response(smallint, uuid, text, text)`, ambas `SECURITY DEFINER`
+    com `search_path = public`: resolvem `auth.uid()` internamente (nunca
+    aceitam `user_id` do chamador) e validam `is_org_member(_organization_id)`
+    antes de gravar — reuso do helper já hardened pela R29 (nega membership
+    inativa e organização archived/suspended sem duplicar essa lógica).
+    `organization_id` nulo continua aceito (uso individual sem organização).
+    Em seguida, `DROP POLICY` das duas policies de INSERT originais e
+    `REVOKE INSERT ... FROM authenticated` nas duas tabelas — o `INSERT`
+    direto client-side deixa de existir como caminho possível, não só
+    indesejado. `REVOKE`/`GRANT` explícitos e queries de verificação
+    (`has_function_privilege`, `has_table_privilege`) documentadas no corpo da
+    migration. Idempotente (`CREATE OR REPLACE FUNCTION`, `DROP POLICY IF
+    EXISTS`).
+
+    Verificação após aplicar:
+    ```sql
+    -- INSERT direto deve estar fechado (esperado: false | false)
+    SELECT has_table_privilege('authenticated','public.engagement_events','INSERT'),
+           has_table_privilege('authenticated','public.nps_responses','INSERT');
+
+    -- nenhuma policy de INSERT resta (esperado: 0)
+    SELECT count(*) FROM pg_policies
+     WHERE schemaname='public' AND tablename IN ('engagement_events','nps_responses')
+       AND cmd='INSERT';
+
+    -- grants das RPCs (esperado: false | true, nas duas)
+    SELECT has_function_privilege('anon','public.record_engagement_event(uuid,text,jsonb)','EXECUTE'),
+           has_function_privilege('authenticated','public.record_engagement_event(uuid,text,jsonb)','EXECUTE');
+    SELECT has_function_privilege('anon','public.submit_nps_response(smallint,uuid,text,text)','EXECUTE'),
+           has_function_privilege('authenticated','public.submit_nps_response(smallint,uuid,text,text)','EXECUTE');
+    ```
+
+A migration TRUST #48 continua **não aplicada remotamente**, na mesma condição
+das #43–#47. O replay local com Supabase CLI 2.115.0 aplicou **48/48** desde
+banco vazio; os cinco arquivos runtime aplicáveis passaram **121/121**
+(93 herdados + 28 novos de `input-integrity-runtime-contract.test.ts`).
