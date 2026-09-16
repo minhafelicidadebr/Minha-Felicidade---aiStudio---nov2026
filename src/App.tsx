@@ -46,6 +46,7 @@ const CognitiveMirrorPage = lazy(() => import("./pages/CognitiveMirrorPage"));
 const FutureSelfPage = lazy(() => import("./pages/FutureSelfPage"));
 const SignatureStrengthsPage = lazy(() => import("./pages/SignatureStrengthsPage"));
 const GuardianConsentPage = lazy(() => import("./pages/GuardianConsentPage"));
+const GuardianDecisionPage = lazy(() => import("./pages/GuardianDecisionPage"));
 const BirthDateCompletionPage = lazy(() => import("./pages/BirthDateCompletionPage"));
 const OrgDashboardPage = lazy(() => import("./pages/OrgDashboardPage"));
 // UX-3: painel escolar autenticado (D33/D43 — singular, para não colidir com a
@@ -147,6 +148,10 @@ const App = () => (
                 <Route path="/escolas" element={<EscolasLandingPage />} />
                 <Route path="/aceitar-convite" element={<AcceptInvitePage />} />
                 <Route path="/auth" element={<AuthPage />} />
+                {/* TRUST-1.6 (R06): vista pelo RESPONSÁVEL, não pelo estudante — o
+                token é a credencial, nunca exige conta/sessão. Fora de
+                RequireAuth de propósito. */}
+                <Route path="/autorizacao-responsavel" element={<GuardianDecisionPage />} />
                 <Route
                   path="/consentimento-responsavel"
                   element={
