@@ -317,3 +317,69 @@ Frontend migrado na mesma onda: `src/lib/engagement.ts` e
 `src/components/NpsSurvey.tsx` passaram de `.insert()` direto para as RPCs.
 Guard estático em `trust1-4-static-guards.test.ts` impede regressão para
 INSERT direto em código de aplicação.
+
+
+## Atualização TRUST-1.6 / DB-R06
+
+| # | Migration | Domínio | Classificação |
+|---|---|---|---|
+| 49 | `20260916120000_trust1_6_verifiable_guardian_consent.sql` | Consentimento parental / Cadeia de evidência | **RECONCILED, forward-only, NOT_YET_APPLIED_REMOTELY** |
+
+A #49 fecha R06 sem editar o histórico:
+
+- Duas tabelas novas: `guardian_consent_policies` (versão vigente do termo +
+  hash do texto apresentado + flag de reconsentimento; uma linha ativa por
+  vez) e `guardian_consent_requests` (request de canal, `token_hash` único,
+  one-time, `pending`/`consumed`/`expired`/`superseded`). Nenhuma delas tem
+  policy de INSERT/UPDATE/DELETE para `authenticated` — escrita só via RPC.
+- `guardian_consent_events` (existente desde `20260706194000`) é **estendida,
+  não substituída**: `decision` passa a aceitar `declined`/`revoked` além de
+  `granted`; novas colunas `request_id` e `assurance_level`
+  (`self_declared`/`channel_verified`); removida a
+  `UNIQUE(user_id, policy_version)` original, incompatível com múltiplos
+  eventos por usuário/versão ao longo do tempo. Linhas antigas preservadas
+  sem edição, por doutrina de ledger imutável.
+- Sete RPCs novas/reescritas, todas `SECURITY DEFINER` com
+  `search_path = public` e `REVOKE`/`GRANT` explícitos:
+  `get_current_guardian_consent_policy`, `create_guardian_consent_request`,
+  `resolve_guardian_consent_token`, `decide_guardian_consent`,
+  `revoke_guardian_consent`, `get_my_guardian_consent_status` (v2),
+  `has_valid_guardian_consent` (novo boundary, `service_role` apenas).
+- `enforce_ai_usage_limit` (existente desde `20260722200000`) reescrita
+  preservando **integralmente** a lógica original de limite por plano;
+  adiciona apenas a checagem de `has_valid_guardian_consent` no topo, antes
+  de qualquer contagem de cota. Contrato das 4 edge functions de IA que a
+  chamam não muda.
+- Token: `pgcrypto` (`gen_random_bytes` + `digest`), mesma primitiva já
+  homologada no projeto (`institutional_invitations.token`,
+  `purchase_intents.claim_token`). Só o hash é persistido; o bruto existe
+  transitoriamente em `notification_outbox.payload`.
+- `notification_outbox_kind_check` estendido com `'guardian_consent_request'`.
+- Nenhum `DROP ... CASCADE`, remoção de linha, nem aplicação remota. SELECT
+  de `record_guardian_consent` (histórico) não é alterado.
+
+RED comprovado contra Postgres local antes da migration: estudante concedeu
+consentimento a si mesmo com responsável fabricado, RPC antiga devolveu
+`granted = true`.
+
+Validação local: Supabase CLI 2.115.0, `db reset --local` **49/49**;
+`guardian-consent-runtime-contract.test.ts` **35/35** (request≠receipt,
+token one-time/replay/expiração/superseded/aleatório/nulo/vocabulário,
+corrida atômica, grant/decline/revoke, versionamento, autoridade do
+servidor, isolamento RLS, disciplina SECURITY DEFINER);
+`trust1-6-static-guards.test.ts` **7/7**; total runtime aplicável **163/163**
+(121 herdados de TRUST-1.2/1.2.1/1.3/1.4 + 35 novos + 7 guards estáticos).
+
+Frontend migrado na mesma onda: `AuthPage.tsx` (envia request em vez de
+gravar consentimento direto), `GuardianConsentPage.tsx` reescrita (visto pelo
+estudante: cria/reenvia request, mostra pending/declined/reconsent_required,
+nunca grava consentimento), `GuardianDecisionPage.tsx` nova (visto pelo
+responsável via token, sem sessão, ação positiva explícita), `ProfilePage.tsx`
+(status + revogação condicional). Rota `/autorizacao-responsavel` registrada
+em `App.tsx` fora de `<RequireAuth>`.
+
+Achado fora do escopo, registrado como R33: `invite_member`/
+`resend_invitation` referenciam colunas inexistentes (`body_html`,
+`metadata`) em `notification_outbox`; erro engolido por
+`EXCEPTION WHEN OTHERS`. Não corrigido nesta onda. Ver
+`TRUST_1_RISK_REGISTER.md` e `TRUST_1_6_GATE.md`.

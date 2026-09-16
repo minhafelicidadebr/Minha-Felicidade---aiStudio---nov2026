@@ -151,3 +151,36 @@ constraints existentes, sem duplicação de vocabulário na RPC.
 
 R22 continua `OPEN / REQUIRED_BEFORE_PRODUCTION`; nenhuma migration TRUST foi
 promovida remotamente nesta onda.
+
+## Atualização da MACRO-ONDA G — TRUST-1.6
+
+**Before.** A única forma de conceder consentimento parental era
+`record_guardian_consent(guardian_name, guardian_email, ...)`, chamada na
+própria sessão do estudante, com `guardian_name`/`guardian_email` digitados
+livremente. Sem canal separado, sem verificação de posse do e-mail, sem
+versionamento de política aplicado no servidor, sem revogação.
+
+**Attack (RED).** Reproduzido contra Postgres local antes da correção: um
+estudante concedeu consentimento a si mesmo com um responsável inteiramente
+fabricado (`'Fake Guardian'`, `'fake@example.invalid'`) — a RPC devolveu
+`granted = true`.
+
+| # | Risco | Severidade | Evidência | Status |
+|---|---|---|---|---|
+| R06 | Consentimento parental era auto-declarado pelo próprio adolescente, sem verificação independente de canal. | P0 | **RED comprovado em execução** contra Postgres local antes da correção (ver acima); **GREEN comprovado** depois — 35 contratos de runtime em `guardian-consent-runtime-contract.test.ts` + 7 guards estáticos em `trust1-6-static-guards.test.ts`. | ✅ **FECHADO.** Modelo de request/token/decisão de canal separado: `create_guardian_consent_request` (estudante declara canal, não grava consentimento) → e-mail com token de uso único → `resolve_guardian_consent_token`/`decide_guardian_consent` (responsável, sem sessão, ação positiva explícita) → evento `channel_verified` no ledger. `record_guardian_consent` permanece no banco (linhas antigas imutáveis) mas nenhum código de aplicação a chama mais. Assurance explícito: **Level 1 (canal verificado, relação apenas declarada)**, não Level 2 (vínculo confirmado institucionalmente) — não existe hoje fonte institucional de relação estudante-responsável no produto; construir uma é expansão de produto, fora do escopo desta correção. Ver `TRUST_1_6_GATE.md`. |
+| R33 | **`notification_outbox` referenciado com colunas inexistentes (`body_html`, `metadata`) em `invite_member`/`resend_invitation`.** O `INSERT` sempre falhou nessas RPCs; o erro é engolido por `EXCEPTION WHEN OTHERS THEN NULL`, por isso nunca foi notado. Ledger de decisão institucional grava normalmente, mas o e-mail correspondente provavelmente nunca é enfileirado de fato. | P1 | **Comprovado no código** (schema real de `notification_outbox` desde `20260710120000` só tem `payload`, sem `body_html`/`metadata`) durante a implementação de `create_guardian_consent_request`, que usa os nomes de coluna corretos. | **Aberto.** Não corrigido nesta onda — RPCs pré-existentes, não relacionadas a R06 diretamente, fora do escopo declarado. Registrado para tratamento em onda futura. |
+
+Server gating: `enforce_ai_usage_limit` (chamada pelas 4 edge functions de
+IA) recebeu checagem de `has_valid_guardian_consent` no topo, antes de
+qualquer consumo de cota — negativa por falta de consentimento não gasta
+limite diário. Lógica original de limite por plano preservada
+integralmente. `has_valid_guardian_consent` é boundary server-side reusável,
+`service_role` apenas — frontend nunca é autoridade.
+
+Regressão: **121/121** contratos de runtime herdados (TRUST-1.2, TRUST-1.2.1
+R31/R32, TRUST-1.3 R29, TRUST-1.4 R02/R11) continuam verdes. Replay
+**49/49** migrations desde banco vazio. Quality: **517/517** testes, build e
+security gate verdes.
+
+R22 continua `OPEN / REQUIRED_BEFORE_PRODUCTION`; nenhuma migration TRUST foi
+promovida remotamente nesta onda.

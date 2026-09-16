@@ -147,6 +147,7 @@ export type Database = {
       }
       guardian_consent_events: {
         Row: {
+          assurance_level: string
           created_at: string
           decision: string
           guardian_email: string
@@ -154,9 +155,11 @@ export type Database = {
           id: string
           occurred_at: string
           policy_version: string
+          request_id: string | null
           user_id: string
         }
         Insert: {
+          assurance_level?: string
           created_at?: string
           decision?: string
           guardian_email: string
@@ -164,9 +167,11 @@ export type Database = {
           id?: string
           occurred_at?: string
           policy_version: string
+          request_id?: string | null
           user_id: string
         }
         Update: {
+          assurance_level?: string
           created_at?: string
           decision?: string
           guardian_email?: string
@@ -174,9 +179,92 @@ export type Database = {
           id?: string
           occurred_at?: string
           policy_version?: string
+          request_id?: string | null
           user_id?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "guardian_consent_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "guardian_consent_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guardian_consent_policies: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          policy_version: string
+          requires_reconsent: boolean
+          statement_sha256: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          policy_version: string
+          requires_reconsent?: boolean
+          statement_sha256: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          policy_version?: string
+          requires_reconsent?: boolean
+          statement_sha256?: string
+        }
         Relationships: []
+      }
+      guardian_consent_requests: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          guardian_email: string
+          guardian_name: string
+          id: string
+          policy_version: string
+          status: string
+          student_user_id: string
+          token_hash: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          guardian_email: string
+          guardian_name: string
+          id?: string
+          policy_version: string
+          status?: string
+          student_user_id: string
+          token_hash: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          guardian_email?: string
+          guardian_name?: string
+          id?: string
+          policy_version?: string
+          status?: string
+          student_user_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guardian_consent_requests_policy_version_fkey"
+            columns: ["policy_version"]
+            isOneToOne: false
+            referencedRelation: "guardian_consent_policies"
+            referencedColumns: ["policy_version"]
+          },
+        ]
       }
       institutional_decision_events: {
         Row: {
@@ -974,8 +1062,16 @@ export type Database = {
       can_read_school: { Args: { _school_id: string }; Returns: boolean }
       claim_escolar_subscription: { Args: never; Returns: Json }
       claim_escolar_with_token: { Args: { _token: string }; Returns: Json }
+      create_guardian_consent_request: {
+        Args: { _guardian_email: string; _guardian_name: string }
+        Returns: Json
+      }
       create_organization: {
         Args: { _name: string; _slug?: string }
+        Returns: Json
+      }
+      decide_guardian_consent: {
+        Args: { _decision: string; _token: string }
         Returns: Json
       }
       enforce_ai_usage_limit: {
@@ -991,6 +1087,14 @@ export type Database = {
           _severity?: string
         }
         Returns: Json
+      }
+      get_current_guardian_consent_policy: {
+        Args: never
+        Returns: {
+          policy_version: string
+          requires_reconsent: boolean
+          statement_sha256: string
+        }[]
       }
       get_funnel_overview: { Args: { _days?: number }; Returns: Json }
       get_institutional_decision_events: {
@@ -1046,6 +1150,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_valid_guardian_consent: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       invite_member: {
         Args: {
           _class_id?: string
@@ -1082,6 +1190,14 @@ export type Database = {
       }
       request_subscription_cancellation: { Args: never; Returns: Json }
       resend_invitation: { Args: { _invitation_id: string }; Returns: Json }
+      resolve_guardian_consent_token: {
+        Args: { _token: string }
+        Returns: Json
+      }
+      revoke_guardian_consent: {
+        Args: { _policy_version: string }
+        Returns: Json
+      }
       run_subscription_lifecycle: {
         Args: { _reminder_days?: number }
         Returns: Json

@@ -239,13 +239,27 @@ homologa o remoto — R22 continua `OPEN / REQUIRED_BEFORE_PRODUCTION`. Receipt:
 
 | Critério | Status |
 |---|---|
-| Adolescente não pode autorizar sozinho | ⬜ |
-| Responsável confirma em contexto independente | ⬜ |
-| Revogação funciona | ⬜ |
-| Versão do termo registrada | ⬜ |
-| Testes de token passam | ⬜ |
+| Adolescente não pode autorizar sozinho | ✅ escrita direta em `record_guardian_consent` deixou de ser usada por qualquer código de aplicação; único caminho de decisão é `decide_guardian_consent`, que exige o token entregue ao canal do responsável |
+| Responsável confirma em contexto independente | ✅ `GuardianDecisionPage` (rota `/autorizacao-responsavel`), sem sessão de estudante, fora de `<RequireAuth>`; ação positiva explícita (Autorizar/Não autorizar), sem checkbox pré-marcada |
+| Revogação funciona | ✅ `revoke_guardian_consent` — evento novo `revoked`, não edita o grant anterior; testado em execução real |
+| Versão do termo registrada | ✅ `guardian_consent_policies` (policy_version + statement_sha256 + requires_reconsent); `get_my_guardian_consent_status` compara contra a versão vigente resolvida no servidor, não numa constante do frontend |
+| Testes de token passam | ✅ one-time/replay/expiração/superseded/aleatório/nulo/corrida atômica — 35 contratos de runtime |
 
-**Gate: ⬜ NÃO INICIADO**
+**Gate: ✅ APROVADO LOCALMENTE**
+
+RED reproduzido contra Postgres local antes da correção: estudante concedeu
+consentimento a si mesmo com um responsável inteiramente fabricado, e a RPC
+antiga devolveu `granted = true`. GREEN: 35 contratos de runtime em
+`guardian-consent-runtime-contract.test.ts` + 7 guards estáticos em
+`trust1-6-static-guards.test.ts`. Assurance explícito: **Level 1** (canal do
+responsável verificado, relação apenas declarada) — não Level 2 (vínculo
+confirmado institucionalmente), porque não existe hoje nenhuma fonte
+institucional de relação estudante-responsável no produto; construir uma é
+expansão de produto, fora do escopo desta correção. Replay 49/49 migrations
+desde banco vazio. Regressão: 121/121 contratos herdados (TRUST-1.2/1.2.1/
+1.3/1.4) verdes. Quality: 517/517 testes, build e security gate verdes. Isto
+não homologa o remoto — R22 continua `OPEN / REQUIRED_BEFORE_PRODUCTION`.
+Receipt: `TRUST_1_6_GATE.md`.
 
 ## TRUST-1.7 — Prova Ponta a Ponta
 
