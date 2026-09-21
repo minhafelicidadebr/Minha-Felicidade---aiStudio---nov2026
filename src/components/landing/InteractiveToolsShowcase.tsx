@@ -203,7 +203,7 @@ export default function InteractiveToolsShowcase() {
                   )}
 
                   <div className="w-12 h-12 rounded-2xl icon-tile-premium flex items-center justify-center mb-4">
-                    <tool.Icon className="w-6 h-6 text-primary" />
+                    <tool.Icon className="w-6 h-6" />
                   </div>
                   <h4 className="font-display font-bold text-base mb-1">{tool.name}</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed mb-3">{tool.desc}</p>

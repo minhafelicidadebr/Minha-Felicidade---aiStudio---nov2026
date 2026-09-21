@@ -104,9 +104,9 @@ const dynamics: Dynamic[] = [
 ];
 
 const colorClasses: Record<string, { bg: string; badge: string; ring: string; tile: string }> = {
-  coral: { bg: "bg-coral-light", badge: "bg-destructive/10 text-destructive", ring: "ring-destructive/30", tile: "from-destructive/20 to-destructive/5 text-destructive" },
-  gold: { bg: "bg-gold-light", badge: "bg-secondary/10 text-secondary-foreground", ring: "ring-secondary/40", tile: "from-secondary/25 to-secondary/5 text-secondary-foreground" },
-  navy: { bg: "bg-navy-light", badge: "bg-accent/10 text-accent", ring: "ring-accent/30", tile: "from-accent/20 to-accent/5 text-accent" },
+  coral: { bg: "bg-coral-light", badge: "chip-coral", ring: "ring-destructive/40", tile: "from-destructive to-destructive/70 text-destructive-foreground icon-tile-contrast" },
+  gold: { bg: "bg-gold-light", badge: "chip-gold", ring: "ring-secondary/40", tile: "from-secondary to-secondary/70 text-secondary-foreground icon-tile-contrast" },
+  navy: { bg: "bg-navy-light", badge: "chip-navy", ring: "ring-accent/40", tile: "from-accent to-accent/70 text-accent-foreground icon-tile-contrast" },
 };
 
 const PHASES: Phase[] = ["ensinar", "treinar", "transferir"];
