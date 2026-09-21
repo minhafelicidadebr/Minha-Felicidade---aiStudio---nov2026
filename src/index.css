@@ -788,6 +788,20 @@
   backdrop-filter: blur(8px);
 }
 
+/* Readable icon glyphs inside saturated tiles (beats child text-* utilities) */
+.icon-tile-contrast svg {
+  color: currentColor;
+  filter: drop-shadow(0 1px 2px hsl(0 0% 0% / 0.35));
+}
+
+/* Theme-aware XP/status chips — guaranteed contrast on tinted cards */
+.chip-coral { background: hsl(var(--destructive) / 0.14); color: hsl(0 78% 40%); }
+.dark .chip-coral { background: hsl(0 70% 55% / 0.22); color: hsl(0 95% 78%); }
+.chip-gold { background: hsl(var(--secondary) / 0.22); color: hsl(36 95% 28%); }
+.dark .chip-gold { background: hsl(var(--secondary) / 0.16); color: hsl(45 100% 68%); }
+.chip-navy { background: hsl(var(--accent) / 0.12); color: hsl(var(--accent)); }
+.dark .chip-navy { background: hsl(var(--accent) / 0.22); color: hsl(197 90% 74%); }
+
 /* Premium cards — layered depth, gradient border, hover lift */
 .card-premium {
   position: relative;
