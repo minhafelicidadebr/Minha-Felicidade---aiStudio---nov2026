@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle2, BookOpen, Video, Brain, Sparkles, ArrowRight, Zap } from "lucide-react";
+import { X, CheckCircle2, BookOpen, Video, Brain, Sparkles, ArrowRight, Zap, Theater, Bug, Rocket } from "lucide-react";
 
 const modules = [
   {
-    n: 1, icon: "🎭", title: "As Grandes Mentiras Sobre Ser Feliz",
+    n: 1, icon: Theater, tile: "module-tile-coral", title: "As Grandes Mentiras Sobre Ser Feliz",
     desc: "Misconceptions, Miswanting, Falácia de G.I. Joe",
     tag: "Diagnóstico",
     detail: "Neste módulo inaugural, você vai descobrir que quase tudo que acredita sobre felicidade está errado. Dinheiro não compra felicidade (acima de um limiar), notas perfeitas não garantem satisfação, e o corpo ideal não traz paz interior.",
@@ -14,7 +14,7 @@ const modules = [
     gradient: "gradient-card-coral"
   },
   {
-    n: 2, icon: "🐛", title: "O Bug das Expectativas",
+    n: 2, icon: Bug, tile: "module-tile-navy", title: "O Bug das Expectativas",
     desc: "Adaptação Hedônica, Pontos de Referência, Impact Bias",
     tag: "Diagnóstico",
     detail: "Seu cérebro tem bugs de fábrica. A adaptação hedônica faz você se acostumar com coisas boas, os pontos de referência distorcem comparações, e o impact bias faz você superestimar o impacto de eventos futuros.",
@@ -24,7 +24,7 @@ const modules = [
     gradient: "gradient-card-navy"
   },
   {
-    n: 3, icon: "⚡", title: "O Que Realmente Funciona",
+    n: 3, icon: Zap, tile: "module-tile-gold", title: "O Que Realmente Funciona",
     desc: "6 Rewirements: Conexão, Bondade, Gratidão, Flow, Sono, Tempo",
     tag: "Intervenção",
     detail: "Agora que sabemos os bugs, é hora dos patches! Seis estratégias cientificamente validadas para reprogramar seu cérebro: investir em conexões sociais, praticar bondade, cultivar gratidão, buscar flow, priorizar sono e usar bem o tempo.",
@@ -34,7 +34,7 @@ const modules = [
     gradient: "gradient-card-gold"
   },
   {
-    n: 4, icon: "🧠", title: "Hackeando o Cérebro para Sentir-se Melhor",
+    n: 4, icon: Brain, tile: "module-tile-coral", title: "Hackeando o Cérebro para Sentir-se Melhor",
     desc: "Savoring, Visualização Negativa, Mindfulness, Experiências",
     tag: "Intervenção",
     detail: "Técnicas avançadas de neurociência afetiva para hackear seu sistema de recompensa. Aprenda savoring (saborear o momento), visualização negativa, mindfulness e por que experiências superam posses.",
@@ -44,7 +44,7 @@ const modules = [
     gradient: "gradient-card-coral"
   },
   {
-    n: 5, icon: "🚀", title: "Virando o Jogo da Vida Real",
+    n: 5, icon: Rocket, tile: "module-tile-navy", title: "Virando o Jogo da Vida Real",
     desc: "WOOP, Implementation Intentions, Growth Mindset, Hábitos",
     tag: "Sustentação",
     detail: "O módulo final transforma conhecimento em ação duradoura. Use o framework WOOP para definir objetivos, Implementation Intentions para automatizar comportamentos, Growth Mindset para abraçar desafios e a ciência dos hábitos.",
@@ -104,8 +104,8 @@ export default function CourseStructure() {
                 {/* Shimmer */}
                 <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-transparent via-primary/3 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />
 
-                <div className="w-14 h-14 rounded-2xl gradient-institute flex items-center justify-center shrink-0 shadow-warm group-hover:scale-110 transition-transform relative z-10">
-                  <span className="text-2xl">{m.icon}</span>
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform relative z-10 ${m.tile}`}>
+                  <m.icon className="w-7 h-7" strokeWidth={1.8} />
                 </div>
                 <div className="flex-1 relative z-10">
                   <div className="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -153,7 +153,9 @@ export default function CourseStructure() {
                 >
                   <X className="w-4 h-4" />
                 </button>
-                <span className="text-5xl block mb-4 relative z-10">{selected.icon}</span>
+                <div className="w-14 h-14 rounded-2xl bg-primary-foreground/15 backdrop-blur flex items-center justify-center mb-4 relative z-10">
+                  <selected.icon className="w-7 h-7" strokeWidth={1.8} />
+                </div>
                 <div className="flex items-center gap-2 mb-2 relative z-10">
                   <span className="text-xs font-bold uppercase tracking-wider opacity-80">Semana {selected.n}</span>
                   <span className="px-2 py-0.5 rounded-full bg-primary-foreground/20 text-xs font-bold">{selected.tag}</span>
