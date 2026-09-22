@@ -22,12 +22,20 @@ function localDbAvailable(): boolean {
   }
 }
 
-function asAuthenticated(uid: string, statement: string): string {
+function asAuthenticatedCommit(uid: string, statement: string): string {
   return sql(`BEGIN;
     SET LOCAL ROLE authenticated;
     SET LOCAL request.jwt.claims = '{"sub":"${uid}","role":"authenticated"}';
     ${statement};
     ROLLBACK;`);
+}
+
+function asAuthenticatedCommit(uid: string, statement: string): string {
+  return sql(`BEGIN;
+    SET LOCAL ROLE authenticated;
+    SET LOCAL request.jwt.claims = '{"sub":"${uid}","role":"authenticated"}';
+    ${statement};
+    COMMIT;`);
 }
 
 const available = localDbAvailable();
@@ -77,7 +85,7 @@ suite("TRUST-1.6.1 / R33-R34 — notification outbox contract", () => {
 
   it("invite_member cria convite e enfileira delivery request real", () => {
     const payload = JSON.parse(
-      asAuthenticated(
+      asAuthenticatedCommit(
         ADMIN,
         `SELECT public.invite_member('${ORG}', '${EMAIL}', 'educator', NULL, NULL)::text`,
       ),
@@ -112,7 +120,7 @@ suite("TRUST-1.6.1 / R33-R34 — notification outbox contract", () => {
 
   it("invite_member é idempotente e não duplica a outbox inicial", () => {
     const payload = JSON.parse(
-      asAuthenticated(
+      asAuthenticatedCommit(
         ADMIN,
         `SELECT public.invite_member('${ORG}', '${EMAIL}', 'educator', NULL, NULL)::text`,
       ),
