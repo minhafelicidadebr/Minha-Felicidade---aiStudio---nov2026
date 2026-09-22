@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
       ai_usage_limits: {
@@ -44,7 +49,6 @@ export type Database = {
           name: string
           school_id: string
           semester: number | null
-          status: string
           year: number
         }
         Insert: {
@@ -54,7 +58,6 @@ export type Database = {
           name: string
           school_id: string
           semester?: number | null
-          status?: string
           year?: number
         }
         Update: {
@@ -64,7 +67,6 @@ export type Database = {
           name?: string
           school_id?: string
           semester?: number | null
-          status?: string
           year?: number
         }
         Relationships: [
@@ -147,7 +149,6 @@ export type Database = {
       }
       guardian_consent_events: {
         Row: {
-          assurance_level: string
           created_at: string
           decision: string
           guardian_email: string
@@ -155,11 +156,9 @@ export type Database = {
           id: string
           occurred_at: string
           policy_version: string
-          request_id: string | null
           user_id: string
         }
         Insert: {
-          assurance_level?: string
           created_at?: string
           decision?: string
           guardian_email: string
@@ -167,11 +166,9 @@ export type Database = {
           id?: string
           occurred_at?: string
           policy_version: string
-          request_id?: string | null
           user_id: string
         }
         Update: {
-          assurance_level?: string
           created_at?: string
           decision?: string
           guardian_email?: string
@@ -179,92 +176,9 @@ export type Database = {
           id?: string
           occurred_at?: string
           policy_version?: string
-          request_id?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "guardian_consent_events_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "guardian_consent_requests"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      guardian_consent_policies: {
-        Row: {
-          active: boolean
-          created_at: string
-          id: string
-          policy_version: string
-          requires_reconsent: boolean
-          statement_sha256: string
-        }
-        Insert: {
-          active?: boolean
-          created_at?: string
-          id?: string
-          policy_version: string
-          requires_reconsent?: boolean
-          statement_sha256: string
-        }
-        Update: {
-          active?: boolean
-          created_at?: string
-          id?: string
-          policy_version?: string
-          requires_reconsent?: boolean
-          statement_sha256?: string
-        }
         Relationships: []
-      }
-      guardian_consent_requests: {
-        Row: {
-          consumed_at: string | null
-          created_at: string
-          expires_at: string
-          guardian_email: string
-          guardian_name: string
-          id: string
-          policy_version: string
-          status: string
-          student_user_id: string
-          token_hash: string
-        }
-        Insert: {
-          consumed_at?: string | null
-          created_at?: string
-          expires_at?: string
-          guardian_email: string
-          guardian_name: string
-          id?: string
-          policy_version: string
-          status?: string
-          student_user_id: string
-          token_hash: string
-        }
-        Update: {
-          consumed_at?: string | null
-          created_at?: string
-          expires_at?: string
-          guardian_email?: string
-          guardian_name?: string
-          id?: string
-          policy_version?: string
-          status?: string
-          student_user_id?: string
-          token_hash?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "guardian_consent_requests_policy_version_fkey"
-            columns: ["policy_version"]
-            isOneToOne: false
-            referencedRelation: "guardian_consent_policies"
-            referencedColumns: ["policy_version"]
-          },
-        ]
       }
       institutional_decision_events: {
         Row: {
@@ -848,7 +762,6 @@ export type Database = {
           name: string
           organization_id: string
           state_code: string | null
-          status: string
         }
         Insert: {
           created_at?: string
@@ -858,7 +771,6 @@ export type Database = {
           name: string
           organization_id: string
           state_code?: string | null
-          status?: string
         }
         Update: {
           created_at?: string
@@ -868,7 +780,6 @@ export type Database = {
           name?: string
           organization_id?: string
           state_code?: string | null
-          status?: string
         }
         Relationships: [
           {
@@ -1055,30 +966,17 @@ export type Database = {
         }
         Returns: Json
       }
-      archive_institutional_entity: {
-        Args: { _entity: string; _entity_id: string }
-        Returns: Json
-      }
       can_read_school: { Args: { _school_id: string }; Returns: boolean }
       claim_escolar_subscription: { Args: never; Returns: Json }
       claim_escolar_with_token: { Args: { _token: string }; Returns: Json }
-      create_guardian_consent_request: {
-        Args: { _guardian_email: string; _guardian_name: string }
-        Returns: Json
-      }
       create_organization: {
         Args: { _name: string; _slug?: string }
-        Returns: Json
-      }
-      decide_guardian_consent: {
-        Args: { _decision: string; _token: string }
         Returns: Json
       }
       enforce_ai_usage_limit: {
         Args: { _function_name: string }
         Returns: Json
       }
-      enqueue_engagement_reminders: { Args: never; Returns: Json }
       escalate_indicator: {
         Args: {
           _indicator: string
@@ -1088,24 +986,7 @@ export type Database = {
         }
         Returns: Json
       }
-      get_current_guardian_consent_policy: {
-        Args: never
-        Returns: {
-          policy_version: string
-          requires_reconsent: boolean
-          statement_sha256: string
-        }[]
-      }
       get_funnel_overview: { Args: { _days?: number }; Returns: Json }
-      get_institutional_decision_events: {
-        Args: {
-          _days?: number
-          _limit?: number
-          _offset?: number
-          _organization_id: string
-        }
-        Returns: Json
-      }
       get_learning_progress_overview: { Args: never; Returns: Json }
       get_my_guardian_consent_status: { Args: never; Returns: Json }
       get_my_learning_progress_summary: { Args: never; Returns: Json }
@@ -1128,13 +1009,8 @@ export type Database = {
         Args: { _organization_id: string }
         Returns: Json
       }
-      get_org_analytics_series: { Args: { _org_id: string }; Returns: Json }
       get_org_engagement_summary: { Args: { _org_id: string }; Returns: Json }
       get_school_metrics: {
-        Args: { _period?: string; _school_id: string }
-        Returns: Json
-      }
-      get_school_metrics_r29_base: {
         Args: { _period?: string; _school_id: string }
         Returns: Json
       }
@@ -1150,10 +1026,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      has_valid_guardian_consent: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
       invite_member: {
         Args: {
           _class_id?: string
@@ -1165,21 +1037,8 @@ export type Database = {
         Returns: Json
       }
       is_org_admin: { Args: { _org_id: string }; Returns: boolean }
-      is_org_lifecycle_admin: { Args: { _org_id: string }; Returns: boolean }
       is_org_member: { Args: { _org_id: string }; Returns: boolean }
-      is_school_lifecycle_admin: {
-        Args: { _school_id: string }
-        Returns: boolean
-      }
       metric_minimum_group_size: { Args: never; Returns: number }
-      record_engagement_event: {
-        Args: {
-          _event_type: string
-          _metadata?: Json
-          _organization_id: string
-        }
-        Returns: Json
-      }
       record_guardian_consent: {
         Args: {
           _guardian_email: string
@@ -1190,28 +1049,11 @@ export type Database = {
       }
       request_subscription_cancellation: { Args: never; Returns: Json }
       resend_invitation: { Args: { _invitation_id: string }; Returns: Json }
-      resolve_guardian_consent_token: {
-        Args: { _token: string }
-        Returns: Json
-      }
-      revoke_guardian_consent: {
-        Args: { _policy_version: string }
-        Returns: Json
-      }
       run_subscription_lifecycle: {
         Args: { _reminder_days?: number }
         Returns: Json
       }
       set_my_birth_date: { Args: { _birth_date: string }; Returns: Json }
-      submit_nps_response: {
-        Args: {
-          _context?: string
-          _feedback?: string
-          _organization_id?: string
-          _score: number
-        }
-        Returns: Json
-      }
       user_has_feature: {
         Args: { _feature: string; _user_id: string }
         Returns: boolean
@@ -1235,12 +1077,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1264,11 +1106,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1289,11 +1131,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1314,11 +1156,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1331,11 +1173,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1351,4 +1193,3 @@ export const Constants = {
     },
   },
 } as const
-

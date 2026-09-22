@@ -1,12 +1,10 @@
+import { useState, useEffect } from "react";
 import { Activity, Zap, AlertTriangle, DollarSign } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { institutionalQueryKeys } from "@/lib/institutional-query-keys";
 import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
-import DashboardErrorState from "@/components/dashboard/DashboardErrorState";
+import DashboardEmptyState from "@/components/dashboard/DashboardEmptyState";
 
 interface Props {
-    userId: string | null;
     organizationId: string;
 }
 
@@ -19,26 +17,28 @@ interface Metrics {
     recent_errors_24h: number;
 }
 
-async function fetchOperationalMetrics(organizationId: string): Promise<Metrics> {
-    const { data, error } = await supabase.rpc("get_operational_metrics", {
-        _organization_id: organizationId,
-    });
-    if (error) throw error;
-    if (!data) throw new Error("Métricas operacionais indisponíveis.");
-    return data as unknown as Metrics;
-}
+/**
+ * ONDA 5 — Operational metrics section for the org dashboard.
+ * Calls get_operational_metrics RPC (org_admin only).
+ */
+export default function OperationalMetrics({ organizationId }: Props) {
+    const [metrics, setMetrics] = useState<Metrics | null>(null);
+    const [loading, setLoading] = useState(true);
 
-/** Query particionada por identidade+tenant; resposta tardia permanece na key de origem. */
-export default function OperationalMetrics({ userId, organizationId }: Props) {
-    const query = useQuery({
-        queryKey: institutionalQueryKeys.operationalMetrics(userId, organizationId),
-        queryFn: () => fetchOperationalMetrics(organizationId),
-        enabled: Boolean(userId && organizationId),
-        staleTime: 30_000,
-        retry: false,
-    });
+    useEffect(() => {
+        async function fetch() {
+            const { data, error } = await supabase.rpc("get_operational_metrics", {
+                _organization_id: organizationId,
+            });
+            if (!error && data) {
+                setMetrics(data as unknown as Metrics);
+            }
+            setLoading(false);
+        }
+        fetch();
+    }, [organizationId]);
 
-    if (query.isLoading) {
+    if (loading) {
         return (
             <section className="mb-8">
                 <h2 className="text-lg font-display font-bold mb-3 flex items-center gap-2">
@@ -49,20 +49,21 @@ export default function OperationalMetrics({ userId, organizationId }: Props) {
         );
     }
 
-    if (query.isError || !query.data) {
+    if (!metrics) {
         return (
             <section className="mb-8">
-                <DashboardErrorState
+                <h2 className="text-lg font-display font-bold mb-3 flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-accent" /> Operação
+                </h2>
+                <DashboardEmptyState
+                    variant="empty"
                     title="Métricas operacionais indisponíveis"
-                    description="A leitura falhou; nenhum zero ou dado de outro contexto foi usado como fallback."
-                    detail={(query.error as Error | null)?.message ?? null}
-                    onRetry={() => void query.refetch()}
+                    description="Os dados operacionais não puderam ser carregados. A RPC pode não estar disponível ainda."
+                    icon={Activity}
                 />
             </section>
         );
     }
-
-    const metrics = query.data;
 
     const items = [
         { icon: Zap, label: "IA hoje", value: metrics.ai_usage_today, suffix: "chamadas", color: "text-primary" },
@@ -81,9 +82,7 @@ export default function OperationalMetrics({ userId, organizationId }: Props) {
                     <div key={item.label} className="p-4 rounded-2xl glass-card">
                         <item.icon className={`w-4 h-4 ${item.color} mb-1.5`} />
                         <div className="text-xl font-display font-bold">{item.value}</div>
-                        <div className="text-[11px] text-muted-foreground">
-                            {item.label}{item.suffix ? ` · ${item.suffix}` : ""}
-                        </div>
+                        <div className="text-[11px] text-muted-foreground">{item.label}{item.suffix ? ` · ${item.suffix}` : ""}</div>
                     </div>
                 ))}
             </div>

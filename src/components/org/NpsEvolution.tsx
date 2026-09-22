@@ -5,10 +5,10 @@ import DashboardErrorState from "@/components/dashboard/DashboardErrorState";
 import { useOrgAnalyticsSeries } from "@/hooks/useOrgAnalytics";
 import { describeSuppression, isEmptyGroup, isSuppressed } from "@/lib/metric-privacy";
 
-interface Props { userId: string | null; organizationId: string }
+interface Props { organizationId: string }
 
-export default function NpsEvolution({ userId, organizationId }: Props) {
-    const query = useOrgAnalyticsSeries(userId, organizationId);
+export default function NpsEvolution({ organizationId }: Props) {
+    const query = useOrgAnalyticsSeries(organizationId);
 
     if (query.isLoading) {
         return <section className="mt-4"><DashboardSkeleton variant="chart" label="Carregando evolução NPS" /></section>;

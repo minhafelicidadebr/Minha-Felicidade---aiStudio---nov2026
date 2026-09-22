@@ -1,7 +1,6 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 import {
     ArrowRight,
     Building2,
@@ -29,19 +28,12 @@ import {
     canResendInvitations,
     evaluateActivationEscalation,
 } from "@/lib/decision-queue-items";
-import {
-    useDashboardContext,
-    type UseDashboardContextResult,
-} from "@/hooks/useDashboardContext";
+import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { useDecisionActions } from "@/hooks/useDecisionActions";
 import { useOrganizationDetail } from "@/hooks/useOrganizationDetail";
 import OnboardingWizard from "@/components/org/OnboardingWizard";
 import OperationalMetrics from "@/components/org/OperationalMetrics";
 import EngagementMetrics from "@/components/org/EngagementMetrics";
-import {
-    assertInstitutionalPayload,
-    institutionalQueryKeys,
-} from "@/lib/institutional-query-keys";
 // UX-4: EngagementChart e NpsEvolution importados com lazy para code-split.
 // São os que puxam Recharts inteiro para dentro deste chunk (D48).
 const EngagementChart = lazy(() => import("@/components/org/EngagementChart"));
@@ -55,36 +47,13 @@ async function loadPdfGenerator() {
     return generatePilotReportPDF;
 }
 
-/** A key do tenant desmonta formulários e operações visuais antes de montar o próximo contexto. */
 export default function OrgDashboardPage() {
-    const dashboardContext = useDashboardContext();
-    return (
-        <OrgDashboardContent
-            key={dashboardContext.activeOrganization?.id ?? "no-organization"}
-            dashboardContext={dashboardContext}
-        />
-    );
-}
-
-function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashboardContextResult }) {
-    const { activeOrganization, memberships, userId, selectionRequired } = dashboardContext;
+    // Organização ativa vem do ContextSwitcher (shell) — reage à troca no switcher.
+    const { activeOrganization, memberships } = useDashboardContext();
     const { org, schools, classes, members, invitations, loading, error, refetch } =
-        useOrganizationDetail(userId, activeOrganization?.id);
-    const { resendInvitations, escalateIndicator } = useDecisionActions(userId, activeOrganization?.id ?? null);
-    const queryClient = useQueryClient();
+        useOrganizationDetail(activeOrganization?.id);
+    const { resendInvitations, escalateIndicator } = useDecisionActions();
     const { toast } = useToast();
-    const mounted = useRef(true);
-
-    useEffect(() => () => {
-        mounted.current = false;
-    }, []);
-
-    const invalidateOrganization = useCallback(
-        (organizationId: string) => queryClient.invalidateQueries({
-            queryKey: institutionalQueryKeys.organization(userId, organizationId),
-        }),
-        [queryClient, userId],
-    );
 
     // Invite form state
     const [showInvite, setShowInvite] = useState(false);
@@ -109,7 +78,6 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
     // Pilot report — PDF with data visualization
     const handleDownloadReport = async () => {
         if (!org) return;
-        const operationOrganizationId = org.id;
         const roleCounts = members.reduce<Record<string, number>>((acc, m) => {
             acc[m.role] = (acc[m.role] || 0) + 1;
             return acc;
@@ -119,17 +87,19 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
         const totalInvited = members.length + invitations.length;
         const activationRate = totalInvited > 0 ? Math.round((members.length / totalInvited) * 100) : 0;
 
-        // TRUST-1.2 (§D8): `null` de supressão chega ao PDF sem virar zero.
-        // TRUST-1.3: resposta tardia só pode alimentar o tenant que iniciou o export.
+        // Engajamento e NPS da rede.
+        //
+        // TRUST-1.2 (§D8): exportação é superfície de dados, não detalhe visual.
+        // O servidor suprime as métricas derivadas de estudantes quando a rede
+        // tem entre 1 e o limiar de participantes — e nesse caso elas chegam
+        // aqui como `null`. O `|| 0` que existia antes convertia a supressão em
+        // zero fabricado e o PDF imprimia "0" onde a resposta é "não podemos
+        // dizer". Agora a supressão trafega até o PDF.
         let engagementData = undefined;
         try {
-            const { data: eng } = await supabase.rpc("get_org_engagement_summary", {
-                _org_id: operationOrganizationId,
-            });
-            if (!mounted.current) return;
-            if (eng && typeof eng === "object" && !Array.isArray(eng)) {
+            const { data: eng } = await supabase.rpc("get_org_engagement_summary", { _org_id: org.id });
+            if (eng && typeof eng === "object") {
                 const e = eng as Record<string, unknown>;
-                assertInstitutionalPayload(operationOrganizationId, e.organization_id, "organization");
                 const num = (v: unknown): number | null => (typeof v === "number" ? v : null);
                 engagementData = {
                     suppressedMetrics: Array.isArray(e.suppressed_metrics)
@@ -147,13 +117,9 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
                     npsDetractors: num(e.nps_detractors),
                 };
             }
-        } catch {
-            // Best-effort: falha de analytics não inclui dados não validados no PDF.
-        }
+        } catch { /* best-effort */ }
 
-        if (!mounted.current) return;
         const generatePilotReportPDF = await loadPdfGenerator();
-        if (!mounted.current) return;
         const doc = generatePilotReportPDF({
             orgName: org.name,
             generatedAt: new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }),
@@ -170,115 +136,83 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
             engagementData,
         });
 
-        if (!mounted.current) return;
         doc.save(`relatorio_piloto_${org.slug || "organizacao"}.pdf`);
         toast({ title: "Relatório PDF baixado! 📄", description: "Design premium com indicadores agregados." });
     };
 
     const handleAddSchool = async () => {
         if (!org || !schoolName.trim()) return;
-        const operationOrganizationId = org.id;
-        const submittedName = schoolName.trim();
         setAddingSchool(true);
         try {
             const { error: err } = await supabase.from("schools").insert({
-                organization_id: operationOrganizationId,
-                name: submittedName,
+                organization_id: org.id,
+                name: schoolName.trim(),
                 municipality: schoolMunicipality.trim() || null,
             });
             if (err) throw err;
-            await invalidateOrganization(operationOrganizationId);
-            if (!mounted.current) return;
-            toast({ title: "Escola criada!", description: submittedName });
+            toast({ title: "Escola criada!", description: schoolName.trim() });
             setSchoolName("");
             setSchoolMunicipality("");
             setShowAddSchool(false);
+            refetch();
         } catch (e) {
-            if (mounted.current) {
-                toast({ title: "Erro ao criar escola", description: e instanceof Error ? e.message : "Tente novamente.", variant: "destructive" });
-            }
+            toast({ title: "Erro ao criar escola", description: e instanceof Error ? e.message : "Tente novamente.", variant: "destructive" });
         } finally {
-            if (mounted.current) setAddingSchool(false);
+            setAddingSchool(false);
         }
     };
 
     const handleAddClass = async (schoolId: string) => {
-        if (!org || !className.trim() || !schools.some((school) => school.id === schoolId)) return;
-        const operationOrganizationId = org.id;
-        const submittedName = className.trim();
+        if (!className.trim()) return;
         setAddingClass(true);
         try {
             const { error: err } = await supabase.from("classes").insert({
                 school_id: schoolId,
-                name: submittedName,
+                name: className.trim(),
                 year: new Date().getFullYear(),
             });
             if (err) throw err;
-            await invalidateOrganization(operationOrganizationId);
-            if (!mounted.current) return;
-            toast({ title: "Turma criada!", description: submittedName });
+            toast({ title: "Turma criada!", description: className.trim() });
             setClassName("");
             setAddingClassForSchool(null);
+            refetch();
         } catch (e) {
-            if (mounted.current) {
-                toast({ title: "Erro ao criar turma", description: e instanceof Error ? e.message : "Tente novamente.", variant: "destructive" });
-            }
+            toast({ title: "Erro ao criar turma", description: e instanceof Error ? e.message : "Tente novamente.", variant: "destructive" });
         } finally {
-            if (mounted.current) setAddingClass(false);
+            setAddingClass(false);
         }
     };
 
     const handleInvite = async () => {
         if (!org || !inviteEmail.trim()) return;
-        const operationOrganizationId = org.id;
-        const submittedEmail = inviteEmail.trim();
-        const submittedRole = inviteRole;
         setInviting(true);
         try {
             const { data, error: err } = await supabase.rpc("invite_member", {
-                _organization_id: operationOrganizationId,
-                _invited_email: submittedEmail,
-                _role: submittedRole,
+                _organization_id: org.id,
+                _invited_email: inviteEmail.trim(),
+                _role: inviteRole,
             });
             if (err) throw err;
-            await invalidateOrganization(operationOrganizationId);
-            if (!mounted.current) return;
             const result = data as { created: boolean; token: string } | null;
             toast({
                 title: result?.created ? "Convite enviado!" : "Convite já existe",
                 description: result?.created
-                    ? `${submittedEmail} receberá o convite como ${submittedRole}.`
+                    ? `${inviteEmail} receberá o convite como ${inviteRole}.`
                     : "Este e-mail já tem um convite pendente.",
             });
             setInviteEmail("");
             setShowInvite(false);
+            refetch();
         } catch (e) {
-            if (mounted.current) {
-                toast({
-                    title: "Erro ao convidar",
-                    description: e instanceof Error ? e.message : "Tente novamente.",
-                    variant: "destructive",
-                });
-            }
+            toast({
+                title: "Erro ao convidar",
+                description: e instanceof Error ? e.message : "Tente novamente.",
+                variant: "destructive",
+            });
         } finally {
-            if (mounted.current) setInviting(false);
+            setInviting(false);
         }
     };
-
-    // Uma seleção persistida que perdeu autorização não cai silenciosamente em
-    // outro tenant. O switcher do shell permanece disponível para escolha explícita.
-    if (selectionRequired) {
-        return (
-            <RoleAwareAppShell title="Visão da rede" subtitle="Selecione uma organização">
-                <DashboardEmptyState
-                    variant="denied"
-                    title="O contexto anterior não está mais disponível"
-                    description="Selecione no cabeçalho uma organização que sua conta ainda pode acessar."
-                    icon={Building2}
-                />
-            </RoleAwareAppShell>
-        );
-    }
 
     // ── Loading state (canonical) ─────────────────────────────────────────────
     if (loading) {
@@ -719,16 +653,16 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
                 )}
 
                 {/* Engagement Metrics */}
-                <EngagementMetrics userId={userId} organizationId={org.id} />
+                <EngagementMetrics organizationId={org.id} />
 
                 {/* Engagement Evolution Chart — lazy loaded para code-split (D48) */}
                 <Suspense fallback={null}>
-                    <EngagementChart userId={userId} organizationId={org.id} />
-                    <NpsEvolution userId={userId} organizationId={org.id} />
+                    <EngagementChart organizationId={org.id} />
+                    <NpsEvolution organizationId={org.id} />
                 </Suspense>
 
                 {/* Operational Metrics */}
-                <OperationalMetrics userId={userId} organizationId={org.id} />
+                <OperationalMetrics organizationId={org.id} />
             </motion.div>
         </RoleAwareAppShell>
     );

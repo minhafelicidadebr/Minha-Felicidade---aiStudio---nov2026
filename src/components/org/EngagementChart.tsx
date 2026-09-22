@@ -8,7 +8,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { useOrgAnalyticsSeries } from "@/hooks/useOrgAnalytics";
 import { isSuppressed, type MetricGroup } from "@/lib/metric-privacy";
 
-interface Props { userId: string | null; organizationId: string }
+interface Props { organizationId: string }
 interface WeeklyDataPoint { week: string; sessions: number | null; exercises: number | null; aiInteractions: number | null }
 
 const chartConfig = {
@@ -20,8 +20,8 @@ const chartConfig = {
 const chartValue = (group: MetricGroup) => isSuppressed(group) ? null : group.value;
 const tableValue = (group: MetricGroup) => isSuppressed(group) ? "Amostra insuficiente" : group.value;
 
-export default function EngagementChart({ userId, organizationId }: Props) {
-    const query = useOrgAnalyticsSeries(userId, organizationId);
+export default function EngagementChart({ organizationId }: Props) {
+    const query = useOrgAnalyticsSeries(organizationId);
 
     if (query.isLoading) {
         return <section className="mt-6"><DashboardSkeleton variant="chart" label="Carregando gráfico de engajamento" /></section>;

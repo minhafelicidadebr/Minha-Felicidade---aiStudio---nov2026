@@ -12,19 +12,17 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 vi.mock("@/integrations/supabase/client", () => ({
     supabase: {
-        auth: { getSession: vi.fn(), onAuthStateChange: vi.fn() },
+        auth: { getSession: vi.fn() },
         rpc: vi.fn(),
         from: vi.fn(),
     },
 }));
 
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardContextProvider } from "@/contexts/DashboardContext";
 import RoleAwareAppShell from "./RoleAwareAppShell";
 import RoleHomeRedirect from "@/pages/RoleHomeRedirect";
 
 const mockGetSession = supabase.auth.getSession as unknown as ReturnType<typeof vi.fn>;
-const mockOnAuthStateChange = supabase.auth.onAuthStateChange as unknown as ReturnType<typeof vi.fn>;
 const mockRpc = supabase.rpc as unknown as ReturnType<typeof vi.fn>;
 const mockFrom = supabase.from as unknown as ReturnType<typeof vi.fn>;
 
@@ -53,9 +51,6 @@ function arrangeContext({
     profileError,
 }: ContextFixture = {}) {
     mockGetSession.mockResolvedValue({ data: { session: { user: { id: "user-1" } } } });
-    mockOnAuthStateChange.mockReturnValue({
-        data: { subscription: { unsubscribe: vi.fn() } },
-    });
     mockRpc.mockResolvedValue(
         profileError ? { data: null, error: profileError } : { data: { roles: appRoles }, error: null },
     );
@@ -80,11 +75,9 @@ function renderShell(children: React.ReactNode = <p>conteudo do painel</p>) {
     });
     return render(
         <QueryClientProvider client={queryClient}>
-            <DashboardContextProvider>
-                <MemoryRouter initialEntries={["/org"]}>
-                    <RoleAwareAppShell title="Visão da rede">{children}</RoleAwareAppShell>
-                </MemoryRouter>
-            </DashboardContextProvider>
+            <MemoryRouter initialEntries={["/org"]}>
+                <RoleAwareAppShell title="Visão da rede">{children}</RoleAwareAppShell>
+            </MemoryRouter>
         </QueryClientProvider>,
     );
 }
@@ -95,24 +88,21 @@ function renderRoleHome() {
     });
     return render(
         <QueryClientProvider client={queryClient}>
-            <DashboardContextProvider>
-                <MemoryRouter initialEntries={["/inicio"]}>
-                    <Routes>
-                        <Route path="/inicio" element={<RoleHomeRedirect />} />
-                        <Route path="/alunos" element={<p>HOME ESTUDANTE</p>} />
-                        <Route path="/dashboard" element={<RoleHomeRedirect />} />
-                        <Route path="/org" element={<p>HOME REDE</p>} />
-                        <Route path="/admin" element={<p>HOME ADMIN</p>} />
-                    </Routes>
-                </MemoryRouter>
-            </DashboardContextProvider>
+            <MemoryRouter initialEntries={["/inicio"]}>
+                <Routes>
+                    <Route path="/inicio" element={<RoleHomeRedirect />} />
+                    <Route path="/alunos" element={<p>HOME ESTUDANTE</p>} />
+                    <Route path="/dashboard" element={<RoleHomeRedirect />} />
+                    <Route path="/org" element={<p>HOME REDE</p>} />
+                    <Route path="/admin" element={<p>HOME ADMIN</p>} />
+                </Routes>
+            </MemoryRouter>
         </QueryClientProvider>,
     );
 }
 
 beforeEach(() => {
     localStorage.clear();
-    sessionStorage.clear();
 });
 
 afterEach(() => {
@@ -134,11 +124,7 @@ describe("RoleHomeRedirect — redirecionamento canônico por papel", () => {
     });
 
     it("membership institucional tem precedência sobre papel de aplicação", async () => {
-        arrangeContext({
-            appRoles: ["student"],
-            membershipRoles: ["platform_admin"],
-            organizations: [{ id: "org-1", name: "Rede Alfa", slug: "alfa" }],
-        });
+        arrangeContext({ appRoles: ["student"], membershipRoles: ["platform_admin"] });
         renderRoleHome();
         expect(await screen.findByText("HOME ADMIN")).toBeInTheDocument();
     });

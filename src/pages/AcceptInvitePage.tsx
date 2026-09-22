@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { CheckCircle2, Loader2, XCircle, ArrowRight, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { institutionalQueryKeys } from "@/lib/institutional-query-keys";
 import logoIcon from "@/assets/logo-icon.png";
 
 /**
@@ -16,7 +14,6 @@ import logoIcon from "@/assets/logo-icon.png";
 export default function AcceptInvitePage() {
     const [params] = useSearchParams();
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
     const token = params.get("token");
 
     const [status, setStatus] = useState<"loading" | "success" | "error" | "no_token">(token ? "loading" : "no_token");
@@ -25,11 +22,9 @@ export default function AcceptInvitePage() {
 
     useEffect(() => {
         if (!token) return;
-        let active = true;
 
         async function accept() {
             const { data: { session } } = await supabase.auth.getSession();
-            if (!active) return;
             if (!session) {
                 // Redirect to auth with return URL
                 navigate(`/auth?redirect=${encodeURIComponent(`/aceitar-convite?token=${token}`)}`);
@@ -37,29 +32,18 @@ export default function AcceptInvitePage() {
             }
 
             const { data, error } = await supabase.rpc("accept_invitation", { _token: token });
-            if (!active) return;
             if (error) {
                 setStatus("error");
                 setErrorMsg(error.message || "Não foi possível aceitar o convite.");
                 return;
             }
 
-            // A membership recém-criada precisa chegar ao Provider antes de a
-            // pessoa abrir /org. A invalidação é da identidade atual, nunca global.
-            await queryClient.invalidateQueries({
-                queryKey: institutionalQueryKeys.context(session.user.id),
-                exact: true,
-            });
-            if (!active) return;
             setResult(data as { organization_id: string; role: string });
             setStatus("success");
         }
 
-        void accept();
-        return () => {
-            active = false;
-        };
-    }, [navigate, queryClient, token]);
+        accept();
+    }, [token, navigate]);
 
     const roleLabel: Record<string, string> = {
         org_admin: "Gestor",

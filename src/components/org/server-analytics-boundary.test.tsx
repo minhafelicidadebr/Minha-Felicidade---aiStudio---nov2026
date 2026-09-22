@@ -49,20 +49,20 @@ afterEach(() => { cleanup(); vi.clearAllMocks(); });
 describe("TRUST-1.2.1 — estados da série institucional", () => {
     it("loading é explícito", () => {
         seriesMock.mockReturnValue(queryResult(undefined, "loading"));
-        render(<EngagementChart userId="user-a" organizationId="org-a" />);
+        render(<EngagementChart organizationId="org-a" />);
         expect(screen.getByRole("status")).toHaveAttribute("aria-busy", "true");
     });
 
     it("erro é recuperável e não vira vazio", () => {
         seriesMock.mockReturnValue(queryResult(undefined, "error"));
-        render(<NpsEvolution userId="user-a" organizationId="org-a" />);
+        render(<NpsEvolution organizationId="org-a" />);
         expect(screen.getByRole("alert")).toHaveTextContent(/Não foi possível carregar/);
         expect(screen.getByRole("button", { name: /Tentar novamente/i })).toBeInTheDocument();
     });
 
     it("zero legítimo produz estado vazio, não supressão", () => {
         seriesMock.mockReturnValue(queryResult(series()));
-        render(<NpsEvolution userId="user-a" organizationId="org-a" />);
+        render(<NpsEvolution organizationId="org-a" />);
         expect(screen.getByText("Sem dados de NPS")).toBeInTheDocument();
         expect(screen.queryByText(/Amostra insuficiente/)).not.toBeInTheDocument();
     });
@@ -72,7 +72,7 @@ describe("TRUST-1.2.1 — estados da série institucional", () => {
         seriesMock.mockReturnValue(queryResult(series({
             engagement: [{ bucket_start: "2026-09-01", sessions: compromised, exercises: hidden, ai_interactions: hidden }],
         })));
-        const { container } = render(<EngagementChart userId="user-a" organizationId="org-a" />);
+        const { container } = render(<EngagementChart organizationId="org-a" />);
         expect(screen.getByText(/Alguns pontos mostram/)).toBeInTheDocument();
         fireEvent.click(screen.getByRole("button", { name: /Ver dados em tabela/i }));
         expect(screen.getAllByText("Amostra insuficiente").length).toBeGreaterThanOrEqual(3);
@@ -84,7 +84,7 @@ describe("TRUST-1.2.1 — estados da série institucional", () => {
         seriesMock.mockReturnValue(queryResult(series({
             engagement: [{ bucket_start: "2026-09-01", sessions: disclosed(12), exercises: disclosed(7), ai_interactions: disclosed(6) }],
         })));
-        render(<EngagementChart userId="user-a" organizationId="org-a" />);
+        render(<EngagementChart organizationId="org-a" />);
         fireEvent.click(screen.getByRole("button", { name: /Ver dados em tabela/i }));
         expect(screen.getByRole("cell", { name: "12" })).toBeInTheDocument();
         expect(screen.getByRole("cell", { name: "7" })).toBeInTheDocument();
@@ -102,7 +102,7 @@ describe("TRUST-1.2.1 — resumo por métrica", () => {
 
     it("disclosed renderiza números autorizados", () => {
         summaryMock.mockReturnValue(queryResult(base));
-        render(<EngagementMetrics userId="user-a" organizationId="org-a" />);
+        render(<EngagementMetrics organizationId="org-a" />);
         expect(screen.getByLabelText("Sessões: 12")).toBeInTheDocument();
         expect(screen.getByText("+100")).toBeInTheDocument();
     });
@@ -115,7 +115,7 @@ describe("TRUST-1.2.1 — resumo por métrica", () => {
             total_sessions: null,
             nps_avg: null, nps_count: null, nps_promoters: null, nps_detractors: null,
         }));
-        const { container } = render(<EngagementMetrics userId="user-a" organizationId="org-a" />);
+        const { container } = render(<EngagementMetrics organizationId="org-a" />);
         expect(screen.getByLabelText("Sessões: amostra insuficiente")).toBeInTheDocument();
         expect(screen.getByLabelText("Exercícios: 7")).toBeInTheDocument();
         expect(screen.getAllByText("Amostra insuficiente para exibição segura.")).toHaveLength(1);

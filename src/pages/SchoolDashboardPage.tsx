@@ -8,7 +8,7 @@
 // `get_school_metrics`). O guard de rota barra o papel errado, mas não sabe se
 // ESTA escola pertence à rede da pessoa — só o banco sabe.
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Bot, Building2, Dumbbell, Flame, School, Users } from "lucide-react";
 import RoleAwareAppShell from "@/components/dashboard/RoleAwareAppShell";
@@ -47,23 +47,17 @@ const TOTAL_CARDS = [
 export default function SchoolDashboardPage() {
     const { schoolId } = useParams<{ schoolId: string }>();
     const [period, setPeriod] = useState<DashboardPeriod>(DEFAULT_DASHBOARD_PERIOD);
-    const { organizations, roleHomePath, userId, activeOrganization, setActiveOrganization } = useDashboardContext();
+    const { organizations, roleHomePath } = useDashboardContext();
 
     // Id malformado não gera chamada de rede (contrato §2 item 7): passar `null`
     // desabilita a query e a pessoa vai direto ao estado de acesso negado.
     const validId = isValidSchoolId(schoolId) ? schoolId! : null;
-    const { metrics, isLoading, isError, isDenied, error, refetch } = useSchoolMetrics(userId, validId, period);
+    const { metrics, isLoading, isError, isDenied, error, refetch } = useSchoolMetrics(validId, period);
 
-    const resolvedOrganization = useMemo(
-        () => organizations.find((organization) => organization.id === metrics?.organization_id) ?? null,
-        [organizations, metrics?.organization_id],
+    const organizationName = useMemo(
+        () => organizations.find((o) => o.id === metrics?.organization_id)?.name ?? null,
+        [organizations, metrics],
     );
-    const organizationName = resolvedOrganization?.name ?? null;
-
-    useEffect(() => {
-        if (!resolvedOrganization || activeOrganization?.id === resolvedOrganization.id) return;
-        setActiveOrganization(resolvedOrganization.id);
-    }, [activeOrganization?.id, resolvedOrganization, setActiveOrganization]);
 
     const filters = <GlobalFilterBar period={period} onPeriodChange={setPeriod} />;
 
@@ -103,28 +97,6 @@ export default function SchoolDashboardPage() {
                     detail={error?.message ?? null}
                     onRetry={refetch}
                 />
-            </RoleAwareAppShell>
-        );
-    }
-
-    if (!resolvedOrganization) {
-        return (
-            <RoleAwareAppShell title={TITLE} subtitle="Acesso restrito">
-                <DashboardEmptyState
-                    variant="denied"
-                    title="Escola fora do contexto autorizado"
-                    description="O servidor autorizou a escola, mas a organização não está no contexto atual da conta."
-                    icon={School}
-                    action={{ label: "Voltar ao meu painel", to: roleHomePath }}
-                />
-            </RoleAwareAppShell>
-        );
-    }
-
-    if (activeOrganization?.id !== resolvedOrganization.id) {
-        return (
-            <RoleAwareAppShell title={TITLE} subtitle="Sincronizando contexto…" filters={filters}>
-                <DashboardSkeleton variant="page" label="Sincronizando organização autorizada da escola" />
             </RoleAwareAppShell>
         );
     }

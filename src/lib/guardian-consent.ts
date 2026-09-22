@@ -56,23 +56,6 @@ export const GUARDIAN_CONSENT_STATEMENT =
   "processadas por provedores de IA contratados pela plataforma, com a " +
   "finalidade de gerar as respostas educacionais.";
 
-// TRUST-1.6: texto exato apresentado ao responsável por versão de política.
-// O servidor guarda só o hash (statement_sha256, ver migration
-// 20260916120000) como referência imutável — o texto em si vive aqui,
-// versionado junto do código. Adicionar uma versão nova aqui NÃO a torna
-// vigente por si só: isso depende de uma linha correspondente e ativa em
-// guardian_consent_policies (configuração de servidor).
-export const GUARDIAN_CONSENT_STATEMENTS: Record<string, string> = {
-  "2026.2": GUARDIAN_CONSENT_STATEMENT,
-};
-
-export function getConsentStatementText(policyVersion: string): string {
-  return (
-    GUARDIAN_CONSENT_STATEMENTS[policyVersion] ??
-    "Não foi possível carregar o texto desta versão da autorização. Por segurança, não avance sem ler o termo completo — contate o suporte."
-  );
-}
-
 // --- Gate de rota (fail-closed) --------------------------------------------
 // Decisão pura e testável usada por <RequireGuardianConsent>. Regra central de
 // segurança juvenil: acesso privado só é liberado ("clear") diante de uma

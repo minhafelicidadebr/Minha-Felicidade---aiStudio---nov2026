@@ -37,12 +37,11 @@ export default function ContextSwitcher({
 }: ContextSwitcherProps) {
     const [open, setOpen] = useState(false);
 
-    if (organizations.length === 0) return null;
+    if (organizations.length === 0 || !activeOrganization) return null;
 
-    // Um único contexto já validado não precisa de controle. Quando uma seleção
-    // persistida foi invalidada, até uma única organização exige escolha
-    // explícita para não trocar o tenant silenciosamente.
-    if (organizations.length === 1 && activeOrganization) {
+    // Um único contexto: mostra o contexto (informação necessária) sem oferecer
+    // um controle que não faz nada (controle morto confunde e falha em a11y).
+    if (organizations.length === 1) {
         return (
             <p
                 className={cn(
@@ -61,9 +60,7 @@ export default function ContextSwitcher({
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger
-                aria-label={activeOrganization
-                    ? `Trocar organização. Atual: ${activeOrganization.name}`
-                    : "Selecionar organização autorizada"}
+                aria-label={`Trocar organização. Atual: ${activeOrganization.name}`}
                 className={cn(
                     "flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-border/60 bg-card/60 px-3 text-xs font-semibold transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                     className,
@@ -71,7 +68,7 @@ export default function ContextSwitcher({
                 data-testid="context-switcher"
             >
                 <Building2 className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden="true" />
-                <span className="truncate">{activeOrganization?.name ?? "Selecionar organização"}</span>
+                <span className="truncate">{activeOrganization.name}</span>
                 <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
             </PopoverTrigger>
             <PopoverContent align="start" className="w-72 p-0">
@@ -81,7 +78,7 @@ export default function ContextSwitcher({
                         <CommandEmpty>Nenhuma organização encontrada.</CommandEmpty>
                         <CommandGroup heading="Suas organizações">
                             {organizations.map((organization) => {
-                                const isActive = organization.id === activeOrganization?.id;
+                                const isActive = organization.id === activeOrganization.id;
                                 return (
                                     <CommandItem
                                         key={organization.id}
