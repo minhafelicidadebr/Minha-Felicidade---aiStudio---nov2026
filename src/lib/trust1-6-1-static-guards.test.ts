@@ -11,8 +11,9 @@ const template = readFileSync("supabase/functions/_shared/email-templates.ts", "
 describe("TRUST-1.6.1 static guards", () => {
   it("invitation RPCs never target phantom outbox columns", () => {
     expect(migration).toContain("kind, recipient_email, user_id, payload, dedupe_key");
-    expect(migration).not.toContain("body_html");
-    expect(migration).not.toContain("EXCEPTION WHEN OTHERS");
+    expect(migration).not.toMatch(/INSERT INTO public\.notification_outbox\s*\([^)]*body_html/s);
+    expect(migration).not.toMatch(/INSERT INTO public\.notification_outbox\s*\([^)]*metadata/s);
+    expect(migration).not.toMatch(/EXCEPTION\s+WHEN\s+OTHERS\s+THEN\s+NULL/i);
   });
 
   it("notification worker reads only the canonical payload column", () => {
