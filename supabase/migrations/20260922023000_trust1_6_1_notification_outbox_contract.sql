@@ -77,7 +77,6 @@ BEGIN
     AND lower(invited_email) = lower(trim(_invited_email))
     AND role = _role
     AND accepted_at IS NULL
-    AND revoked_at IS NULL
     AND expires_at > now()
   ORDER BY created_at DESC
   LIMIT 1;
@@ -167,9 +166,6 @@ BEGIN
 
   IF _inv.accepted_at IS NOT NULL THEN
     RAISE EXCEPTION 'Invitation already accepted' USING ERRCODE = '22023';
-  END IF;
-  IF _inv.revoked_at IS NOT NULL THEN
-    RAISE EXCEPTION 'Invitation revoked' USING ERRCODE = '22023';
   END IF;
   IF _inv.expires_at < now() THEN
     RAISE EXCEPTION 'Invitation expired: cancel and issue a new one' USING ERRCODE = '22023';
