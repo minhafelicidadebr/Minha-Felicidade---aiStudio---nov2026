@@ -22,7 +22,7 @@ function localDbAvailable(): boolean {
   }
 }
 
-function asAuthenticatedCommit(uid: string, statement: string): string {
+function asAuthenticated(uid: string, statement: string): string {
   return sql(`BEGIN;
     SET LOCAL ROLE authenticated;
     SET LOCAL request.jwt.claims = '{"sub":"${uid}","role":"authenticated"}';
@@ -136,7 +136,7 @@ suite("TRUST-1.6.1 / R33-R34 — notification outbox contract", () => {
 
   it("resend_invitation enfileira nova entrega antes de registrar sucesso", () => {
     const result = JSON.parse(
-      asAuthenticated(
+      asAuthenticatedCommit(
         ADMIN,
         `SELECT public.resend_invitation('${invitationId}')::text`,
       ),
