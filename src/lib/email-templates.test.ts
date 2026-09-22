@@ -8,6 +8,9 @@ const KINDS: NotificationKind[] = [
     "subscription_expired",
     "subscription_canceled",
     "escolar_claim",
+    "institutional_invite",
+    "engagement_reminder",
+    "guardian_consent_request",
 ];
 
 describe("renderEmail", () => {
@@ -50,5 +53,28 @@ describe("renderEmail", () => {
         const out = renderEmail({ kind: "escolar_claim", claimToken: "TOKEN-ABC-123", appUrl: "https://app.exemplo" });
         expect(out.subject.toLowerCase()).toContain("escolar");
         expect(out.html).toContain("TOKEN-ABC-123");
+    });
+
+    it("convite institucional gera link de aceitação com token", () => {
+        const out = renderEmail({
+            kind: "institutional_invite",
+            inviteToken: "INVITE-TOKEN",
+            inviteRole: "educator",
+            orgName: "Escola Exemplo",
+            appUrl: "https://app.exemplo",
+        });
+        expect(out.html).toContain("/aceitar-convite?token=INVITE-TOKEN");
+        expect(out.html).toContain("Escola Exemplo");
+    });
+
+    it("pedido de consentimento gera link seguro para a decisão do responsável", () => {
+        const out = renderEmail({
+            kind: "guardian_consent_request",
+            guardianConsentToken: "GUARDIAN-TOKEN",
+            policyVersion: "2026.1",
+            appUrl: "https://app.exemplo",
+        });
+        expect(out.html).toContain("/autorizacao-responsavel?token=GUARDIAN-TOKEN");
+        expect(out.html).toContain("2026.1");
     });
 });

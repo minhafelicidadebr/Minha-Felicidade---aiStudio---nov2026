@@ -168,7 +168,7 @@ fabricado (`'Fake Guardian'`, `'fake@example.invalid'`) — a RPC devolveu
 | # | Risco | Severidade | Evidência | Status |
 |---|---|---|---|---|
 | R06 | Consentimento parental era auto-declarado pelo próprio adolescente, sem verificação independente de canal. | P0 | **RED comprovado em execução** contra Postgres local antes da correção (ver acima); **GREEN comprovado** depois — 35 contratos de runtime em `guardian-consent-runtime-contract.test.ts` + 7 guards estáticos em `trust1-6-static-guards.test.ts`. | ✅ **FECHADO.** Modelo de request/token/decisão de canal separado: `create_guardian_consent_request` (estudante declara canal, não grava consentimento) → e-mail com token de uso único → `resolve_guardian_consent_token`/`decide_guardian_consent` (responsável, sem sessão, ação positiva explícita) → evento `channel_verified` no ledger. `record_guardian_consent` permanece no banco (linhas antigas imutáveis) mas nenhum código de aplicação a chama mais. Assurance explícito: **Level 1 (canal verificado, relação apenas declarada)**, não Level 2 (vínculo confirmado institucionalmente) — não existe hoje fonte institucional de relação estudante-responsável no produto; construir uma é expansão de produto, fora do escopo desta correção. Ver `TRUST_1_6_GATE.md`. |
-| R33 | **`notification_outbox` referenciado com colunas inexistentes (`body_html`, `metadata`) em `invite_member`/`resend_invitation`.** O `INSERT` sempre falhou nessas RPCs; o erro é engolido por `EXCEPTION WHEN OTHERS THEN NULL`, por isso nunca foi notado. Ledger de decisão institucional grava normalmente, mas o e-mail correspondente provavelmente nunca é enfileirado de fato. | P1 | **Comprovado no código** (schema real de `notification_outbox` desde `20260710120000` só tem `payload`, sem `body_html`/`metadata`) durante a implementação de `create_guardian_consent_request`, que usa os nomes de coluna corretos. | **Aberto.** Não corrigido nesta onda — RPCs pré-existentes, não relacionadas a R06 diretamente, fora do escopo declarado. Registrado para tratamento em onda futura. |
+| R33 | **`notification_outbox` referenciado com colunas inexistentes (`body_html`, `metadata`) em `invite_member`/`resend_invitation`.** O `INSERT` falhava e o erro era engolido, enquanto a UI relatava sucesso. | P1 | **RED comprovado no schema/código; GREEN exigido em runtime na TRUST-1.6.1.** Migration `20260922023000_trust1_6_1_notification_outbox_contract.sql` reconcilia as duas RPCs com as colunas reais (`payload`), remove o swallow silencioso e só registra reenvio bem-sucedido após a outbox aceitar a entrega. | ✅ **FECHADO (TRUST-1.6.1).** UI passou a distinguir enfileiramento de entrega; contratos de PostgreSQL e CI cobrem criação, idempotência, reenvio e cooldown. |
 
 Server gating: `enforce_ai_usage_limit` (chamada pelas 4 edge functions de
 IA) recebeu checagem de `has_valid_guardian_consent` no topo, antes de
@@ -184,3 +184,11 @@ security gate verdes.
 
 R22 continua `OPEN / REQUIRED_BEFORE_PRODUCTION`; nenhuma migration TRUST foi
 promovida remotamente nesta onda.
+
+## Atualização TRUST-1.6.1 — contrato da fila de notificações
+
+| # | Risco | Severidade | Evidência | Status |
+|---|---|---|---|---|
+| R34 | **Worker `process-notifications` consultava a coluna inexistente `notification_outbox.metadata` e não possuía template para `guardian_consent_request`.** Mesmo com requests corretamente enfileirados pela TRUST-1.6, o dispatcher não conseguia cumprir o contrato real da tabela e pedidos de consentimento não tinham renderização de e-mail. | P1 | Tipos gerados confirmam que a outbox possui `payload`, não `metadata`; código Deno selecionava `metadata` e `NotificationKind` não incluía `guardian_consent_request`. | ✅ **FECHADO (TRUST-1.6.1).** Worker lê apenas `payload`; template canônico e espelho Deno incluem convite institucional e consentimento do responsável, com testes unitários e guards estáticos. |
+
+**R09 permanece aberto:** fila funcional não equivale a entrega real. `RESEND_API_KEY`, `RESEND_FROM_EMAIL` e `PUBLIC_SITE_URL` precisam ser verificados/configurados no ambiente antes do piloto real. A UI agora evita afirmar entrega antes do dispatcher/provedor.

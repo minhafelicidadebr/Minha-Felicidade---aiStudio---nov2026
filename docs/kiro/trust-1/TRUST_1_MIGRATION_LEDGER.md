@@ -383,3 +383,18 @@ Achado fora do escopo, registrado como R33: `invite_member`/
 `metadata`) em `notification_outbox`; erro engolido por
 `EXCEPTION WHEN OTHERS`. Não corrigido nesta onda. Ver
 `TRUST_1_RISK_REGISTER.md` e `TRUST_1_6_GATE.md`.
+
+
+## Atualização TRUST-1.6.1 / DB-R33-R34
+
+| # | Migration | Domínio | Classificação |
+|---|---|---|---|
+| 50 | `20260922023000_trust1_6_1_notification_outbox_contract.sql` | Convites / notification outbox / delivery contract | **RECONCILED, forward-only, NOT_YET_APPLIED_REMOTELY** |
+
+A #50 reconcilia `invite_member` e `resend_invitation` com o schema real da
+`notification_outbox`: usa `payload`, remove o swallow silencioso de erro e
+preserva os grants mínimos. O worker Deno foi reconciliado no mesmo PR para
+consumir o mesmo contrato. Replay CI: **50/50**; runtime completo: **161/161**.
+
+R22 permanece `OPEN / REQUIRED_BEFORE_PRODUCTION`; nenhuma migration desta
+sequência foi promovida remotamente.

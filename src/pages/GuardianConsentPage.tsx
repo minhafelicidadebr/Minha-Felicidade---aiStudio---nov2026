@@ -60,7 +60,10 @@ export default function GuardianConsentPage() {
       });
       if (error) throw error;
       setSent(true);
-      toast({ title: "Link enviado! 💌", description: "Avise seu responsável para verificar o e-mail." });
+      toast({
+        title: "Pedido registrado 💌",
+        description: "O e-mail foi colocado na fila de notificações. A entrega depende do serviço de envio.",
+      });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
       toast({ title: "Erro ao enviar", description: message, variant: "destructive" });
@@ -107,18 +110,19 @@ export default function GuardianConsentPage() {
             </div>
           ) : (
             <p className="text-xs text-muted-foreground mt-1 mb-6">
-              Como você tem menos de 18 anos, a lei (LGPD, art. 14) exige a autorização de um pai, mãe ou
-              responsável legal. Enviaremos um link para o e-mail informado — é o responsável, pelo
-              próprio e-mail, quem confirma a autorização.
+              Para continuar neste programa, a política de participação exige uma decisão do responsável
+              indicado. Enviaremos um link para o e-mail informado — é a pessoa que controla esse canal,
+              pelo próprio link, quem registra a decisão. A verificação do e-mail não comprova, por si só,
+              vínculo jurídico de responsabilidade.
             </p>
           )}
 
           {sent ? (
             <div className="text-center py-4">
               <span className="text-3xl mb-2 block">💌</span>
-              <p className="text-sm font-display font-bold">Link enviado!</p>
+              <p className="text-sm font-display font-bold">Pedido colocado na fila</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Avise {guardianName || "seu responsável"} para verificar o e-mail e concluir a autorização.
+                Avise {guardianName || "seu responsável"} para verificar o e-mail. A mensagem pode levar alguns instantes para chegar.
               </p>
             </div>
           ) : (

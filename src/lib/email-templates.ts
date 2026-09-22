@@ -14,7 +14,8 @@ export type NotificationKind =
     | "subscription_canceled"
     | "escolar_claim"
     | "institutional_invite"
-    | "engagement_reminder";
+    | "engagement_reminder"
+    | "guardian_consent_request";
 
 export interface EmailTemplateInput {
     kind: NotificationKind;
@@ -26,6 +27,8 @@ export interface EmailTemplateInput {
     inviteRole?: string; // só para 'institutional_invite'
     inviteToken?: string; // só para 'institutional_invite'
     orgName?: string; // só para 'institutional_invite'
+    guardianConsentToken?: string; // só para 'guardian_consent_request'
+    policyVersion?: string; // só para 'guardian_consent_request'
 }
 
 export interface RenderedEmail {
@@ -151,6 +154,25 @@ export function renderEmail(input: EmailTemplateInput): RenderedEmail {
                         ? `<p style="margin:24px 0"><a href="${acceptUrl}" style="background:#f97316;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:bold">Aceitar convite</a></p>`
                         : `<p>Crie sua conta na plataforma para aceitar o convite.</p>`) +
                     `<p style="font-size:13px;color:#6b7280">Se não reconhece este convite, ignore este e-mail.</p>`,
+                ),
+            };
+        }
+
+        case "guardian_consent_request": {
+            const decisionUrl = input.appUrl
+                ? `${input.appUrl}/autorizacao-responsavel?token=${input.guardianConsentToken ?? ""}`
+                : undefined;
+            return {
+                subject: "Pedido de autorização para uso da plataforma",
+                html: shell(
+                    "Revise um pedido de autorização",
+                    `<p>Você recebeu um pedido para revisar a participação de um adolescente na plataforma Ciência do Bem-Estar.</p>` +
+                    `<p>Antes de decidir, leia o termo apresentado no link seguro abaixo. A abertura do link confirma apenas o controle deste canal de e-mail; a decisão é registrada separadamente.</p>` +
+                    (decisionUrl
+                        ? `<p style="margin:24px 0"><a href="${decisionUrl}" style="background:#f97316;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:bold">Revisar pedido</a></p>`
+                        : `<p>Acesse a plataforma pelo endereço institucional para revisar o pedido.</p>`) +
+                    (input.policyVersion ? `<p style="font-size:12px;color:#6b7280">Versão do termo: ${input.policyVersion}.</p>` : "") +
+                    `<p style="font-size:13px;color:#6b7280">Se você não reconhece este pedido, ignore esta mensagem.</p>`,
                 ),
             };
         }
