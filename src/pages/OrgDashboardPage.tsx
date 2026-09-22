@@ -243,12 +243,12 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
             if (err) throw err;
             await invalidateOrganization(operationOrganizationId);
             if (!mounted.current) return;
-            const result = data as { created: boolean; token: string } | null;
+            const result = data as { created: boolean; token: string; delivery_enqueued?: boolean } | null;
             toast({
-                title: result?.created ? "Convite enviado!" : "Convite já existe",
-                description: result?.created
-                    ? `${submittedEmail} receberá o convite como ${submittedRole}.`
-                    : "Este e-mail já tem um convite pendente.",
+                title: result?.created ? "Convite criado" : "Convite pendente reutilizado",
+                description: result?.delivery_enqueued
+                    ? `O envio para ${submittedEmail} foi colocado na fila como ${submittedRole}.`
+                    : "O convite existe, mas o servidor não confirmou o enfileiramento do e-mail.",
             });
             setInviteEmail("");
             setShowInvite(false);
