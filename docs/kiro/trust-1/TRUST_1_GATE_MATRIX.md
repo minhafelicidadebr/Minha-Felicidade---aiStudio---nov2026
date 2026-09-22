@@ -261,6 +261,28 @@ desde banco vazio. Regressão: 121/121 contratos herdados (TRUST-1.2/1.2.1/
 não homologa o remoto — R22 continua `OPEN / REQUIRED_BEFORE_PRODUCTION`.
 Receipt: `TRUST_1_6_GATE.md`.
 
+## TRUST-1.6.1 — Notification Outbox Contract
+
+| Critério | Status |
+|---|---|
+| Convite inicial persiste delivery request real | ✅ |
+| Reenvio só conta sucesso após enqueue | ✅ |
+| Colunas fantasma `body_html`/`metadata` eliminadas das RPCs | ✅ |
+| Worker lê schema canônico `payload` | ✅ |
+| Consent request possui template de e-mail | ✅ |
+| UI não confunde fila com entrega | ✅ |
+| Replay desde zero | ✅ 50/50 |
+| Runtime Postgres | ✅ 161/161, 0 skips |
+| Quality/build/security gate | ✅ |
+| Produção intocada | ✅ |
+| R33 / R34 | ✅ fechados |
+| R09 | 🔴 aberto — configuração real de entrega |
+| R22 | 🔴 aberto — preflight remoto obrigatório |
+
+**Gate: ✅ APROVADO LOCALMENTE**
+
+Receipt: `TRUST_1_6_1_GATE.md`.
+
 ## TRUST-1.7 — Prova Ponta a Ponta
 
 | Critério | Status |
