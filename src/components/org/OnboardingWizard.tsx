@@ -94,7 +94,10 @@ export default function OnboardingWizard({ organizationId, orgName, onComplete }
             });
             if (error) throw error;
             await invalidateOrganization();
-            toast({ title: "Convite enviado! ✉️" });
+            toast({
+                title: "Convite criado! ✉️",
+                description: "O envio por e-mail foi colocado na fila. A entrega depende do serviço de notificações.",
+            });
             setStep("done");
         } catch (e) {
             toast({ title: "Erro ao convidar", description: e instanceof Error ? e.message : "Tente novamente.", variant: "destructive" });
