@@ -110,9 +110,10 @@ export default function GuardianConsentPage() {
             </div>
           ) : (
             <p className="text-xs text-muted-foreground mt-1 mb-6">
-              Como você tem menos de 18 anos, a lei (LGPD, art. 14) exige a autorização de um pai, mãe ou
-              responsável legal. Enviaremos um link para o e-mail informado — é o responsável, pelo
-              próprio e-mail, quem confirma a autorização.
+              Para continuar neste programa, a política de participação exige uma decisão do responsável
+              indicado. Enviaremos um link para o e-mail informado — é a pessoa que controla esse canal,
+              pelo próprio link, quem registra a decisão. A verificação do e-mail não comprova, por si só,
+              vínculo jurídico de responsabilidade.
             </p>
           )}
 
