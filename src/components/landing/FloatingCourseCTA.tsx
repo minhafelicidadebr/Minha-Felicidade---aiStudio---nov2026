@@ -5,7 +5,7 @@ export default function FloatingCourseCTA() {
   return (
     <motion.a
       href="#modulos"
-      className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-40 group max-md:hidden"
+      className="fixed bottom-6 right-6 z-40 group"
       initial={{ opacity: 0, y: 20, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ delay: 1.2, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}

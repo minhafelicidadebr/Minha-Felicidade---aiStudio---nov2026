@@ -33,11 +33,13 @@ export default function NpsSurvey({ context = "general", onDismiss }: NpsSurveyP
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("Não autenticado");
 
-            const { error } = await supabase.from("nps_responses").insert({
-                user_id: user.id,
-                score,
-                feedback: feedback.trim() || null,
-                context,
+            // TRUST-1.4 (R11): grava via RPC `submit_nps_response`, não via
+            // INSERT direto — a RPC resolve auth.uid() no servidor e não
+            // aceita organization_id (este componente não declara tenant).
+            const { error } = await supabase.rpc("submit_nps_response", {
+                _score: score,
+                _feedback: feedback.trim() || undefined,
+                _context: context,
             });
             if (error) throw error;
             setStep("done");

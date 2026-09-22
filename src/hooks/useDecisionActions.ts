@@ -10,8 +10,10 @@
 // dois como "falhou" faria o gestor repetir um reenvio que nunca vai passar.
 
 import { useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DecisionActionOutcome } from "@/components/dashboard/DecisionQueue";
+import { institutionalQueryKeys } from "@/lib/institutional-query-keys";
 
 /** `42501` = insufficient_privilege no Postgres. */
 const DENIED_CODE = "42501";
@@ -59,9 +61,32 @@ export interface UseDecisionActionsResult {
     }) => Promise<DecisionActionOutcome>;
 }
 
-export function useDecisionActions(): UseDecisionActionsResult {
+export function useDecisionActions(
+    userId: string | null,
+    organizationId: string | null,
+): UseDecisionActionsResult {
+    const queryClient = useQueryClient();
+    const invalidateOrganization = useCallback(
+        () => organizationId
+            ? queryClient.invalidateQueries({
+                queryKey: institutionalQueryKeys.organization(userId, organizationId),
+            })
+            : Promise.resolve(),
+        [organizationId, queryClient, userId],
+    );
+    const finalize = useCallback(
+        async (outcome: DecisionActionOutcome): Promise<DecisionActionOutcome> => {
+            if (outcome.status === "succeeded") await invalidateOrganization();
+            return outcome;
+        },
+        [invalidateOrganization],
+    );
+
     const resendInvitations = useCallback(
         async (invitationIds: string[]): Promise<DecisionActionOutcome> => {
+            if (!userId || !organizationId) {
+                return { status: "failed", message: "Contexto institucional indisponível. Nada foi alterado." };
+            }
             if (invitationIds.length === 0) {
                 return { status: "failed", message: "Nenhum convite selecionado. Nada foi alterado." };
             }
@@ -70,7 +95,7 @@ export function useDecisionActions(): UseDecisionActionsResult {
                 const { error } = await supabase.rpc("resend_invitation", {
                     _invitation_id: invitationIds[0],
                 });
-                return toOutcome(error, "Convite reenviado.");
+                return finalize(toOutcome(error, "Convite reenviado."));
             }
 
             // Lote: relata quantos passaram e quantos foram recusados, em vez de
@@ -92,15 +117,15 @@ export function useDecisionActions(): UseDecisionActionsResult {
                 );
             }
 
-            return {
+            return finalize({
                 status: "succeeded",
                 message:
                     blocked === 0
                         ? `${sent} ${sent === 1 ? "convite reenviado" : "convites reenviados"}.`
                         : `${sent} reenviado(s); ${blocked} recusado(s) pelo limite de 3 reenvios ou pela janela de 24 horas.`,
-            };
+            });
         },
-        [],
+        [finalize, organizationId, userId],
     );
 
     const escalateIndicator = useCallback(
@@ -110,15 +135,18 @@ export function useDecisionActions(): UseDecisionActionsResult {
             indicator: string;
             severity?: "info" | "warning" | "critical";
         }): Promise<DecisionActionOutcome> => {
+            if (!userId || !organizationId || input.organizationId !== organizationId) {
+                return { status: "failed", message: "Contexto institucional mudou. Nada foi alterado." };
+            }
             const { error } = await supabase.rpc("escalate_indicator", {
                 _organization_id: input.organizationId,
                 _school_id: input.schoolId ?? null,
                 _indicator: input.indicator,
                 _severity: input.severity ?? "warning",
             });
-            return toOutcome(error, "Pendência escalada e registrada no histórico de decisões.");
+            return finalize(toOutcome(error, "Pendência escalada e registrada no histórico de decisões."));
         },
-        [],
+        [finalize, organizationId, userId],
     );
 
     return { resendInvitations, escalateIndicator };
