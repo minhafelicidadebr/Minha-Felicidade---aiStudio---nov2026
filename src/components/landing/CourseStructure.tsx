@@ -132,7 +132,7 @@ export default function CourseStructure() {
                 <div className="absolute inset-0 bg-gradient-to-br from-foreground/[0.035] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="relative flex flex-col h-full min-h-[260px]">
                   <div className="flex items-start justify-between gap-3 mb-6">
-                    <div className={`w-13 h-13 min-w-13 rounded-2xl flex items-center justify-center ${module.tile}`}>
+                    <div className={`w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center ${module.tile}`}>
                       <Icon className="w-6 h-6" strokeWidth={1.8} />
                     </div>
                     <span className="font-display text-5xl leading-none text-foreground/[0.07]">0{module.n}</span>
