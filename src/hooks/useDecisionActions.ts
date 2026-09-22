@@ -95,7 +95,7 @@ export function useDecisionActions(
                 const { error } = await supabase.rpc("resend_invitation", {
                     _invitation_id: invitationIds[0],
                 });
-                return finalize(toOutcome(error, "Convite reenviado."));
+                return finalize(toOutcome(error, "Reenvio solicitado e colocado na fila de notificações."));
             }
 
             // Lote: relata quantos passaram e quantos foram recusados, em vez de
@@ -121,8 +121,8 @@ export function useDecisionActions(
                 status: "succeeded",
                 message:
                     blocked === 0
-                        ? `${sent} ${sent === 1 ? "convite reenviado" : "convites reenviados"}.`
-                        : `${sent} reenviado(s); ${blocked} recusado(s) pelo limite de 3 reenvios ou pela janela de 24 horas.`,
+                        ? `${sent} ${sent === 1 ? "reenvio solicitado" : "reenvios solicitados"} e colocado(s) na fila.`
+                        : `${sent} enfileirado(s); ${blocked} recusado(s) pelo limite de 3 reenvios ou pela janela de 24 horas.`,
             });
         },
         [finalize, organizationId, userId],
