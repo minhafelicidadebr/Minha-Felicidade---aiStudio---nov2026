@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { assertInstitutionalPayload, institutionalQueryKeys } from "@/lib/institutional-query-keys";
 import type { MetricGroup } from "@/lib/metric-privacy";
 
 export interface NpsSeriesPoint {
@@ -42,13 +43,14 @@ export interface OrgEngagementSummary {
     nps_detractors: number | null;
 }
 async function fetchSeries(organizationId: string): Promise<OrgAnalyticsSeries> {
-    // Type-asserted while generated Supabase types are out of sync with this RPC.
-    const { data, error } = await (supabase as any).rpc("get_org_analytics_series", { _org_id: organizationId });
+    const { data, error } = await supabase.rpc("get_org_analytics_series", { _org_id: organizationId });
     if (error) throw error;
     if (!data || typeof data !== "object" || Array.isArray(data)) {
         throw new Error("Resposta inválida da série institucional.");
     }
-    return data as unknown as OrgAnalyticsSeries;
+    const payload = data as unknown as OrgAnalyticsSeries;
+    assertInstitutionalPayload(organizationId, payload.organization_id, "organization");
+    return payload;
 }
 
 
@@ -58,25 +60,27 @@ async function fetchSummary(organizationId: string): Promise<OrgEngagementSummar
     if (!data || typeof data !== "object" || Array.isArray(data)) {
         throw new Error("Resposta inválida do resumo institucional.");
     }
-    return data as unknown as OrgEngagementSummary;
+    const payload = data as unknown as OrgEngagementSummary;
+    assertInstitutionalPayload(organizationId, payload.organization_id, "organization");
+    return payload;
 }
 
-/** Cache segregado por tenant; o servidor revalida o escopo em toda chamada. */
-export function useOrgAnalyticsSeries(organizationId: string) {
+/** Cache segregado por identidade e tenant; o servidor revalida o escopo. */
+export function useOrgAnalyticsSeries(userId: string | null, organizationId: string) {
     return useQuery({
-        queryKey: ["org-analytics-series", organizationId],
+        queryKey: institutionalQueryKeys.orgAnalytics(userId, organizationId),
         queryFn: () => fetchSeries(organizationId),
-        enabled: Boolean(organizationId),
+        enabled: Boolean(userId && organizationId),
         staleTime: 30_000,
         retry: false,
     });
 }
 
-export function useOrgEngagementSummary(organizationId: string) {
+export function useOrgEngagementSummary(userId: string | null, organizationId: string) {
     return useQuery({
-        queryKey: ["org-engagement-summary", organizationId],
+        queryKey: institutionalQueryKeys.orgEngagement(userId, organizationId),
         queryFn: () => fetchSummary(organizationId),
-        enabled: Boolean(organizationId),
+        enabled: Boolean(userId && organizationId),
         staleTime: 30_000,
         retry: false,
     });

@@ -11,7 +11,6 @@ import { getSafeRedirectPath } from "@/lib/redirect";
 import { translateAuthError } from "@/lib/auth-errors";
 import { trackEvent } from "@/lib/analytics";
 import {
-  GUARDIAN_CONSENT_POLICY_VERSION,
   GUARDIAN_CONSENT_STATEMENT,
   isMinor,
   isValidPastDate,
@@ -48,6 +47,11 @@ export default function AuthPage() {
 
   const requiresGuardianStep = !isLogin && birthDate && isValidPastDate(birthDate) && isMinor(birthDate);
 
+  // TRUST-1.6 (R06): o cadastro do adolescente não grava mais consentimento
+  // diretamente — ele só DECLARA o canal do responsável. A RPC
+  // create_guardian_consent_request envia um link ao e-mail informado; é o
+  // responsável, pelo próprio canal, quem decide (granted/declined). Ver
+  // src/pages/GuardianDecisionPage.tsx e docs/kiro/trust-1/TRUST_1_6_GATE.md.
   const completeSignup = async () => {
     const { error } = await supabase.auth.signUp({
       email,
@@ -57,16 +61,24 @@ export default function AuthPage() {
     if (error) throw error;
 
     if (requiresGuardianStep) {
-      const { error: consentError } = await supabase.rpc("record_guardian_consent", {
+      // A sessão do signUp pode levar um instante para propagar; a RPC exige
+      // auth.uid() válido, então aguardamos a sessão antes de chamar.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Não foi possível confirmar sua sessão para enviar o pedido ao responsável.");
+      const { error: requestError } = await supabase.rpc("create_guardian_consent_request", {
         _guardian_name: guardianName,
         _guardian_email: guardianEmail,
-        _policy_version: GUARDIAN_CONSENT_POLICY_VERSION,
       });
-      if (consentError) throw consentError;
+      if (requestError) throw requestError;
     }
 
     void trackEvent("signup"); // funil (best-effort, sem PII)
-    toast({ title: "Conta criada! 🎉", description: "Bem-vindo(a) à Ciência do Bem-Estar!" });
+    toast({
+      title: "Conta criada! 🎉",
+      description: requiresGuardianStep
+        ? "Enviamos um link ao responsável para confirmar a autorização."
+        : "Bem-vindo(a) à Ciência do Bem-Estar!",
+    });
     navigate(redirectPath, { replace: true });
   };
 
@@ -235,7 +247,9 @@ export default function AuthPage() {
                     <h2 className="font-display font-bold text-base">Autorização do responsável</h2>
                   </div>
                   <p className="text-xs text-muted-foreground -mt-2">
-                    Como você tem menos de 18 anos, a lei (LGPD, art. 14) exige a autorização de um pai, mãe ou responsável legal.
+                    Como você tem menos de 18 anos, a lei (LGPD, art. 14) exige a autorização de um pai, mãe ou
+                    responsável legal. Enviaremos um link para o e-mail informado — é o responsável, pelo próprio
+                    e-mail, quem confirma a autorização.
                   </p>
                   <div>
                     <label className="text-sm font-medium text-foreground mb-1.5 block">Nome do responsável</label>
@@ -245,16 +259,19 @@ export default function AuthPage() {
                     <label className="text-sm font-medium text-foreground mb-1.5 block">E-mail do responsável</label>
                     <input type="email" value={guardianEmail} onChange={(e) => setGuardianEmail(e.target.value)} placeholder="responsavel@email.com" className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" required />
                   </div>
-                  <label className="flex items-start gap-2.5 text-xs text-foreground bg-muted rounded-xl p-3.5 cursor-pointer">
+                  <p className="text-xs text-foreground bg-muted rounded-xl p-3.5">
+                    O responsável verá este termo antes de decidir: <span className="italic">{GUARDIAN_CONSENT_STATEMENT}</span>
+                  </p>
+                  <label className="flex items-start gap-2.5 text-xs text-foreground cursor-pointer">
                     <input type="checkbox" checked={guardianAck} onChange={(e) => setGuardianAck(e.target.checked)} className="mt-0.5 w-4 h-4 accent-primary shrink-0" required />
-                    <span>{GUARDIAN_CONSENT_STATEMENT}</span>
+                    <span>Confirmo que os dados acima são de um pai, mãe ou responsável legal real, que poderá receber o link de autorização.</span>
                   </label>
                   <div className="flex gap-3">
                     <button type="button" onClick={() => setStep("form")} className="px-5 py-3.5 rounded-xl bg-muted text-foreground font-semibold text-sm hover:bg-muted/80 transition-all">
                       Voltar
                     </button>
                     <button type="submit" disabled={loading || !guardianAck} className="flex-1 py-3.5 rounded-xl gradient-institute text-primary-foreground font-semibold text-sm shadow-warm hover:shadow-glow transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                      {loading ? <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> : <><Sparkles className="w-4 h-4" />Confirmar e começar</>}
+                      {loading ? <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> : <><Sparkles className="w-4 h-4" />Enviar link ao responsável</>}
                     </button>
                   </div>
                 </motion.form>

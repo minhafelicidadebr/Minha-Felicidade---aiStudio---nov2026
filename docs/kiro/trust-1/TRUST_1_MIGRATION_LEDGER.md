@@ -1,21 +1,22 @@
 # TRUST-1 — LEDGER DE MIGRATIONS
 
-46 arquivos em `supabase/migrations/`. Classificação por domínio e status.
+47 arquivos em `supabase/migrations/`. Classificação por domínio e status.
 
-## Estado corrente — TRUST-1.2.1
+## Estado corrente — TRUST-1.3 / DB-R29
 
 | # | Migration | Domínio | Classificação |
 |---|---|---|---|
 | 46 | `20260901120000_trust1_2_1_server_analytics_boundary.sql` | Privacidade / Analytics | **RECONCILED, forward-only, NOT_YET_APPLIED_REMOTELY** |
+| 47 | `20260902120000_trust1_3_r29_archived_operational_visibility.sql` | Segurança institucional / Lifecycle | **RECONCILED, forward-only, NOT_YET_APPLIED_REMOTELY** |
 
-A #46 remove policies administrativas de SELECT raw em `nps_responses` e
-`engagement_events` por semântica, cria `get_org_analytics_series(uuid)` e
-redefine `get_org_engagement_summary(uuid)` com contributor gate independente
-por métrica. Preserva self-read e acesso operacional. Sem `DROP ... CASCADE` e
-sem remoção de linhas.
+A #47 separa autorização operacional de autorização de ciclo de vida. Entidades
+`archived`/`suspended` deixam de aparecer em leituras operacionais; o
+arquivamento tenant-scoped passa pela RPC `archive_institutional_entity`; e
+métricas/analytics negam ancestrais inativos e omitem classes não ativas. O
+ledger append-only e as linhas históricas são preservados.
 
-`db reset --local`: **46/46 migrations desde banco vazio**. Contratos específicos:
-**12/12**; runtime completo: **78/78**.
+`db reset --local`: **47/47 migrations desde banco vazio**. Contratos archive:
+**28/28**; runtime completo aplicável: **93/93**.
 
 ### Migrations TRUST pendentes de promoção remota
 
@@ -25,6 +26,7 @@ sem remoção de linhas.
 | 44 | `20260826120000_trust1_5_ledger_read_rpc.sql` | 1.5 |
 | 45 | `20260828120000_trust1_2_privacy_and_archive.sql` | 1.2 |
 | 46 | `20260901120000_trust1_2_1_server_analytics_boundary.sql` | 1.2.1 |
+| 47 | `20260902120000_trust1_3_r29_archived_operational_visibility.sql` | 1.3 / DB-R29 |
 
 Nenhuma foi aplicada remotamente. Ordem obrigatória = timestamps; antes de
 produção, executar o preflight read-only do R22.
@@ -227,3 +229,157 @@ remotamente:
 
 Ordem de aplicação é a ordem dos timestamps. O checklist read-only de preflight
 está em `TRUST_1_R22_PREFLIGHT_CHECKLIST.md` e **não foi executado**.
+
+
+---
+
+## Atualização TRUST-1.3 / DB-R29
+
+| # | Migration | Domínio | Classificação |
+|---|---|---|---|
+| 47 | `20260902120000_trust1_3_r29_archived_operational_visibility.sql` | Segurança institucional / Lifecycle | **RECONCILED, forward-only, NOT_YET_APPLIED_REMOTELY** |
+
+A #47 fecha a frente DB/R29 sem editar o histórico:
+
+- `organizations`, `schools` e `classes` `archived`/`suspended` não aparecem em
+  SELECT operacional de `authenticated`; policies `FOR ALL` administrativas não
+  sobrevivem no estado final.
+- `is_org_admin`/`is_org_member` exigem organization active. O helper separado
+  `is_org_lifecycle_admin` autoriza a RPC tenant-scoped
+  `archive_institutional_entity(text, uuid)` sem reabrir SELECT de archived.
+- `can_read_school` exige organization e school active. `get_school_metrics`
+  nega ancestrais inativos e filtra classes não active por wrapper fino sobre a
+  implementação TRUST-1.2 preservada, evitando outra cópia do corpo grande.
+- `get_org_analytics_series` e `get_org_engagement_summary` negam organization
+  inativa pela redefinição reutilizada de `is_org_admin`; seus corpos não foram
+  duplicados.
+- Ledger, FKs e eventos históricos permanecem intactos. Nenhum `DROP ...
+  CASCADE`, remoção de linha ou aplicação remota.
+- Funções `SECURITY DEFINER` novas/substituídas usam `SET search_path = public`,
+  `REVOKE`/`GRANT` explícitos e queries `has_function_privilege` documentadas.
+
+Validação local: Supabase CLI 2.116.0, `db reset --local` **47/47**; archive
+**28/28**; RPC **30/30**; privacy **23/23**; server analytics **12/12**; total
+runtime aplicável **93/93**.
+
+## Nota — reconciliação pós-rebase TRUST-1.3 (2026-09-09)
+
+Rebase de `trust-1.3-context-isolation` sobre `origin/main` não introduziu
+migration nova (nenhum arquivo em `supabase/migrations/` veio do upstream).
+`db reset --local` pós-rebase confirmou os mesmos **47/47** desde banco vazio,
+incluindo a #47 (R29). O que precisou de reconciliação foi
+`src/integrations/supabase/types.ts` — artefato gerado, não migration — que o
+upstream tinha regenerado contra schema remoto desatualizado. Ver
+`TRUST_1_3_UPSTREAM_TYPES_DRIFT_RECEIPT.md` para a análise completa e o gate de
+CI adicionado para detectar essa classe de drift automaticamente.
+
+## Atualização TRUST-1.4 / DB-R02, R11
+
+| # | Migration | Domínio | Classificação |
+|---|---|---|---|
+| 48 | `20260909120000_trust1_4_tenant_safe_writes.sql` | Segurança de escrita / Integridade institucional | **RECONCILED, forward-only, NOT_YET_APPLIED_REMOTELY** |
+
+A #48 fecha a frente de escrita deixada aberta pela #37/#28
+(`20260725100000_nps_and_engagement_metrics.sql`), sem editar o histórico:
+
+- `record_engagement_event(uuid, text, jsonb)` e
+  `submit_nps_response(smallint, uuid, text, text)`, ambas `SECURITY DEFINER`
+  com `search_path = public`, resolvem `auth.uid()` internamente — `user_id`
+  nunca é parâmetro aceito do chamador — e validam `is_org_member(_organization_id)`
+  antes de gravar. Reuso direto do helper hardened pela R29: organização
+  archived/suspended e membership inativa já são negadas sem duplicar lógica.
+- `organization_id` nulo permanece aceito (uso individual sem organização);
+  usuário com múltiplas memberships continua podendo escrever em qualquer
+  organização de que seja membro ativo.
+- `score`/`event_type`/`context` continuam validados pelos `CHECK` constraints
+  originais da tabela — não duplicados na RPC. `metadata`/`feedback` recebem
+  limite de tamanho na própria RPC (defesa em profundidade contra chamador que
+  ignore o filtro client-side).
+- As duas policies de INSERT originais (`"Users can log own engagement"`,
+  `"Users can submit own NPS"`) são removidas e `REVOKE INSERT` explícito é
+  aplicado a `authenticated` nas duas tabelas — o INSERT direto client-side
+  deixa de ser um caminho possível, não só indesejado.
+- Nenhum `DROP ... CASCADE`, remoção de linha, nem aplicação remota. SELECT
+  (self-read) não é alterado.
+
+RED comprovado contra Postgres local antes da migration: membro de uma
+organização inseria com sucesso `organization_id` de organização alheia nas
+duas tabelas (linha persistida e devolvida por `RETURNING`). `user_id` spoof já
+estava bloqueado pela policy original — só `organization_id` era vulnerável.
+
+Validação local: Supabase CLI 2.115.0, `db reset --local` **48/48**;
+`input-integrity-runtime-contract.test.ts` **28/28** (cross-tenant engagement,
+cross-tenant NPS, archived org, org inexistente, sem membership, INSERT direto
+fechado, threshold poisoning 4→5); total runtime aplicável **121/121**
+(93 herdados da TRUST-1.3 + 28 novos).
+
+Frontend migrado na mesma onda: `src/lib/engagement.ts` e
+`src/components/NpsSurvey.tsx` passaram de `.insert()` direto para as RPCs.
+Guard estático em `trust1-4-static-guards.test.ts` impede regressão para
+INSERT direto em código de aplicação.
+
+
+## Atualização TRUST-1.6 / DB-R06
+
+| # | Migration | Domínio | Classificação |
+|---|---|---|---|
+| 49 | `20260916120000_trust1_6_verifiable_guardian_consent.sql` | Consentimento parental / Cadeia de evidência | **RECONCILED, forward-only, NOT_YET_APPLIED_REMOTELY** |
+
+A #49 fecha R06 sem editar o histórico:
+
+- Duas tabelas novas: `guardian_consent_policies` (versão vigente do termo +
+  hash do texto apresentado + flag de reconsentimento; uma linha ativa por
+  vez) e `guardian_consent_requests` (request de canal, `token_hash` único,
+  one-time, `pending`/`consumed`/`expired`/`superseded`). Nenhuma delas tem
+  policy de INSERT/UPDATE/DELETE para `authenticated` — escrita só via RPC.
+- `guardian_consent_events` (existente desde `20260706194000`) é **estendida,
+  não substituída**: `decision` passa a aceitar `declined`/`revoked` além de
+  `granted`; novas colunas `request_id` e `assurance_level`
+  (`self_declared`/`channel_verified`); removida a
+  `UNIQUE(user_id, policy_version)` original, incompatível com múltiplos
+  eventos por usuário/versão ao longo do tempo. Linhas antigas preservadas
+  sem edição, por doutrina de ledger imutável.
+- Sete RPCs novas/reescritas, todas `SECURITY DEFINER` com
+  `search_path = public` e `REVOKE`/`GRANT` explícitos:
+  `get_current_guardian_consent_policy`, `create_guardian_consent_request`,
+  `resolve_guardian_consent_token`, `decide_guardian_consent`,
+  `revoke_guardian_consent`, `get_my_guardian_consent_status` (v2),
+  `has_valid_guardian_consent` (novo boundary, `service_role` apenas).
+- `enforce_ai_usage_limit` (existente desde `20260722200000`) reescrita
+  preservando **integralmente** a lógica original de limite por plano;
+  adiciona apenas a checagem de `has_valid_guardian_consent` no topo, antes
+  de qualquer contagem de cota. Contrato das 4 edge functions de IA que a
+  chamam não muda.
+- Token: `pgcrypto` (`gen_random_bytes` + `digest`), mesma primitiva já
+  homologada no projeto (`institutional_invitations.token`,
+  `purchase_intents.claim_token`). Só o hash é persistido; o bruto existe
+  transitoriamente em `notification_outbox.payload`.
+- `notification_outbox_kind_check` estendido com `'guardian_consent_request'`.
+- Nenhum `DROP ... CASCADE`, remoção de linha, nem aplicação remota. SELECT
+  de `record_guardian_consent` (histórico) não é alterado.
+
+RED comprovado contra Postgres local antes da migration: estudante concedeu
+consentimento a si mesmo com responsável fabricado, RPC antiga devolveu
+`granted = true`.
+
+Validação local: Supabase CLI 2.115.0, `db reset --local` **49/49**;
+`guardian-consent-runtime-contract.test.ts` **35/35** (request≠receipt,
+token one-time/replay/expiração/superseded/aleatório/nulo/vocabulário,
+corrida atômica, grant/decline/revoke, versionamento, autoridade do
+servidor, isolamento RLS, disciplina SECURITY DEFINER);
+`trust1-6-static-guards.test.ts` **7/7**; total runtime aplicável **163/163**
+(121 herdados de TRUST-1.2/1.2.1/1.3/1.4 + 35 novos + 7 guards estáticos).
+
+Frontend migrado na mesma onda: `AuthPage.tsx` (envia request em vez de
+gravar consentimento direto), `GuardianConsentPage.tsx` reescrita (visto pelo
+estudante: cria/reenvia request, mostra pending/declined/reconsent_required,
+nunca grava consentimento), `GuardianDecisionPage.tsx` nova (visto pelo
+responsável via token, sem sessão, ação positiva explícita), `ProfilePage.tsx`
+(status + revogação condicional). Rota `/autorizacao-responsavel` registrada
+em `App.tsx` fora de `<RequireAuth>`.
+
+Achado fora do escopo, registrado como R33: `invite_member`/
+`resend_invitation` referenciam colunas inexistentes (`body_html`,
+`metadata`) em `notification_outbox`; erro engolido por
+`EXCEPTION WHEN OTHERS`. Não corrigido nesta onda. Ver
+`TRUST_1_RISK_REGISTER.md` e `TRUST_1_6_GATE.md`.

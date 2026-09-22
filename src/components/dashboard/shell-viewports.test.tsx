@@ -15,17 +15,19 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 vi.mock("@/integrations/supabase/client", () => ({
     supabase: {
-        auth: { getSession: vi.fn() },
+        auth: { getSession: vi.fn(), onAuthStateChange: vi.fn() },
         rpc: vi.fn(),
         from: vi.fn(),
     },
 }));
 
 import { supabase } from "@/integrations/supabase/client";
+import { DashboardContextProvider } from "@/contexts/DashboardContext";
 import RoleAwareAppShell from "./RoleAwareAppShell";
 import { getMobileNavItemsForRole } from "@/config/dashboard-navigation";
 
 const mockGetSession = supabase.auth.getSession as unknown as ReturnType<typeof vi.fn>;
+const mockOnAuthStateChange = supabase.auth.onAuthStateChange as unknown as ReturnType<typeof vi.fn>;
 const mockRpc = supabase.rpc as unknown as ReturnType<typeof vi.fn>;
 const mockFrom = supabase.from as unknown as ReturnType<typeof vi.fn>;
 
@@ -57,6 +59,9 @@ function setViewport(width: number, height: number) {
 
 function arrange() {
     mockGetSession.mockResolvedValue({ data: { session: { user: { id: "user-1" } } } });
+    mockOnAuthStateChange.mockReturnValue({
+        data: { subscription: { unsubscribe: vi.fn() } },
+    });
     mockRpc.mockResolvedValue({ data: { roles: ["student"] }, error: null });
     mockFrom.mockImplementation(() => thenable([]));
 }
@@ -65,17 +70,20 @@ function renderShell() {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
     return render(
         <QueryClientProvider client={queryClient}>
-            <MemoryRouter initialEntries={["/dashboard"]}>
-                <RoleAwareAppShell title="Minha jornada">
-                    <p>conteudo</p>
-                </RoleAwareAppShell>
-            </MemoryRouter>
+            <DashboardContextProvider>
+                <MemoryRouter initialEntries={["/dashboard"]}>
+                    <RoleAwareAppShell title="Minha jornada">
+                        <p>conteudo</p>
+                    </RoleAwareAppShell>
+                </MemoryRouter>
+            </DashboardContextProvider>
         </QueryClientProvider>,
     );
 }
 
 beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
     arrange();
 });
 
