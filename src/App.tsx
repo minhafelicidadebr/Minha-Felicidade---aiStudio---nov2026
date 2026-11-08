@@ -1,0 +1,222 @@
+import { lazy, Suspense, type ReactElement } from "react";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import ScrollToTop from "@/components/ScrollToTop";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import RequireAuth from "@/components/routing/RequireAuth";
+import RequireRole from "@/components/routing/RequireRole";
+import RequireInstitutionalRole from "@/components/routing/RequireInstitutionalRole";
+import RequireGuardianConsent from "@/components/routing/RequireGuardianConsent";
+import RequireFeature from "@/components/routing/RequireFeature";
+import { DashboardContextProvider } from "@/contexts/DashboardContext";
+
+const queryClient = new QueryClient();
+
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+const EscolasLandingPage = lazy(() => import("./pages/EscolasLandingPage"));
+const AcceptInvitePage = lazy(() => import("./pages/AcceptInvitePage"));
+const AuthPage = lazy(() => import("./pages/AuthPage"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const ModulePage = lazy(() => import("./pages/ModulePage"));
+const QuizPage = lazy(() => import("./pages/QuizPage"));
+const FlashcardsPage = lazy(() => import("./pages/FlashcardsPage"));
+const EvidencePage = lazy(() => import("./pages/EvidencePage"));
+const SimulatorPage = lazy(() => import("./pages/SimulatorPage"));
+const DebatePage = lazy(() => import("./pages/DebatePage"));
+const PoetryPage = lazy(() => import("./pages/PoetryPage"));
+const CoDesignPage = lazy(() => import("./pages/CoDesignPage"));
+const AlegriaPage = lazy(() => import("./pages/AlegriaPage"));
+const AdminPage = lazy(() => import("./pages/AdminPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const BreathingPage = lazy(() => import("./pages/BreathingPage"));
+const LifeWheelPage = lazy(() => import("./pages/LifeWheelPage"));
+const GratitudePage = lazy(() => import("./pages/GratitudePage"));
+const MemoryGamePage = lazy(() => import("./pages/MemoryGamePage"));
+const MindMapPage = lazy(() => import("./pages/MindMapPage"));
+const EmotionTrackerPage = lazy(() => import("./pages/EmotionTrackerPage"));
+const Challenge21Page = lazy(() => import("./pages/Challenge21Page"));
+const HypothesisLabPage = lazy(() => import("./pages/HypothesisLabPage"));
+const SocialMissionsPage = lazy(() => import("./pages/SocialMissionsPage"));
+const SubscriptionPage = lazy(() => import("./pages/SubscriptionPage"));
+const ConstellationPage = lazy(() => import("./pages/ConstellationPage"));
+const CognitiveMirrorPage = lazy(() => import("./pages/CognitiveMirrorPage"));
+const FutureSelfPage = lazy(() => import("./pages/FutureSelfPage"));
+const SignatureStrengthsPage = lazy(() => import("./pages/SignatureStrengthsPage"));
+const GuardianConsentPage = lazy(() => import("./pages/GuardianConsentPage"));
+const GuardianDecisionPage = lazy(() => import("./pages/GuardianDecisionPage"));
+const BirthDateCompletionPage = lazy(() => import("./pages/BirthDateCompletionPage"));
+const OrgDashboardPage = lazy(() => import("./pages/OrgDashboardPage"));
+// UX-3: painel escolar autenticado (D33/D43 — singular, para não colidir com a
+// landing pública `/escolas`).
+const SchoolDashboardPage = lazy(() => import("./pages/SchoolDashboardPage"));
+// UX-3 (§D3/D51): `/admin` deixou de ser o painel docente e passou a ser a
+// Landing Administrativa da plataforma.
+const AdminOperacaoPage = lazy(() => import("./pages/AdminOperacaoPage"));
+// UX-1: entrada canônica autenticada. Resolve o painel do papel em um único
+// ponto (contrato DASHBOARD-ROUTE-MAP §"Redirecionamento canônico").
+const RoleHomeRedirect = lazy(() => import("./pages/RoleHomeRedirect"));
+const SubscriptionSuccessPage = lazy(() => import("./pages/SubscriptionSuccessPage"));
+const SubscriptionPendingPage = lazy(() => import("./pages/SubscriptionPendingPage"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+const RouteFallback = () => (
+  <div className="min-h-screen bg-background" aria-busy="true" />
+);
+
+type AppRole = "student" | "teacher" | "manager";
+type PrivateRoute = {
+  path: string;
+  element: ReactElement;
+  roles?: AppRole[];
+  /** Canonical feature key (subscription_plans.features) required to access this route server-side. */
+  feature?: string;
+};
+
+// Ferramentas premium: exigem a feature "modules" (planos pagos liberam o
+// currículo completo) OU a feature específica listada no schema de planos.
+// Rotas sem `feature` continuam abertas a qualquer conta autenticada
+// (gratuitas por padrão: dashboard, quiz, flashcards, breathing, etc.)
+const privateRoutes: PrivateRoute[] = [
+  // Entrada canônica: redireciona para a home do papel.
+  { path: "/inicio", element: <RoleHomeRedirect /> },
+  // UX-4: `/alunos` é a home canônica do estudante. `/dashboard` permanece como
+  // redirecionador por compatibilidade (e-mails, bookmarks, testes existentes).
+  { path: "/alunos", element: <DashboardPage /> },
+  { path: "/dashboard", element: <RoleHomeRedirect /> },
+  { path: "/module/:id", element: <ModulePage /> },
+  { path: "/quiz", element: <QuizPage /> },
+  { path: "/flashcards", element: <FlashcardsPage /> },
+  { path: "/evidence", element: <EvidencePage />, feature: "evidence" },
+  { path: "/simulator", element: <SimulatorPage />, feature: "simulator" },
+  { path: "/debate", element: <DebatePage />, feature: "debate" },
+  { path: "/poetry", element: <PoetryPage />, feature: "poetry" },
+  { path: "/codesign", element: <CoDesignPage />, feature: "codesign" },
+  { path: "/alegria", element: <AlegriaPage /> },
+  // UX-3 (§D3/D51): `/admin` é a Landing Administrativa da plataforma.
+  // Protegida por RequireInstitutionalRole (papéis de membership, não de
+  // aplicação). O guard vive no render abaixo, não no campo `roles` da rota.
+  { path: "/admin", element: <RequireInstitutionalRole allowedRoles={["platform_admin"]}><AdminOperacaoPage /></RequireInstitutionalRole> },
+  { path: "/professores", element: <AdminPage />, roles: ["teacher", "manager"] },
+  { path: "/profile", element: <ProfilePage /> },
+  { path: "/breathing", element: <BreathingPage /> },
+  { path: "/lifewheel", element: <LifeWheelPage /> },
+  { path: "/gratitude", element: <GratitudePage /> },
+  { path: "/memory", element: <MemoryGamePage /> },
+  { path: "/mindmap", element: <MindMapPage />, feature: "mindmap" },
+  { path: "/emotions", element: <EmotionTrackerPage /> },
+  { path: "/challenge21", element: <Challenge21Page />, feature: "challenge21" },
+  { path: "/hypothesis", element: <HypothesisLabPage />, feature: "hypothesis" },
+  { path: "/missions", element: <SocialMissionsPage />, feature: "missions" },
+  { path: "/subscription", element: <SubscriptionPage /> },
+  { path: "/constellation", element: <ConstellationPage /> },
+  { path: "/mirror", element: <CognitiveMirrorPage /> },
+  { path: "/future-self", element: <FutureSelfPage /> },
+  { path: "/strengths", element: <SignatureStrengthsPage /> },
+  {
+    path: "/org",
+    element: (
+      <RequireInstitutionalRole allowedRoles={["platform_admin", "org_admin"]}>
+        <OrgDashboardPage />
+      </RequireInstitutionalRole>
+    ),
+  },
+  {
+    path: "/escola/:schoolId",
+    element: (
+      <RequireInstitutionalRole allowedRoles={["platform_admin", "org_admin", "school_admin"]}>
+        <SchoolDashboardPage />
+      </RequireInstitutionalRole>
+    ),
+  },
+];
+
+const App = () => (
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <DashboardContextProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ScrollToTop />
+            <Suspense fallback={<RouteFallback />}>
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/escolas" element={<EscolasLandingPage />} />
+                <Route path="/aceitar-convite" element={<AcceptInvitePage />} />
+                <Route path="/auth" element={<AuthPage />} />
+                {/* TRUST-1.6 (R06): vista pelo RESPONSÁVEL, não pelo estudante — o
+                token é a credencial, nunca exige conta/sessão. Fora de
+                RequireAuth de propósito. */}
+                <Route path="/autorizacao-responsavel" element={<GuardianDecisionPage />} />
+                <Route
+                  path="/consentimento-responsavel"
+                  element={
+                    <RequireAuth>
+                      <GuardianConsentPage />
+                    </RequireAuth>
+                  }
+                />
+                {/* Captura de data de nascimento para contas legadas (sem birth_date).
+                Atrás de RequireAuth, mas FORA do gate de consentimento — senão o
+                próprio needs_birth_date redirecionaria de volta em loop. */}
+                <Route
+                  path="/completar-cadastro"
+                  element={
+                    <RequireAuth>
+                      <BirthDateCompletionPage />
+                    </RequireAuth>
+                  }
+                />
+                {/* Retorno do checkout: atrás de RequireAuth, mas fora do gate de
+                consentimento — quem acabou de pagar não deve ser bloqueado
+                aqui. A ativação real é confirmada via get_my_plan/webhook. */}
+                <Route
+                  path="/assinatura/sucesso"
+                  element={
+                    <RequireAuth>
+                      <SubscriptionSuccessPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/assinatura/pendente"
+                  element={
+                    <RequireAuth>
+                      <SubscriptionPendingPage />
+                    </RequireAuth>
+                  }
+                />
+                {privateRoutes.map((route) => (
+                  <Route
+                    key={route.path}
+                    path={route.path}
+                    element={
+                      <RequireAuth>
+                        <RequireGuardianConsent>
+                          {route.roles ? (
+                            <RequireRole allowedRoles={route.roles}>{route.element}</RequireRole>
+                          ) : route.feature ? (
+                            <RequireFeature feature={route.feature}>{route.element}</RequireFeature>
+                          ) : (
+                            route.element
+                          )}
+                        </RequireGuardianConsent>
+                      </RequireAuth>
+                    }
+                  />
+                ))}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </TooltipProvider>
+      </DashboardContextProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
+);
+
+export default App;

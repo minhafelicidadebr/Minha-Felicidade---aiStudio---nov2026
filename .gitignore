@@ -1,0 +1,38 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+
+# Cache incremental do tsc (gerado por `tsc --build`)
+*.tsbuildinfo
+*.local
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Artefatos do Supabase CLI ao subir o stack local
+supabase/.temp
+supabase/.branches
+
+# Logs de trabalho da TRUST-1 (evidência fica em docs/kiro/trust-1/)
+.trust1-*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

@@ -1,0 +1,8 @@
+{
+  "name": "Minha Felicidade",
+  "description": "Minha Felicidade: plataforma de ciência do bem-estar para adolescentes brasileiros com aulas, práticas e trilhas socioemocionais baseadas em evidências.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

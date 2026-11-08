@@ -1,0 +1,68 @@
+project_id = "ctjwyybmlwhynherikqy"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PORTAS LOCAIS — TRUST-1.1B
+#
+# Declaradas explicitamente porque a máquina de desenvolvimento pode ter OUTRO
+# projeto Supabase local rodando nas portas padrão (54321-54327). Sem isto,
+# `supabase start` falha com "port is already allocated" e a pessoa é levada a
+# parar o outro projeto — que pode ser trabalho ativo de outra pessoa.
+#
+# Estas portas só afetam o ambiente LOCAL. Não têm relação com produção.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+[api]
+enabled = true
+port = 55321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 55322
+shadow_port = 55320
+major_version = 17
+
+[db.pooler]
+enabled = false
+port = 55329
+
+[studio]
+enabled = true
+port = 55323
+
+# Servidor de e-mail de teste local. Nenhum e-mail sai para o mundo real.
+[inbucket]
+enabled = true
+port = 55324
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = ["https://127.0.0.1:3000"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+enable_signup = true
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+secure_password_change = false
+max_frequency = "1s"
+
+[analytics]
+enabled = false
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[realtime]
+enabled = true
+
+[edge_runtime]
+enabled = true
+policy = "oneshot"

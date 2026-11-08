@@ -1,0 +1,313 @@
+# Superprompt de continuidade — SaaS de bem-estar para redes de escolas
+
+Preparado em 06/11/2026. Cole o conteúdo a partir de “Instrução para o agente” no AI Studio. Este documento orienta o desenvolvimento; não é um laudo de prontidão comercial. Os fatos abaixo têm origem no Git e no código inspecionados nesta sessão e devem ser reconfirmados no ambiente de execução.
+
+---
+
+# Instrução para o agente
+
+Assuma a continuidade técnica e de produto desta plataforma educacional brasileira de ciência do bem-estar para adolescentes, escolas e redes. Trabalhe com o rigor de engenharia de software, segurança, privacidade, produto SaaS, design instrucional e UX. Expresse decisões em português claro. Transforme objetivos em jornadas funcionais, código integrado e evidências de execução.
+
+O objetivo é preparar uma versão comercial operável: uma rede consegue contratar, cadastrar suas escolas e equipes, ativar estudantes com os controles de consentimento adequados, acompanhar indicadores permitidos, administrar licenças e receber suporte; o estudante encontra uma experiência de aprendizagem clara, acolhedora e útil. Uma interface bonita e um checkout aberto não bastam para demonstrar esse resultado.
+
+Priorize o B2B de redes de escolas e preserve o B2C existente. Use a arquitetura implementada, evitando reescrita geral. Inovação precisa melhorar uma tarefa real ou reduzir uma limitação comprovada. Trabalhe em macro-ondas com entregas verticais, revisão e critérios de saída, sem solicitar autorização para cada edição local reversível.
+
+## 1. Ponto de partida e fontes de verdade
+
+### Repositórios e branches
+
+- Fonte canônica histórica: `minhafelicidadebr/yale-minhafelicidade-julho`.
+- Referência TRUST-1.6.1: `09cf4b4cca5f9e0363f94fa2f0715a21379e234e`, associada ao PR #58.
+- `main` canônico na última consulta: `31626dd0786e065ed8765dbf9ccbce59e9c3e8ad`.
+- Repositório destinado ao AI Studio: `minhafelicidadebr/Minha-Felicidade---aiStudio---nov2026`.
+- Nele, `canonical/trust-1.6.1` e `aistudio/work` foram criadas apontando para `09cf4b4`, com o histórico original.
+- Seu `main` ainda apontava para `57286d4bf7717e9fa50ebb9d7758843375d18d68`, contendo somente um README.
+- A imagem do AI Studio mostrava 433 arquivos pendentes de envio. Seu conteúdo não foi inspecionado nesta sessão. A criação das branches não prova que a aplicação no AI Studio mudou para `aistudio/work`.
+
+Faça o preflight antes de implementar: identifique repositório real, branch, HEAD, origem, diff e arquivos pendentes. Preserve o trabalho do usuário em uma versão/exportação recuperável antes de trocar a conexão ou sobrescrever arquivos. Não confunda o conjunto de arquivos aberto no editor com o commit remoto. Se o AI Studio não expuser Git/terminal ou seleção de branch, declare essa limitação e indique a ação de interface necessária. Não simule uma conexão bem-sucedida.
+
+Use o checkout isolado existente. Não crie worktree sem solicitação explícita. Não faça force push, reset destrutivo, substituição em massa de arquivos ou push direto no canônico. A branch `canonical/trust-1.6.1` guarda a referência; desenvolva em `aistudio/work` ou em branches derivadas dela. O retorno ao canônico deve preservar a ancestralidade Git e passar por revisão de PR. Dois repositórios não se sincronizam automaticamente; registre o SHA de origem e o último ponto integrado para evitar sobrescrever trabalho do Kiro ou de outros terminais.
+
+### O que já foi identificado
+
+- O diff de `09cf4b4` para `31626dd` afeta somente `src/integrations/supabase/types.ts` e `previewAuthStorage.ts`.
+- O arquivo de tipos perdeu campos e RPCs exigidos pelo código TRUST, incluindo estruturas de consentimento, campos de arquivamento, `get_org_analytics_series`, `record_engagement_event` e `submit_nps_response`.
+- As 50 migrations e os contratos TRUST permaneceram no repositório. Isso comprova divergência entre artefatos versionados; não comprova o schema aplicado em produção.
+- Na validação anterior do checkout `31626dd`, build e `security:gate` passaram; a execução final teve 366 testes aprovados e 161 de banco pulados. Houve uma falha intermitente de viewport em uma execução anterior.
+- Lint falhou em `previewAuthStorage.ts`; typecheck falhou por incompatibilidades de tipos; a auditoria reportou 23 vulnerabilidades, incluindo uma crítica em DOMPurify.
+- O gate histórico TRUST-1.6.1 registra quality, replay de 50 migrations, comparação dos tipos gerados e 161 contratos PostgreSQL aprovados no job de banco, sem skips nesse job. Isso é evidência histórica. O resultado atual do CI remoto não foi acessível nesta sessão.
+
+A baseline histórica também usa dependências que envelhecem. Um CI verde no passado não substitui a auditoria de hoje. Não use `as any`, desative regras ou edite tipos gerados manualmente para esconder divergência. Reconstrua o schema isolado a partir das migrations e gere os tipos com a versão pinada da ferramenta.
+
+### Stack e leitura inicial
+
+React 18, TypeScript, Vite, npm, Tailwind, shadcn/ui, React Query, Supabase/PostgreSQL/RLS/RPCs, Edge Functions Deno e Vitest. Preserve o lockfile npm. Não substitua esse backend por Drizzle, Firebase ou outro serviço sem necessidade demonstrada e decisão registrada.
+
+Leia, respeitando a evolução dos commits:
+
+- `CLAUDE.md`, `.kiro/steering/doutrina-fable5.md` e instruções de agente aplicáveis;
+- `docs/kiro/DASHBOARD_PRODUCT_CONTRACT.md` e `METRIC_PRIVACY_POLICY.md`;
+- `docs/kiro/DECISIONS.md`, `PROJECT_TRUTH.md`, `COMMERCIAL_GATES.md`, `NEXT_ACTION.md` e `WORKLOG.md`;
+- `docs/kiro/trust-1/TRUST_1_6_1_GATE.md`, risk register, migration ledger e checklist R22;
+- specs existentes de monetização, pós-compra, associação escolar e consentimento;
+- manifests, lockfile, scripts, CI e implementações relacionadas à onda escolhida.
+
+Há documentos antigos com estados superados, inclusive `NEXT_ACTION.md`. Reconcile a cronologia com commits, receipts e código. Preserve contratos normativos e explique contradições; não repita trabalho já comprovado nem trate uma anotação antiga como descrição do estado atual. A instrução atual do usuário autoriza esta continuidade em ambiente isolado.
+
+## 2. Método de decisão: Tree of Thoughts com saída objetiva
+
+Use ToT como comparação estruturada de alternativas. Não exponha raciocínio privado, cadeias internas ou um diálogo fictício entre especialistas. Apresente apenas alternativas, critérios, evidências, trade-offs e decisão resumida.
+
+Para cada decisão arquitetural ou comercial relevante:
+
+1. Defina o resultado do usuário e o problema observado, com evidência.
+2. Compare até três caminhos viáveis. Quando fizer sentido, inclua reaproveitamento incremental, extensão do que existe e troca de componente. Não invente opções artificiais para preencher uma tabela.
+3. Elimine caminhos que violem privacidade, autorização, integridade financeira ou restrições de produção.
+4. Avalie os restantes de 0 a 5 nos critérios abaixo e registre confiança da evidência.
+5. Escolha um caminho, registre a razão em poucas linhas e implemente a menor entrega vertical que possa validá-lo.
+
+| Critério | Peso |
+|---|---:|
+| Segurança, privacidade e integridade financeira | 25% |
+| Valor para a jornada prioritária | 20% |
+| Continuidade da arquitetura e manutenção | 15% |
+| Facilidade de validação e reversão | 15% |
+| Tempo e dependências para entregar valor | 15% |
+| Custo de operação e capacidade de crescimento | 10% |
+
+Use `Σ(peso × nota/5)` para obter uma preferência de 0 a 100. Essas notas ajudam a decidir; não são certificação, medida científica de qualidade nem prova de prontidão. Um veto de segurança não pode ser compensado por uma nota alta em estética ou velocidade. Em correções simples, use uma decisão curta, sem burocracia ToT.
+
+Combine descoberta curta com entrega contínua: problema → hipótese → contrato → fatia vertical → teste → observação → ajuste. Limite o trabalho em curso a uma macro-onda. Divida-a em histórias verificáveis com papel, ação, resultado, risco, critério de aceite e evidência. Evite redesenhar todo o produto antes de entregar uma jornada utilizável.
+
+## 3. Diagnóstico de maturidade sem falsa precisão
+
+Monte uma matriz por capacidade. Diferencie implementação e validação nos ambientes: inspeção estática, execução isolada, integração em homologação e operação real.
+
+| Nível | Evidência exigida |
+|---|---|
+| ND | Informação ou acesso insuficiente; registre o que falta. |
+| 0 | Ausência confirmada. |
+| 1 | Intenção, desenho ou especificação existente. |
+| 2 | Código implementado, sem comprovação suficiente da jornada. |
+| 3 | Jornada exercitada em ambiente isolado, incluindo falhas e autorização. |
+| 4 | Fluxo validado em homologação/piloto, com operação e recuperação verificadas. |
+| 5 | Uso comercial observado, com métricas, suporte e continuidade demonstrados. |
+
+Avalie pelo menos: baseline/reprodutibilidade/CI; multitenancy e autorização; privacidade e consentimento; gestão da rede; experiência de estudantes e docentes; dashboards; preços/pagamentos/entitlements; notificações; IA/custos; operação/suporte/recuperação; conteúdo/marca; comercialização.
+
+Cada linha deve conter capacidade, nível, evidência com arquivo/commit/execução/data, ambiente, confiança, lacuna, prioridade e próxima ação. ND não significa ausência de código, mas não pode contar como validação para lançamento. Não anuncie “90% pronto” pela quantidade de telas ou testes. Use a matriz e os gates para decidir: desenvolvimento, candidato a piloto, piloto pago restrito ou lançamento comercial controlado. Nível 5 é consequência de operação comprovada, não requisito circular para começar o primeiro piloto.
+
+Para demonstrar que as funções operacionais estão corretas, mantenha um inventário verificável: capacidade → ator → rota/componente → RPC/Edge Function/job → autorização → estados de sucesso/falha → teste → evidência → lacuna. Classifique cada item como ausente, apenas visual, implementado sem execução, validado em isolamento ou validado em homologação. Inclua os CTAs, exports, filtros e ações administrativas; um componente montado não comprova a função de negócio.
+
+O parecer inicial esperado é prudente: existe uma base de engenharia relevante, mas produção, cobrança efetiva, entrega de notificações e a versão aberta no AI Studio precisam de verificação. Não transforme essa hipótese em conclusão sem executar os checks pertinentes.
+
+## 4. Contrato operacional para redes, escolas e pessoas
+
+Reutilize `organizations`, `schools`, `classes`, memberships, convites, assinaturas e ledgers existentes. Antes de criar outra entidade, identifique a lacuna concreta. Distinga organização contratante, escola, turma, responsável financeiro, gestor, docente, estudante e responsável legal.
+
+Papéis existentes incluem `platform_admin`, `org_admin`, `school_admin`, `educator`, `student` e `guardian`; o código também tem papéis legados. Preserve a resolução canônica e valide permissões no servidor. Uma preferência de navegação ou papel autodeclarado no navegador não concede acesso. `guardian` hoje participa do fluxo de consentimento e não tem um dashboard próprio comprovado.
+
+| Papel | Jornada prioritária | Limite essencial |
+|---|---|---|
+| Administração da plataforma | Operação, tenants, suporte, custos e incidentes autorizados | Acesso mínimo auditável; privilégios globais não são consequência de um cargo local. |
+| Gestão da rede | Escolas, licenças, implantação, pendências e agregados permitidos | Nenhum acesso a reflexões privadas ou dados brutos sensíveis de estudantes. |
+| Gestão da escola | Turmas, equipe, convites e acompanhamento permitido | Escopo limitado à escola autorizada. |
+| Docente | Preparar e conduzir atividades; acompanhar participação permitida | Sem acesso irrestrito a outras turmas ou relatos emocionais privados. |
+| Estudante | Atividade, prática, progresso e recursos permitidos pelo plano | Dados pessoais e jornada isolados por identidade. |
+| Responsável | Consentir, recusar e revogar conforme o fluxo vigente | Verificar um canal de contato não comprova sozinho a tutela jurídica. |
+
+Valide criação e configuração da rede, unidades, turmas, entrada por convite, aceite, reenviar/escalar, troca de organização, afastamento, transferência, arquivamento e término de licença. Aplique integridade referencial e limites no servidor, inclusive sob concorrência. Avalie importação em lote somente se necessária ao piloto; nesse caso, exija validação por linha, preview, idempotência, tratamento de duplicatas e relatório de falhas sem exposição de dados desnecessários.
+
+Verifique as duas fontes de vínculos/assentos existentes (`organization_members` e memberships institucionais): explique como se relacionam antes de alterar ou unificar. Licença comprada deve habilitar apenas a organização correta; assentos e escolas contratadas precisam corresponder às permissões efetivas.
+
+No dashboard da rede, priorize implantação, escolas/turmas ativas, convites pendentes, ocupação das licenças e indicadores agregados permitidos. “Escola cadastrada”, “estudante elegível”, “convite aceito” e “contribuidor de uma métrica” são conceitos distintos. Não use um denominador como se fosse outro.
+
+Mantenha `DashboardContextProvider` canônico, query keys com identidade e tenant, tratamento de respostas assíncronas antigas e isolamento de cache ao trocar de conta/rede. Teste dois tenants A/B, um usuário externo, vínculos múltiplos, sessões expiradas e entidades arquivadas. Verifique tanto a API quanto a interface.
+
+Dimensione o piloto e declare o volume esperado de escolas, turmas, vínculos e sessões. Use dados sintéticos para verificar paginação, filtros, índices, consultas agregadas, importações/jobs e custo no volume-alvo. Defina orçamento de latência e capacidade a partir do requisito e meça o resultado; não declare escalabilidade por usar Supabase ou por um dashboard abrir com poucos registros.
+
+## 5. UX e design instrucional: qualidade observável
+
+Melhore a experiência com identidade visual coerente, tokens reutilizáveis, tipografia legível, hierarquia, espaçamento, linguagem brasileira e estados claros. Preserve os componentes existentes quando adequados. “Premium” significa tarefas compreensíveis e completas, com bom acabamento visual.
+
+- Estudante: objetivo de aprendizagem → explicação breve → exemplo → prática → feedback → reflexão privada → próximo passo. Respeite diferentes ritmos e possibilidade de retomar; não use punições, culpa, comparação pública ou padrões manipulativos para aumentar uso.
+- Docente: objetivos, duração, materiais, facilitação e limitações; planejar uma sessão e acompanhar o que é permitido deve ser simples.
+- Gestor: “o que precisa da minha atenção”, contexto da métrica e ação executável. Toda ação visível precisa ter backend, autorização, confirmação proporcional e resultado claro.
+- Gráficos: rótulos, unidades, período, fonte, denominador, atualização, limitação e ação relacionada. Ofereça tabela acessível. Não interprete engajamento como causalidade, eficácia clínica ou diagnóstico.
+- Estados: carregando, vazio, negado, erro, disponível; acrescente supressão e desatualização quando aplicáveis. Dado indisponível não vira zero.
+- Acessibilidade: teclado, foco, leitores de tela, contraste, rótulos, alvos de toque e movimento reduzido; use WCAG 2.2 AA como meta verificável, sem anunciar conformidade não auditada.
+- Responsividade: 320, 375, 390, 768, 1024, 1280 e 1440 px; drawer e bottom nav preservam as ações essenciais; tablets escolares e rede lenta merecem validação.
+- Meça o sucesso em tarefas, não apenas em capturas: criar turma, aceitar convite, iniciar atividade, retomar progresso, encontrar uma pendência e entender uma cobrança. Testes com pessoas devem usar um protocolo e registro reais; não invente avaliações de usuários.
+
+Respeite as rotas existentes e o contrato de dashboards. `/escolas` é aquisição pública, `/escola/:schoolId` é a experiência escolar autenticada. Resolva parâmetros antes de navegar. Não crie links para funcionalidades futuras. Preserve a separação entre administração da plataforma e gestão da rede.
+
+## 6. Preços e embalagem comercial: auditar antes de alterar
+
+Valores encontrados em código/seeds são referências de implementação; a tabela aplicada no backend de homologação e a aprovação comercial devem ser verificadas. Não publique um novo preço nem inicie cobrança real sem decisão do responsável comercial.
+
+### Individual — seed histórico de `subscription_plans`
+
+| Plano | Mensal | Anual total | Equivalente mensal do anual |
+|---|---:|---:|---:|
+| Gratuito | R$ 0,00 | R$ 0,00 | R$ 0,00 |
+| Intermediário | R$ 29,00 | R$ 278,40 | R$ 23,20 |
+| Avançado | R$ 59,00 | R$ 566,40 | R$ 47,20 |
+
+Os campos são centavos BRL. A landing trata o CTA de Avançado como contato comercial. Investigue essa diferença entre seed, checkout e interface antes de oferecer contratação automática desse plano. O desconto anual não deve ser inferido de um rótulo: confira o valor total cobrado e a regra efetiva.
+
+### Escolar — implementação em `school-pricing.ts`
+
+| Total de estudantes | Base por estudante/mês |
+|---|---:|
+| 1–50 | R$ 19,00 |
+| 51–200 | R$ 14,00 |
+| 201–500 | R$ 10,00 |
+| 501–2.000 | R$ 7,00 |
+| Acima de 2.000 | Cotação manual |
+
+Na implementação atual, a faixa aplica-se ao total, não é uma cobrança progressiva por parcelas. Descontos são somados, com teto de 75%: rede de 2–3 escolas, 10%; 4–9, 18%; 10 ou mais, 25%; anual, 20%; pública/ONG, 30%.
+
+Regra de referência: `desconto = min(0,75; rede + anual + pública/ONG)`; `mensal equivalente = alunos × base × (1 − desconto)`; `anual = mensal equivalente × 12`. O servidor decide e persiste o valor em centavos com regra de arredondamento explícita; o preview precisa coincidir. O código também calcula gestores gratuitos com `max(1, floor(alunos/50))`; verifique sua tradução em licenças reais e a política comercial pretendida.
+
+Exemplo de regressão esperado: 150 estudantes, 1 escola privada, anual → R$ 11,20 por estudante/mês equivalente, R$ 1.680,00 mensais equivalentes e R$ 20.160,00 de cobrança anual. Isso é exemplo da regra codificada, não nova oferta aprovada.
+
+Verifique particularmente:
+
+- limites 0/1/50/51/200/201/500/501/2.000/2.001, entradas inválidas, frações, descontos e arredondamento;
+- a queda do total ao mudar de faixa, por exemplo 50 → 51 alunos: apresente o efeito e peça decisão de negócio antes de mudar a política;
+- elegibilidade ao desconto pública/ONG: um boolean enviado pelo cliente não comprova essa condição; conferir o endpoint e validar a concessão no servidor;
+- diferença entre licença de estudante, gestor gratuito, número de escolas e limite efetivamente aplicado;
+- coerência entre os módulos de preço do frontend e Deno, UI, orçamento, checkout, recibo e contrato;
+- valores brutos, taxas do provedor, impostos/obrigações aplicáveis, suporte e custo de IA por estudante ativo; projeções devem declarar hipóteses e não usar dados inventados.
+
+Não confunda tabela de preço com viabilidade econômica. Apresente proposta de embalagem, eventual trial e política de descontos separadas dos valores implementados. Não adicione trial, cupons ou mudança de tarifa automaticamente.
+
+## 7. Billing SaaS: completar e validar o que já existe
+
+Já há integração Mercado Pago: `src/lib/checkout.ts`, `mp-create-preference`, `mp-webhook`, `purchase_intents`, `activate_subscription_from_intent`, assinaturas individuais/escolares e entitlements. Reutilize-a. A versão documentada cobra uma vez por ciclo; renovação automática não está comprovada e era explicitamente fora do escopo inicial.
+
+Separe duas decisões: vender acesso por período com renovação manual pode sustentar um piloto se contrato/UI/operação refletirem isso; cobrança recorrente automática exige uma integração específica, novos estados, autorização e validação com o provedor. Use ToT para recomendar a primeira modalidade comercial. Não prometa assinatura com débito automático porque existem campos chamados `subscription`.
+
+Valide o ciclo de ponta a ponta em sandbox/homologação:
+
+1. Oferta/preço → login ou pré-cadastro permitido → intenção de compra calculada no servidor → checkout.
+2. Webhook com assinatura válida → consulta ao pagamento na API do provedor → correspondência com intenção, valor, BRL, conta/ambiente e referência → ativação idempotente.
+3. Organização correta, número de assentos, vigência e features efetivos; retorno do checkout mostra “processando” até confirmação server-side.
+4. Associação escolar pós-pagamento antes do cadastro, com vínculo e identidade comprovados; pagamento não deve conceder acesso ao tenant errado.
+5. Histórico visível apenas aos atores autorizados; pagamentos e faturas fiscais são conceitos diferentes.
+6. Expiração, cancelamento ao fim do período, lembrete/renovação e perda de entitlement coerentes. Se houver recorrência nova, incluir falha de renovação, retentativas, inadimplência e conciliação.
+7. Reembolso/chargeback e notificações atrasadas ou fora de ordem: definir comportamento e validar antes de escalar a venda; não assumir que esses estados já estão tratados.
+
+Teste pagamento aprovado, recusado, pendente e abandonado; retorno antes do webhook; assinatura inválida; replay de webhook; eventos concorrentes; divergência de valor/moeda; alteração de preço/assentos/tenant pelo cliente; falha temporária e recuperação. Um replay não pode duplicar acesso, vigência, cobrança ou e-mail. A ativação vem do evento verificado, nunca de query string ou botão do navegador.
+
+Verifique `get_my_plan()`, guardas e enforcement de features/IA do lado do servidor. Guardas de rota não bastam para proteger endpoints premium. Preserve a autoridade de escrita de assinatura no caminho server-side autorizado.
+
+Inventarie nomes e presença dos bindings antes de pedir configuração, sem imprimir valores: `MERCADO_PAGO_ACCESS_TOKEN`, `MERCADO_PAGO_WEBHOOK_SECRET`, `PUBLIC_SITE_URL` e os demais realmente usados. Use credenciais de teste e destinos de homologação para validação. Nunca coloque tokens privados ou service role em `VITE_*`, no bundle ou no chat. Dependência de credencial bloqueia o teste externo correspondente, não o restante das melhorias locais.
+
+## 8. Notificações e operação real
+
+R09 permanece uma lacuna operacional até demonstração de entrega. `notification_outbox` funcionando não prova e-mail recebido. Verifique `process-notifications`, templates, agendamento, autorização de disparo, retentativas, dedupe, expiração, rastreio de falha e reprocessamento seguro.
+
+Use as configurações previstas quando disponíveis: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `PUBLIC_SITE_URL`, `NOTIFICATIONS_TRIGGER_SECRET`. Valide domínio/remetente e entrega de teste para destinatário autorizado. Preserve payload canônico, minimização dos dados e separação entre outbox de comunicação e ledger de governança. Fila, aceitação pelo provedor e entrega observada devem ter rótulos distintos.
+
+Operação comercial requer onboarding assistido da rede, suporte, responsabilidade por incidentes, monitoramento, conciliação de pagamentos, rotina de jobs, backup e restauração ensaiada, procedimento de retirada/retenção de dados e documentação de atendimento. Priorize implantação simples e verificável em vez de criar um sistema de suporte inteiro. Colete telemetria útil de erros, latência, falhas de entrega e custo sem registrar tokens, conversas privadas ou payloads sensíveis de menores.
+
+## 9. Privacidade, segurança e IA
+
+Preserve os controles TRUST existentes. Revalide o que mudar; não reinvente consentimento, protocolo de crise ou analytics institucional bruto no browser.
+
+- Autorização por usuário, tenant, escola/turma e vínculo ativo no servidor; não confiar em `org_id`, papel ou plano do cliente.
+- RLS, grants, `SECURITY DEFINER` com `search_path` seguro, testes de permissão e trilha auditável; migrations novas ao final da sequência, sem reescrever as históricas.
+- Agregados institucionais com mínimo 5 e limiar por contribuidores distintos em cada métrica/bucket; supressão complementar e proteção contra reconstrução por filtros/subtração.
+- A supressão deve ocorrer antes da resposta e valer para RPC/API, gráfico, tooltip, tabela, PDF, CSV e acessibilidade. Uma escola pequena continua visível como entidade operacional; o indicador sensível fica suprimido.
+- Dados operacionais de roster têm política própria de acesso mínimo; não abrir respostas emocionais individuais sob pretexto de gestão. Evite ranking de bem-estar entre estudantes/escolas ou alertas que possam reidentificar menores.
+- Consentimento verificável com token protegido, validade, uso único, decisão atômica, revogação e ledger append-only. A revogação precisa afetar o acesso/IA previsto pelo contrato, inclusive se um job falhar.
+- Inventarie retenção, acesso a dados, exclusão e responsabilidades da escola/plataforma. A validação jurídica é uma dependência comercial humana; não declare conformidade LGPD por executar testes.
+
+As funções de IA inspecionadas usam gateway do Lovable com `LOVABLE_API_KEY`; não presuma que executar no AI Studio as converteu para Gemini. Se houver valor para migrar/estender o provedor, faça adaptador server-side com consentimento, autenticação, quotas, custo, timeout, tratamento de indisponibilidade e protocolo de crise preservados. Verifique documentação oficial atual do SDK/API. Não coloque chave Gemini no frontend.
+
+LLM pode auxiliar explicação, feedback pedagógico e criação de conteúdo revisável. Não delegue a ele preços, cobrança, autorização, cálculo científico/metodológico, supressão estatística ou diagnóstico. Não envie respostas individuais sensíveis, dados identificáveis de menores ou grupos suprimidos ao provedor. Defina minimização e finalidade por caso de uso. Se uma função depender desses dados, pause o caso específico até avaliação e desenho apropriados; não contorne a restrição com pseudônimos frágeis.
+
+Meça tokens/custo, limites e qualidade em exemplos sintéticos. Teste indisponibilidade, excesso de quota e instruções maliciosas. Preserve a natureza educacional do serviço; não o apresente como terapia, ferramenta diagnóstica ou resposta emergencial. A plataforma é independente: referências acadêmicas não autorizam alegar parceria, certificação ou produto oficial Yale.
+
+## 10. Fluxos a validar e entregar com o produto
+
+Confronte este mapa com as rotas, RPCs, jobs e estados reais. Corrija o mapa com evidência antes de implementar novos caminhos. Nenhuma seta fica “funcionando” apenas porque há um botão.
+
+```mermaid
+flowchart TD
+    A[Oferta individual ou escolar] --> B[Preço e intenção no servidor]
+    B --> C[Checkout em sandbox ou ambiente aprovado]
+    C --> D{Evento do provedor verificado?}
+    D -->|Pendente ou recusado| E[Estado claro e acesso preservado]
+    D -->|Aprovado e consistente| F[Ativação idempotente]
+    F --> G{Compra escolar pré-cadastro?}
+    G -->|Sim| H[Identidade e associação verificadas]
+    G -->|Não| I[Entitlements do destinatário correto]
+    H --> I
+    I --> J[Rede e escolas configuradas]
+    J --> K[Turmas, equipe e convites com escopo]
+    K --> L[Entrada do estudante]
+    L --> M{Consentimento requerido e válido?}
+    M -->|Não| N[Jornada limitada e solicitação ao responsável]
+    N --> O[Notificação e decisão verificáveis]
+    O --> M
+    M -->|Sim| P[Aprendizagem e recursos permitidos]
+    P --> Q[Indicadores agregados protegidos]
+    Q --> R[Gestor decide e ação é auditada]
+    I --> S[Vigência, lembretes e renovação]
+    S --> T[Expiração ou cancelamento conforme contrato]
+    T --> U[Entitlements atualizados e suporte]
+```
+
+Entregue também um mapa de permissões e uma tabela de estados de pagamento/assinatura/consentimento. Associe cada transição a ator autorizado, pré-condição, endpoint/RPC/job, efeito, idempotência e teste. Respeite que autenticação, contratação e vínculo escolar podem ocorrer em ordens distintas: o diagrama é hipótese de jornada, não uma instrução para impor compra antes da conta gratuita ou consentimento antes do login.
+
+## 11. Macro-ondas recomendadas e critérios de saída
+
+Ajuste a prioridade à evidência. Não desenvolva todas as ondas simultaneamente. Conclua uma fatia real em cada onda, registre o que foi executado e avance conforme as dependências.
+
+| Onda | Resultado | Critério de saída |
+|---|---|---|
+| 0 — Baseline e ambiente | Workspace identificado, arquivos pendentes preservados, código/schema/tipos/dependências reconciliados | Branch correta, instalação reprodutível, gates pertinentes executados, falhas explicadas e contratos críticos demonstrados em ambiente isolado. |
+| 1 — Rede em operação | Um gestor configura duas escolas e turmas, convida a equipe e ativa estudantes | Fluxo completo com autorização, limites de licença, isolamento A/B, troca de contexto, arquivamento e consentimento/notificação coerentes. |
+| 2 — Experiência pedagógica e dashboards | Estudante retoma uma atividade; docente e gestores encontram informação e ação úteis | Tarefas reais, estados completos, responsividade/acessibilidade verificadas e zero exposição indevida em métricas/exportações. |
+| 3 — Receita e ciclo de acesso | Compra individual e escolar homologadas com preços e licenças corretos | Sandbox end-to-end, replay/concorrência/falhas, associação pós-compra, vigência, expiração, comunicação e conciliação validados; modalidade de renovação explícita. |
+| 4 — IA útil e operação sustentável | Recursos existentes funcionam com quotas e custos observáveis | Consentimento/revogação/limites/falhas demonstrados; decisão de provedor documentada. Gemini novo só entra se necessário ao caso de uso priorizado. |
+| 5 — Homologação e piloto | Rede piloto opera com suporte e um ambiente separado de produção | Cenários de cada papel, entrega de notificações, backup/restore, observabilidade e tratamento de incidentes demonstrados; pendências e responsáveis claros. |
+| 6 — Venda controlada | Oferta, onboarding, cobrança e suporte têm escopo comercial honesto | Go/no-go documentado, R22 concluído antes de promoção remota e aprovação explícita para publicação/mudanças de produção. |
+
+Para o primeiro piloto comercial, priorize um segmento, um produto contratável e uma modalidade de renovação. Não condicione a primeira venda a SSO, todos os relatórios possíveis, app nativo ou novo provedor de IA se não forem necessários. Separe bloqueadores comerciais reais de melhorias que podem vir depois.
+
+## 12. Evidência, execução e limites de ambiente
+
+Use npm e ferramentas pinadas. O ambiente desta sessão validou Node 24.22.1/npm 11.9.0; confirme os requisitos do Vite e do CI antes de instalar. O job de banco referencia Supabase CLI 2.115.0. Preserve lockfile, verificação de integridade e TLS. Um URL de cache privado no lockfile pode exigir obter o mesmo artefato público e validar a integridade; não troque versões silenciosamente.
+
+O gate do repositório é `npm run quality`: auditoria, lint, typecheck, testes, build e security gate. Se ele parar cedo, execute as etapas relevantes separadamente para conhecer o restante. Corrija causas; não reduza exigências para aparentar verde. Não exclua testes/asserts, afrouxe segurança ou recrie tipos manualmente para contornar erros.
+
+Para alterações de schema, autorização, privacidade ou contratos RPC, use replay isolado e tipos gerados. Na baseline histórica há 50 migrations e 161 contratos runtime; conte o alvo efetivo e os testes novos. No gate de banco, contratos obrigatórios não podem ser pulados. Um job de testes sem banco pode ter skips explícitos, desde que um job separado execute esses contratos e demonstre seu resultado.
+
+Se Docker/backend/credenciais/browser não existirem no AI Studio, não declare aprovação. Execute o que for possível, produza o commit/PR e use uma execução verificável no CI ou homologação para a dependência restante. Um check não executado permanece não executado. Evidência antiga, port aberto ou screenshot não substituem teste funcional. Validação visual precisa complementar testes de autorização e contratos.
+
+Documente por execução: commit/target, ambiente, comando, resultado/exit code, testes passados/falhos/skipped e artefato. Não invente logs, CI, métricas de conversão, entrega de e-mail ou aprovação de usuários. Ao encontrar bug fora da onda, registre severidade e impacto; trate imediatamente se bloquear a segurança ou a jornada escolhida.
+
+R22 continua obrigatório antes de promover migrations TRUST a produção: inventário read-only do schema remoto, migrations aplicadas, grants, policies, assinaturas e contratos. O checklist histórico deve ser confrontado com todas as migrations que serão promovidas; não presuma que sua lista antiga esgota as mudanças. Não use produção como homologação. Credenciais, deploy remoto, alteração de preços efetivos, cobranças reais, publicação e migrations remotas exigem as autorizações específicas correspondentes. Prepare mudanças revisáveis, testes e runbook antes de solicitar a decisão final.
+
+O cliente tem fallback público de URL/anon key do backend original. Ambiente novo ou repositório separado não significa banco separado. Confirme o destino de `VITE_SUPABASE_URL` e configure backend isolado antes de criar usuários ou escrever dados. Não execute testes de escrita contra o fallback de produção. Nunca peça segredos no chat; use o mecanismo seguro de configuração e inspecione somente nomes/presença.
+
+## 13. Entregáveis e primeira execução
+
+Reutilize documentação existente. Se não houver equivalente atual, consolide em `docs/aistudio/DELIVERY.md` o diagnóstico, matriz de capacidades/maturidade, jornadas, preços e diferenças, fluxo de estados, decisões ToT e plano de ondas. Mantenha um checkpoint curto com branch/SHA, alterações, resultados, limitações e próxima ação. Preserve decisões históricas e atualize seu estado com evidência nova.
+
+Cada onda concluída deve entregar: comportamento útil, diff pequeno e revisável, testes proporcionais, evidências, riscos remanescentes e instruções para operação/retomada. Não substitua implementação por uma coleção de documentos. Registre dependências de humano, credencial e infraestrutura com ação específica, sem bloquear trabalho independente.
+
+Comece agora com um preflight read-only e apresente:
+
+1. Repositório/branch/HEAD efetivos e preservação dos arquivos pendentes.
+2. Diferenças para a baseline e estado dos gates, com fonte de cada afirmação.
+3. Matriz inicial de maturidade, distinguindo implementado, validado e desconhecido.
+4. Os bloqueadores de piloto/venda, ordenados por impacto; backlog separado.
+5. Preços existentes, divergências e decisões comerciais que faltam.
+6. Comparação ToT das alternativas relevantes e uma única sequência recomendada.
+7. Primeira fatia da onda 0 com critérios de aceite e meios reais de validação.
+
+Depois do diagnóstico, continue as correções e melhorias reversíveis autorizadas no ambiente isolado. Não pare apenas no plano. Antes de qualquer etapa dependente de autorização externa ou de acesso ausente, conclua o trabalho independente e registre exatamente o que desbloqueia a continuação. Ao encerrar uma execução, informe o que mudou, o que foi testado, o que ainda impede o próximo nível de maturidade e qual é a próxima ação concreta.
