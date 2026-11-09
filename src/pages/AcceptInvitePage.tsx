@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { CheckCircle2, Loader2, XCircle, ArrowRight, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { institutionalQueryKeys } from "@/lib/institutional-query-keys";
+import { notifySubscriptionChanged } from "@/hooks/useSubscription";
 import logoIcon from "@/assets/logo-icon.png";
 
 /**
@@ -44,14 +45,25 @@ export default function AcceptInvitePage() {
                 return;
             }
 
-            // A membership recém-criada precisa chegar ao Provider antes de a
-            // pessoa abrir /org. A invalidação é da identidade atual, nunca global.
-            await queryClient.invalidateQueries({
-                queryKey: institutionalQueryKeys.context(session.user.id),
-                exact: true,
-            });
+            const acceptedPayload = data as { organization_id: string; role: string };
+
+            // A membership recém-criada precisa chegar ao Provider e a useSubscription
+            // antes de a pessoa abrir /org ou /alunos. A invalidação é da identidade atual.
+            await Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: institutionalQueryKeys.context(session.user.id),
+                    exact: true,
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: institutionalQueryKeys.organization(
+                        session.user.id,
+                        acceptedPayload.organization_id,
+                    ),
+                }),
+            ]);
+            notifySubscriptionChanged();
             if (!active) return;
-            setResult(data as { organization_id: string; role: string });
+            setResult(acceptedPayload);
             setStatus("success");
         }
 

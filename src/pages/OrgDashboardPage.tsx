@@ -42,6 +42,7 @@ import EngagementMetrics from "@/components/org/EngagementMetrics";
 import { useOrgEngagementSummary } from "@/hooks/useOrgAnalytics";
 import { claimEscolarSubscription, claimEscolarWithToken } from "@/lib/claim-escolar";
 import { buildNetworkDeploymentModel } from "@/lib/network-deployment";
+import { notifySubscriptionChanged } from "@/hooks/useSubscription";
 import {
     assertInstitutionalPayload,
     institutionalQueryKeys,
@@ -78,6 +79,7 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
         classes,
         members,
         invitations,
+        serverSnapshot,
         linkedSubscription,
         unlinkedSubscriptions,
         subscriptionQueryError,
@@ -90,15 +92,32 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
     const queryClient = useQueryClient();
     const { toast } = useToast();
     const mounted = useRef(true);
+    const currentOrgIdRef = useRef<string | null>(activeOrganization?.id ?? null);
+    currentOrgIdRef.current = activeOrganization?.id ?? null;
 
     useEffect(() => () => {
         mounted.current = false;
     }, []);
 
+    const isStillCurrentTenant = useCallback(
+        (operationOrganizationId: string) =>
+            mounted.current && currentOrgIdRef.current === operationOrganizationId,
+        [],
+    );
+
     const invalidateOrganization = useCallback(
-        (organizationId: string) => queryClient.invalidateQueries({
-            queryKey: institutionalQueryKeys.organization(userId, organizationId),
-        }),
+        async (organizationId: string) => {
+            await Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: institutionalQueryKeys.organization(userId, organizationId),
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: institutionalQueryKeys.context(userId),
+                    exact: true,
+                }),
+            ]);
+            notifySubscriptionChanged();
+        },
         [queryClient, userId],
     );
 
@@ -145,7 +164,7 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
             const { data: eng } = await supabase.rpc("get_org_engagement_summary", {
                 _org_id: operationOrganizationId,
             });
-            if (!mounted.current) return;
+            if (!isStillCurrentTenant(operationOrganizationId)) return;
             if (eng && typeof eng === "object" && !Array.isArray(eng)) {
                 const e = eng as Record<string, unknown>;
                 assertInstitutionalPayload(operationOrganizationId, e.organization_id, "organization");
@@ -170,9 +189,9 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
             // Best-effort: falha de analytics não inclui dados não validados no PDF.
         }
 
-        if (!mounted.current) return;
+        if (!isStillCurrentTenant(operationOrganizationId)) return;
         const generatePilotReportPDF = await loadPdfGenerator();
-        if (!mounted.current) return;
+        if (!isStillCurrentTenant(operationOrganizationId)) return;
         const doc = generatePilotReportPDF({
             orgName: org.name,
             generatedAt: new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }),
@@ -189,7 +208,7 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
             engagementData,
         });
 
-        if (!mounted.current) return;
+        if (!isStillCurrentTenant(operationOrganizationId)) return;
         doc.save(`relatorio_piloto_${org.slug || "organizacao"}.pdf`);
         toast({ title: "Relatório PDF baixado! 📄", description: "Design premium com indicadores agregados." });
     };
@@ -207,17 +226,17 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
             });
             if (err) throw err;
             await invalidateOrganization(operationOrganizationId);
-            if (!mounted.current) return;
+            if (!isStillCurrentTenant(operationOrganizationId)) return;
             toast({ title: "Escola criada!", description: submittedName });
             setSchoolName("");
             setSchoolMunicipality("");
             setShowAddSchool(false);
         } catch (e) {
-            if (mounted.current) {
+            if (isStillCurrentTenant(operationOrganizationId)) {
                 toast({ title: "Erro ao criar escola", description: e instanceof Error ? e.message : "Tente novamente.", variant: "destructive" });
             }
         } finally {
-            if (mounted.current) setAddingSchool(false);
+            if (isStillCurrentTenant(operationOrganizationId)) setAddingSchool(false);
         }
     };
 
@@ -234,16 +253,16 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
             });
             if (err) throw err;
             await invalidateOrganization(operationOrganizationId);
-            if (!mounted.current) return;
+            if (!isStillCurrentTenant(operationOrganizationId)) return;
             toast({ title: "Turma criada!", description: submittedName });
             setClassName("");
             setAddingClassForSchool(null);
         } catch (e) {
-            if (mounted.current) {
+            if (isStillCurrentTenant(operationOrganizationId)) {
                 toast({ title: "Erro ao criar turma", description: e instanceof Error ? e.message : "Tente novamente.", variant: "destructive" });
             }
         } finally {
-            if (mounted.current) setAddingClass(false);
+            if (isStillCurrentTenant(operationOrganizationId)) setAddingClass(false);
         }
     };
 
@@ -261,7 +280,7 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
             });
             if (err) throw err;
             await invalidateOrganization(operationOrganizationId);
-            if (!mounted.current) return;
+            if (!isStillCurrentTenant(operationOrganizationId)) return;
             const result = data as { created: boolean; token: string; delivery_enqueued?: boolean } | null;
             toast({
                 title: result?.created ? "Convite criado" : "Convite pendente reutilizado",
@@ -272,7 +291,7 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
             setInviteEmail("");
             setShowInvite(false);
         } catch (e) {
-            if (mounted.current) {
+            if (isStillCurrentTenant(operationOrganizationId)) {
                 toast({
                     title: "Erro ao convidar",
                     description: e instanceof Error ? e.message : "Tente novamente.",
@@ -280,7 +299,7 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
                 });
             }
         } finally {
-            if (mounted.current) setInviting(false);
+            if (isStillCurrentTenant(operationOrganizationId)) setInviting(false);
         }
     };
 
@@ -358,6 +377,7 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
         classes,
         members,
         invitations,
+        serverSnapshot,
         linkedSubscription,
         unlinkedSubscriptions,
         subscriptionQueryError,
@@ -379,7 +399,7 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
         setDeploymentActionSuccess(null);
         try {
             const res = await claimEscolarSubscription();
-            if (!mounted.current) return;
+            if (!isStillCurrentTenant(operationOrganizationId)) return;
             if (!res.ok) {
                 const msg =
                     res.reason === "no_claimable_intent"
@@ -391,18 +411,18 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
                 return;
             }
             await invalidateOrganization(operationOrganizationId);
-            if (!mounted.current) return;
+            if (!isStillCurrentTenant(operationOrganizationId)) return;
             setDeploymentActionSuccess(
                 res.reason === "association_pending"
                     ? "Pagamento aprovado ativado em sua conta. Agora clique em 'Vincular assinatura a esta rede' para associá-lo."
                     : `Assinatura escolar vinculada com sucesso à organização ${org.name}.`,
             );
         } catch (e) {
-            if (mounted.current) {
+            if (isStillCurrentTenant(operationOrganizationId)) {
                 setDeploymentActionError(e instanceof Error ? e.message : "Erro ao reivindicar assinatura.");
             }
         } finally {
-            if (mounted.current) setBusyDeploymentAction(null);
+            if (isStillCurrentTenant(operationOrganizationId)) setBusyDeploymentAction(null);
         }
     };
 
@@ -414,7 +434,7 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
         setDeploymentActionSuccess(null);
         try {
             const res = await claimEscolarWithToken(token);
-            if (!mounted.current) return;
+            if (!isStillCurrentTenant(operationOrganizationId)) return;
             if (!res.ok) {
                 setDeploymentActionError(
                     res.reason === "invalid_token"
@@ -424,18 +444,18 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
                 return;
             }
             await invalidateOrganization(operationOrganizationId);
-            if (!mounted.current) return;
+            if (!isStillCurrentTenant(operationOrganizationId)) return;
             setDeploymentActionSuccess(
                 res.reason === "association_pending"
                     ? "Código validado e assinatura ativada. Vincule-a à organização ativa na Etapa 1."
                     : `Assinatura associada com sucesso à rede ${org.name}.`,
             );
         } catch (e) {
-            if (mounted.current) {
+            if (isStillCurrentTenant(operationOrganizationId)) {
                 setDeploymentActionError(e instanceof Error ? e.message : "Erro ao validar código de ativação.");
             }
         } finally {
-            if (mounted.current) setBusyDeploymentAction(null);
+            if (isStillCurrentTenant(operationOrganizationId)) setBusyDeploymentAction(null);
         }
     };
 
@@ -452,7 +472,7 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
             });
             if (err) throw err;
             await invalidateOrganization(operationOrganizationId);
-            if (!mounted.current) return;
+            if (!isStillCurrentTenant(operationOrganizationId)) return;
             const payload = data as { organization_id?: string } | null;
             if (payload?.organization_id === operationOrganizationId) {
                 setDeploymentActionSuccess(
@@ -464,46 +484,76 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
                 );
             }
         } catch (e) {
-            if (mounted.current) {
+            if (isStillCurrentTenant(operationOrganizationId)) {
                 setDeploymentActionError(
                     e instanceof Error ? e.message : "Não foi possível vincular a assinatura.",
                 );
             }
         } finally {
-            if (mounted.current) setBusyDeploymentAction(null);
+            if (isStillCurrentTenant(operationOrganizationId)) setBusyDeploymentAction(null);
         }
     };
 
     const handleReissueExpiredInvites = async () => {
         if (!org || deploymentModel.allExpiredInvitations.length === 0) return;
         const operationOrganizationId = org.id;
+        const batch = [...deploymentModel.allExpiredInvitations];
         setBusyDeploymentAction("reissue_expired");
         setDeploymentActionError(null);
         setDeploymentActionSuccess(null);
         try {
-            let reissuedCount = 0;
-            for (const inv of deploymentModel.allExpiredInvitations) {
+            const succeededEmails: string[] = [];
+            const failedItems: { email: string; reason: string }[] = [];
+
+            for (const inv of batch) {
                 const { error: err } = await supabase.rpc("invite_member", {
                     _organization_id: operationOrganizationId,
                     _invited_email: inv.invited_email,
                     _role: inv.role,
+                    ...(inv.school_id ? { _school_id: inv.school_id } : {}),
+                    ...(inv.class_id ? { _class_id: inv.class_id } : {}),
                 });
-                if (err) throw err;
-                reissuedCount += 1;
+                if (err) {
+                    failedItems.push({
+                        email: inv.invited_email,
+                        reason: err.message || "Falha ao reemitir convite.",
+                    });
+                } else {
+                    succeededEmails.push(inv.invited_email);
+                }
             }
-            await invalidateOrganization(operationOrganizationId);
-            if (!mounted.current) return;
-            setDeploymentActionSuccess(
-                `${reissuedCount} convite(s) expirado(s) reemitido(s) com nova validade e enfileirado(s) para envio.`,
-            );
+
+            if (succeededEmails.length > 0) {
+                await invalidateOrganization(operationOrganizationId);
+            }
+            if (!isStillCurrentTenant(operationOrganizationId)) return;
+
+            if (failedItems.length === 0) {
+                setDeploymentActionSuccess(
+                    `${succeededEmails.length} convite(s) expirado(s) reemitido(s) com escopo preservado e enfileirado(s) para envio.`,
+                );
+            } else if (succeededEmails.length > 0) {
+                setDeploymentActionSuccess(
+                    `${succeededEmails.length} convite(s) reemitido(s) com sucesso (${succeededEmails.join(", ")}).`,
+                );
+                setDeploymentActionError(
+                    `Não foi possível reemitir ${failedItems.length} convite(s) (${failedItems
+                        .map((item) => `${item.email}: ${item.reason}`)
+                        .join("; ")}). Os convites concluídos já foram atualizados; tente novamente apenas para os restantes.`,
+                );
+            } else {
+                setDeploymentActionError(
+                    `Não foi possível reemitir ${failedItems.length} convite(s): ${failedItems[0].reason}`,
+                );
+            }
         } catch (e) {
-            if (mounted.current) {
+            if (isStillCurrentTenant(operationOrganizationId)) {
                 setDeploymentActionError(
                     e instanceof Error ? e.message : "Erro ao reemitir convites expirados.",
                 );
             }
         } finally {
-            if (mounted.current) setBusyDeploymentAction(null);
+            if (isStillCurrentTenant(operationOrganizationId)) setBusyDeploymentAction(null);
         }
     };
 
@@ -641,6 +691,7 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
                         setShowInvite(true);
                     }}
                     onReissueExpiredInvites={handleReissueExpiredInvites}
+                    onRetryContract={refetch}
                     onRetryEngagement={() => void engagementSummaryQuery.refetch()}
                     onDownloadReport={handleDownloadReport}
                 />

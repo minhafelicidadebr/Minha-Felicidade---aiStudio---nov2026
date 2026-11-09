@@ -40,6 +40,7 @@ export interface NetworkDeploymentCenterProps {
     onOpenInviteStudent?: () => void;
     onOpenInviteStaff?: () => void;
     onReissueExpiredInvites?: () => Promise<void> | void;
+    onRetryContract?: () => void;
     onRetryEngagement?: () => void;
     onDownloadReport?: () => Promise<void> | void;
 }
@@ -100,6 +101,7 @@ export default function NetworkDeploymentCenter({
     onOpenInviteStudent,
     onOpenInviteStaff,
     onReissueExpiredInvites,
+    onRetryContract,
     onRetryEngagement,
     onDownloadReport,
 }: NetworkDeploymentCenterProps) {
@@ -108,6 +110,7 @@ export default function NetworkDeploymentCenter({
 
     const overallMeta = STATUS_META[model.overallStatus];
     const { seats, staff } = model;
+    const isContractUnavailable = model.contractState === "unavailable";
     const seatUsagePct =
         seats.contractedSeats > 0
             ? Math.min(
@@ -128,6 +131,9 @@ export default function NetworkDeploymentCenter({
                 break;
             case "associate_unlinked_subscription":
                 void onAssociateSubscription?.();
+                break;
+            case "retry_contract":
+                onRetryContract?.();
                 break;
             case "add_school":
                 onOpenAddSchool?.();
@@ -306,12 +312,14 @@ export default function NetworkDeploymentCenter({
                         Vagas de estudantes contratadas
                     </p>
                     <p className="mt-1 font-display text-2xl font-bold tabular-nums text-foreground">
-                        {seats.contractedSeats}
+                        {isContractUnavailable ? "—" : seats.contractedSeats}
                     </p>
                     <p className="mt-0.5 text-[11px] text-muted-foreground">
-                        {seats.hasActiveContract
-                            ? `Ocupação + reserva: ${seatUsagePct}%`
-                            : "Requer contrato ativo vinculado"}
+                        {isContractUnavailable
+                            ? "Leitura contratual indisponível"
+                            : seats.hasActiveContract
+                                ? `Ocupação + reserva: ${seatUsagePct}%`
+                                : "Requer contrato ativo vinculado"}
                     </p>
                 </div>
 
@@ -323,7 +331,7 @@ export default function NetworkDeploymentCenter({
                         Ocupadas (estudantes ativos)
                     </p>
                     <p className="mt-1 font-display text-2xl font-bold tabular-nums text-foreground">
-                        {seats.occupiedStudentSeats}
+                        {isContractUnavailable ? "—" : seats.occupiedStudentSeats}
                     </p>
                     <p className="mt-0.5 text-[11px] text-muted-foreground">
                         Membros com papel estudante ativo
@@ -338,11 +346,11 @@ export default function NetworkDeploymentCenter({
                         Reservadas (convites válidos)
                     </p>
                     <p className="mt-1 font-display text-2xl font-bold tabular-nums text-foreground">
-                        {seats.reservedStudentSeats}
+                        {isContractUnavailable ? "—" : seats.reservedStudentSeats}
                     </p>
                     <p className="mt-0.5 text-[11px] text-muted-foreground">
-                        {seats.expiredStudentInvitations.length > 0
-                            ? `${seats.expiredStudentInvitations.length} expirado(s) não reservam vaga`
+                        {seats.expiredStudentInvitationsCount > 0
+                            ? `${seats.expiredStudentInvitationsCount} expirado(s) não reservam vaga`
                             : "Dentro do prazo de validade"}
                     </p>
                 </div>
@@ -359,12 +367,14 @@ export default function NetworkDeploymentCenter({
                             seats.isQuotaFull ? "text-amber-600 dark:text-amber-400" : "text-foreground"
                         }`}
                     >
-                        {seats.availableStudentSeats}
+                        {isContractUnavailable ? "—" : seats.availableStudentSeats}
                     </p>
                     <p className="mt-0.5 text-[11px] text-muted-foreground">
-                        {seats.isQuotaFull
-                            ? "Limite de alunos atingido · equipe livre"
-                            : `Equipe ativa: ${staff.activeOrgAdmins + staff.activeSchoolAdmins + staff.activeEducators}`}
+                        {isContractUnavailable
+                            ? "Aguardando sincronização contratual"
+                            : seats.isQuotaFull
+                                ? "Limite de alunos atingido · equipe livre"
+                                : `Equipe ativa: ${staff.activeOrgAdmins + staff.activeSchoolAdmins + staff.activeEducators}`}
                     </p>
                 </div>
             </div>

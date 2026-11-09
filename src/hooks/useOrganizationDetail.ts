@@ -4,7 +4,10 @@ import {
     assertInstitutionalPayload,
     institutionalQueryKeys,
 } from "@/lib/institutional-query-keys";
-import type { OrganizationSubscriptionSnapshot } from "@/lib/network-deployment";
+import type {
+    OrganizationSubscriptionSnapshot,
+    ServerDeploymentSnapshot,
+} from "@/lib/network-deployment";
 
 export interface Organization {
     id: string;
@@ -48,6 +51,8 @@ export interface Invitation {
     organization_id: string;
     invited_email: string;
     role: string;
+    school_id: string | null;
+    class_id: string | null;
     token: string;
     expires_at: string;
     accepted_at: string | null;
@@ -59,6 +64,7 @@ interface OrganizationDetailData {
     classes: ClassRoom[];
     members: Membership[];
     invitations: Invitation[];
+    serverSnapshot: ServerDeploymentSnapshot | null;
     linkedSubscription: OrganizationSubscriptionSnapshot | null;
     unlinkedSubscriptions: OrganizationSubscriptionSnapshot[];
     subscriptionQueryError: string | null;
@@ -76,7 +82,7 @@ async function fetchOrganizationDetail(organizationId: string): Promise<Organiza
     if (!orgData) throw new Error("Organização não disponível para esta conta.");
     assertInstitutionalPayload(organizationId, orgData.id, "organization");
 
-    const [schoolsResult, membersResult, invitationsResult, subscriptionsResult] = await Promise.all([
+    const [schoolsResult, membersResult, invitationsResult, snapshotResult] = await Promise.all([
         supabase
             .from("schools")
             .select("*")
@@ -92,11 +98,9 @@ async function fetchOrganizationDetail(organizationId: string): Promise<Organiza
             .select("*")
             .eq("organization_id", organizationId)
             .is("accepted_at", null),
-        supabase
-            .from("organization_subscriptions")
-            .select(
-                "id, organization_name, organization_id, owner_id, status, billing_interval, max_seats, current_period_start, current_period_end",
-            ),
+        supabase.rpc("get_org_deployment_snapshot", {
+            _organization_id: organizationId,
+        }),
     ]);
 
     if (schoolsResult.error) throw schoolsResult.error;
@@ -115,25 +119,37 @@ async function fetchOrganizationDetail(organizationId: string): Promise<Organiza
         classes = (data ?? []) as ClassRoom[];
     }
 
-    const subRows = (subscriptionsResult.data ?? []) as OrganizationSubscriptionSnapshot[];
-    const linkedCandidates = subRows
-        .filter((s) => s.organization_id === organizationId)
-        .sort((a, b) => {
-            const aActive = a.status === "active" || a.status === "trialing" ? 0 : 1;
-            const bActive = b.status === "active" || b.status === "trialing" ? 0 : 1;
-            if (aActive !== bActive) return aActive - bActive;
-            const aEnd = a.current_period_end ? new Date(a.current_period_end).getTime() : 0;
-            const bEnd = b.current_period_end ? new Date(b.current_period_end).getTime() : 0;
-            return bEnd - aEnd;
-        });
+    let serverSnapshot: ServerDeploymentSnapshot | null = null;
+    let subscriptionQueryError: string | null = null;
 
-    const linkedSubscription = linkedCandidates[0] ?? null;
-    const unlinkedSubscriptions = subRows.filter(
-        (s) =>
-            s.organization_id === null &&
-            (s.status === "active" || s.status === "trialing") &&
-            (!s.current_period_end || new Date(s.current_period_end).getTime() > Date.now()),
-    );
+    if (snapshotResult.error) {
+        subscriptionQueryError = snapshotResult.error.message;
+    } else if (
+        snapshotResult.data &&
+        typeof snapshotResult.data === "object" &&
+        !Array.isArray(snapshotResult.data)
+    ) {
+        const parsed = snapshotResult.data as unknown as ServerDeploymentSnapshot;
+        assertInstitutionalPayload(organizationId, parsed.organization_id, "organization");
+        serverSnapshot = parsed;
+    } else {
+        subscriptionQueryError = "Resposta contratual inválida do servidor.";
+    }
+
+    const linkedSubscription = serverSnapshot?.subscription ?? null;
+    const unlinkedSubscriptions: OrganizationSubscriptionSnapshot[] =
+        serverSnapshot && serverSnapshot.unlinked_active_subscriptions_count > 0
+            ? Array.from({ length: serverSnapshot.unlinked_active_subscriptions_count }, (_, idx) => ({
+                  id: `unlinked-${idx + 1}`,
+                  organization_name: orgData.name,
+                  organization_id: null,
+                  status: "active",
+                  billing_interval: "monthly",
+                  max_seats: serverSnapshot.unlinked_max_seats || 30,
+                  current_period_start: null,
+                  current_period_end: null,
+              }))
+            : [];
 
     return {
         org: orgData as Organization,
@@ -141,9 +157,10 @@ async function fetchOrganizationDetail(organizationId: string): Promise<Organiza
         classes,
         members: (membersResult.data ?? []) as Membership[],
         invitations: (invitationsResult.data ?? []) as Invitation[],
+        serverSnapshot,
         linkedSubscription,
         unlinkedSubscriptions,
-        subscriptionQueryError: subscriptionsResult.error ? subscriptionsResult.error.message : null,
+        subscriptionQueryError,
     };
 }
 
@@ -153,6 +170,7 @@ export interface UseOrganizationDetailResult {
     classes: ClassRoom[];
     members: Membership[];
     invitations: Invitation[];
+    serverSnapshot: ServerDeploymentSnapshot | null;
     linkedSubscription: OrganizationSubscriptionSnapshot | null;
     unlinkedSubscriptions: OrganizationSubscriptionSnapshot[];
     subscriptionQueryError: string | null;
@@ -181,6 +199,7 @@ export function useOrganizationDetail(
         classes: query.data?.classes ?? [],
         members: query.data?.members ?? [],
         invitations: query.data?.invitations ?? [],
+        serverSnapshot: query.data?.serverSnapshot ?? null,
         linkedSubscription: query.data?.linkedSubscription ?? null,
         unlinkedSubscriptions: query.data?.unlinkedSubscriptions ?? [],
         subscriptionQueryError: query.data?.subscriptionQueryError ?? null,

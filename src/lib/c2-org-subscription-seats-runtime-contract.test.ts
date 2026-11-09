@@ -437,7 +437,7 @@ suite("ONDA C2 / C2.R — Vínculo assinatura<->organização, entitlements e as
     expect(otherOrgPlan.plan_slug).toBe("free");
 
     const canSeePaidSub = Number(
-      asAuthenticatedCommit(otherOrgMember, `SELECT count(*) FROM public.organization_subscriptions WHERE id = '${subPaid}'`),
+      asAuthenticatedCommit(otherOrgMember, `SELECT count(id) FROM public.organization_subscriptions WHERE id = '${subPaid}'`),
     );
     expect(canSeePaidSub).toBe(0);
   });
@@ -891,7 +891,7 @@ suite("ONDA C2 / C2.R — Vínculo assinatura<->organização, entitlements e as
     expect(subOrgAfterCreate).toBe("NULL");
   });
 
-  it("11. Regressão Defeito #4 e Bloqueio D (C2.R): leitura de organization_subscriptions sob RLS sem recursão, bloqueio direto a organization_members e entitlement via get_my_plan()", () => {
+  it("11. Regressão Defeito #4 e C2.1 Menor Privilégio: org_admin não proprietário lê snapshot operacional sem acesso direto a colunas financeiras nem a organization_members", () => {
     const owner = randomUUID();
     const orgAdmin2 = randomUUID();
     const student = randomUUID();
@@ -911,10 +911,12 @@ suite("ONDA C2 / C2.R — Vínculo assinatura<->organização, entitlements e as
         ('${orgOther}', 'Outra Rede Isolada', 'rls-other-${orgOther}', '${outsiderAdmin}', 'active');
 
       INSERT INTO public.organization_subscriptions (
-        id, organization_name, organization_id, plan_id, owner_id, status, billing_interval, max_seats, current_period_end
+        id, organization_name, organization_id, plan_id, owner_id, status, billing_interval, max_seats,
+        current_period_end, external_subscription_id, metadata
       )
       VALUES (
-        '${subId}', 'Escola Sem Recursão RLS', '${orgId}', '${advancedPlanId}', '${owner}', 'active', 'monthly', 25, now() + interval '30 days'
+        '${subId}', 'Escola Sem Recursão RLS', '${orgId}', '${advancedPlanId}', '${owner}', 'active', 'monthly', 25,
+        now() + interval '30 days', 'mp_pay_secret_${subId}', '{"financial_secret":"nf-999"}'::jsonb
       );
 
       INSERT INTO public.institutional_memberships (organization_id, user_id, role, status) VALUES
@@ -927,21 +929,65 @@ suite("ONDA C2 / C2.R — Vínculo assinatura<->organização, entitlements e as
       VALUES ('${subId}', '${student}', 'active');
     `);
 
-    // Owner e co-org_admin leem a assinatura vinculada sem erro de recursão (42P17) nem falta de privilégio (42501)
+    // Owner lê suas colunas operacionais permitidas sem erro de recursão (42P17)
     expect(
-      Number(asAuthenticatedCommit(owner, `SELECT count(*) FROM public.organization_subscriptions WHERE id = '${subId}'`)),
-    ).toBe(1);
-    expect(
-      Number(asAuthenticatedCommit(orgAdmin2, `SELECT count(*) FROM public.organization_subscriptions WHERE id = '${subId}'`)),
+      Number(asAuthenticatedCommit(owner, `SELECT count(id) FROM public.organization_subscriptions WHERE id = '${subId}'`)),
     ).toBe(1);
 
-    // Estudante e gestor de outro tenant não leem linhas financeiras brutas de organization_subscriptions (isolamento cross-tenant)
+    // Co-org_admin não proprietário NÃO lê linhas diretamente em organization_subscriptions (0 linhas visíveis via RLS),
+    // mas lê o resumo operacional autorizado via get_org_deployment_snapshot(orgId)
     expect(
-      Number(asAuthenticatedCommit(student, `SELECT count(*) FROM public.organization_subscriptions WHERE id = '${subId}'`)),
+      Number(asAuthenticatedCommit(orgAdmin2, `SELECT count(id) FROM public.organization_subscriptions WHERE id = '${subId}'`)),
+    ).toBe(0);
+
+    const admin2Snapshot = JSON.parse(
+      asAuthenticatedCommit(orgAdmin2, `SELECT public.get_org_deployment_snapshot('${orgId}')::text`),
+    ) as {
+      contract_state: string;
+      contracted_seats: number;
+      occupied_student_seats: number;
+      subscription: Record<string, unknown>;
+    };
+    expect(admin2Snapshot.contract_state).toBe("active_linked");
+    expect(admin2Snapshot.contracted_seats).toBe(25);
+    expect(admin2Snapshot.occupied_student_seats).toBe(1);
+    expect(admin2Snapshot.subscription).not.toHaveProperty("external_subscription_id");
+    expect(admin2Snapshot.subscription).not.toHaveProperty("metadata");
+
+    // Nem orgAdmin2 nem owner conseguem ler external_subscription_id ou metadata na tabela organization_subscriptions
+    expectAuthenticatedFailure(
+      orgAdmin2,
+      `SELECT external_subscription_id FROM public.organization_subscriptions WHERE id = '${subId}'`,
+      /permission denied for table organization_subscriptions/i,
+    );
+    expectAuthenticatedFailure(
+      orgAdmin2,
+      `SELECT metadata FROM public.organization_subscriptions WHERE id = '${subId}'`,
+      /permission denied for table organization_subscriptions/i,
+    );
+    expectAuthenticatedFailure(
+      owner,
+      `SELECT external_subscription_id, metadata FROM public.organization_subscriptions WHERE id = '${subId}'`,
+      /permission denied for table organization_subscriptions/i,
+    );
+
+    // Estudante e gestor de outro tenant não leem linhas de organization_subscriptions nem executam get_org_deployment_snapshot de orgId
+    expect(
+      Number(asAuthenticatedCommit(student, `SELECT count(id) FROM public.organization_subscriptions WHERE id = '${subId}'`)),
     ).toBe(0);
     expect(
-      Number(asAuthenticatedCommit(outsiderAdmin, `SELECT count(*) FROM public.organization_subscriptions WHERE id = '${subId}'`)),
+      Number(asAuthenticatedCommit(outsiderAdmin, `SELECT count(id) FROM public.organization_subscriptions WHERE id = '${subId}'`)),
     ).toBe(0);
+    expectAuthenticatedFailure(
+      student,
+      `SELECT public.get_org_deployment_snapshot('${orgId}')::text`,
+      /Only org_admin can view organization deployment snapshot/i,
+    );
+    expectAuthenticatedFailure(
+      outsiderAdmin,
+      `SELECT public.get_org_deployment_snapshot('${orgId}')::text`,
+      /Only org_admin can view organization deployment snapshot/i,
+    );
 
     // Escrita direta em organization_subscriptions por usuário autenticado é negada (menor privilégio)
     expectAuthenticatedFailure(
@@ -1176,32 +1222,40 @@ suite("ONDA C2 / C2.R — Vínculo assinatura<->organização, entitlements e as
     expect(auditCount).toBe(1);
   });
 
-  it("14. Regressão Bloqueio D: privilégios de tabela em organization_subscriptions e organization_members estão alinhados ao menor privilégio", () => {
+  it("14. Regressão Bloqueio D e C2.1: privilégios de tabela, coluna e RPC em organization_subscriptions e organization_members estão alinhados ao menor privilégio", () => {
     const userRandom = randomUUID();
     createAuthUser(userRandom, `anon-read-${userRandom}@example.invalid`);
 
-    // Consulta como authenticated em organization_subscriptions respeita RLS sem erro 42501
-    const count = Number(asAuthenticatedCommit(userRandom, `SELECT count(*) FROM public.organization_subscriptions`));
+    // Consulta em coluna operacional permitida (id) como authenticated respeita RLS sem erro 42501
+    const count = Number(asAuthenticatedCommit(userRandom, `SELECT count(id) FROM public.organization_subscriptions`));
     expect(count).toBe(0);
 
     // Verificação direta no catálogo de privilégios do PostgreSQL
     const privs = JSON.parse(
       sql(`
         SELECT jsonb_build_object(
-          'org_sub_auth_select', has_table_privilege('authenticated', 'public.organization_subscriptions', 'SELECT'),
+          'org_sub_auth_table_select', has_table_privilege('authenticated', 'public.organization_subscriptions', 'SELECT'),
+          'org_sub_auth_col_max_seats', has_column_privilege('authenticated', 'public.organization_subscriptions', 'max_seats', 'SELECT'),
+          'org_sub_auth_col_ext_id', has_column_privilege('authenticated', 'public.organization_subscriptions', 'external_subscription_id', 'SELECT'),
+          'org_sub_auth_col_metadata', has_column_privilege('authenticated', 'public.organization_subscriptions', 'metadata', 'SELECT'),
           'org_sub_auth_insert', has_table_privilege('authenticated', 'public.organization_subscriptions', 'INSERT'),
           'org_sub_auth_update', has_table_privilege('authenticated', 'public.organization_subscriptions', 'UPDATE'),
           'org_sub_auth_delete', has_table_privilege('authenticated', 'public.organization_subscriptions', 'DELETE'),
-          'org_sub_anon_select', has_table_privilege('anon', 'public.organization_subscriptions', 'SELECT'),
+          'org_sub_anon_select', has_any_column_privilege('anon', 'public.organization_subscriptions', 'SELECT'),
           'org_mem_auth_select', has_table_privilege('authenticated', 'public.organization_members', 'SELECT'),
           'org_mem_anon_select', has_table_privilege('anon', 'public.organization_members', 'SELECT'),
-          'org_mem_service_select', has_table_privilege('service_role', 'public.organization_members', 'SELECT')
+          'org_mem_service_select', has_table_privilege('service_role', 'public.organization_members', 'SELECT'),
+          'snapshot_auth_exec', has_function_privilege('authenticated', 'public.get_org_deployment_snapshot(uuid)', 'EXECUTE'),
+          'snapshot_anon_exec', has_function_privilege('anon', 'public.get_org_deployment_snapshot(uuid)', 'EXECUTE')
         )::text;
       `),
     ) as Record<string, boolean>;
 
     expect(privs).toEqual({
-      org_sub_auth_select: true,
+      org_sub_auth_table_select: false,
+      org_sub_auth_col_max_seats: true,
+      org_sub_auth_col_ext_id: false,
+      org_sub_auth_col_metadata: false,
       org_sub_auth_insert: false,
       org_sub_auth_update: false,
       org_sub_auth_delete: false,
@@ -1209,8 +1263,298 @@ suite("ONDA C2 / C2.R — Vínculo assinatura<->organização, entitlements e as
       org_mem_auth_select: false,
       org_mem_anon_select: false,
       org_mem_service_select: true,
+      snapshot_auth_exec: true,
+      snapshot_anon_exec: false,
     });
   });
+
+  it("15. Aceite 8.A e 8.B: Isolamento em múltiplas redes — gestor em duas organizações não mistura nem vaza contratos entre redes", () => {
+    const ownerA = randomUUID();
+    const ownerB = randomUUID();
+    const sharedAdmin = randomUUID();
+    const educatorA = randomUUID();
+    const orgA = randomUUID();
+    const orgB = randomUUID();
+    const subA = randomUUID();
+    const subUnlinkedOwnerA = randomUUID();
+
+    createAuthUser(ownerA, `owner-a-${ownerA}@example.invalid`);
+    createAuthUser(ownerB, `owner-b-${ownerB}@example.invalid`);
+    createAuthUser(sharedAdmin, `shared-adm-${sharedAdmin}@example.invalid`);
+    createAuthUser(educatorA, `edu-a-${educatorA}@example.invalid`);
+
+    sql(`
+      INSERT INTO public.organizations (id, name, slug, owner_id, status) VALUES
+        ('${orgA}', 'Rede A Pagante', 'rede-a-${orgA}', '${ownerA}', 'active'),
+        ('${orgB}', 'Rede B Sem Contrato', 'rede-b-${orgB}', '${ownerB}', 'active');
+
+      INSERT INTO public.institutional_memberships (organization_id, user_id, role, status) VALUES
+        ('${orgA}', '${ownerA}', 'org_admin', 'active'),
+        ('${orgA}', '${sharedAdmin}', 'org_admin', 'active'),
+        ('${orgA}', '${educatorA}', 'educator', 'active'),
+        ('${orgB}', '${ownerB}', 'org_admin', 'active'),
+        ('${orgB}', '${sharedAdmin}', 'org_admin', 'active');
+
+      INSERT INTO public.organization_subscriptions (
+        id, organization_name, organization_id, plan_id, owner_id, status, billing_interval, max_seats,
+        current_period_end, external_subscription_id, metadata
+      ) VALUES
+        ('${subA}', 'Rede A Pagante', '${orgA}', '${advancedPlanId}', '${ownerA}', 'active', 'yearly', 90,
+         now() + interval '180 days', 'mp_secret_a', '{"secret_nf":"A-001"}'::jsonb),
+        ('${subUnlinkedOwnerA}', 'Contrato Extra Owner A', NULL, '${advancedPlanId}', '${ownerA}', 'active', 'monthly', 40,
+         now() + interval '30 days', 'mp_secret_unlinked', '{"secret_nf":"A-002"}'::jsonb);
+    `);
+
+    // sharedAdmin em orgA vê apenas o snapshot de orgA (90 vagas, active_linked) e 0 assinaturas não vinculadas de ownerA
+    const snapAForShared = JSON.parse(
+      asAuthenticatedCommit(sharedAdmin, `SELECT public.get_org_deployment_snapshot('${orgA}')::text`),
+    ) as {
+      organization_id: string;
+      contract_state: string;
+      contracted_seats: number;
+      unlinked_active_subscriptions_count: number;
+    };
+    expect(snapAForShared.organization_id).toBe(orgA);
+    expect(snapAForShared.contract_state).toBe("active_linked");
+    expect(snapAForShared.contracted_seats).toBe(90);
+    expect(snapAForShared.unlinked_active_subscriptions_count).toBe(0);
+
+    // sharedAdmin em orgB vê missing_contract e 0 vagas (nunca herda subA nem subUnlinkedOwnerA)
+    const snapBForShared = JSON.parse(
+      asAuthenticatedCommit(sharedAdmin, `SELECT public.get_org_deployment_snapshot('${orgB}')::text`),
+    ) as {
+      organization_id: string;
+      contract_state: string;
+      contracted_seats: number;
+      unlinked_active_subscriptions_count: number;
+    };
+    expect(snapBForShared.organization_id).toBe(orgB);
+    expect(snapBForShared.contract_state).toBe("missing_contract");
+    expect(snapBForShared.contracted_seats).toBe(0);
+    expect(snapBForShared.unlinked_active_subscriptions_count).toBe(0);
+
+    // Educador em orgA é bloqueado em get_org_deployment_snapshot
+    expectAuthenticatedFailure(
+      educatorA,
+      `SELECT public.get_org_deployment_snapshot('${orgA}')::text`,
+      /Only org_admin can view organization deployment snapshot/i,
+    );
+  });
+
+  it("16. Aceite 8.C: Upgrade de schema a partir de estado anterior (b2b82b2) converge para os mesmos privilégios, policies e funções da instalação limpa", () => {
+    const out = JSON.parse(
+      sql(`
+        BEGIN;
+        -- Simula estado anterior pré-C2.1 (onde SELECT amplo estava concedido na tabela inteira)
+        GRANT SELECT ON TABLE public.organization_subscriptions TO authenticated;
+        DROP POLICY IF EXISTS "Contract owners can view own org subscriptions" ON public.organization_subscriptions;
+        CREATE POLICY "Owners and org admins can view org subscriptions"
+          ON public.organization_subscriptions
+          FOR SELECT TO authenticated
+          USING (owner_id = auth.uid() OR (organization_id IS NOT NULL AND public.is_org_admin(organization_id)));
+
+        -- Reaplica os comandos de endurecimento da migration C2.1
+        DROP POLICY IF EXISTS "Owners and org admins can view org subscriptions" ON public.organization_subscriptions;
+        DROP POLICY IF EXISTS "Contract owners can view own org subscriptions" ON public.organization_subscriptions;
+        REVOKE ALL ON TABLE public.organization_subscriptions FROM PUBLIC, anon, authenticated;
+        GRANT SELECT (
+          id, organization_name, organization_id, plan_id, owner_id, status,
+          billing_interval, max_seats, current_period_start, current_period_end,
+          created_at, updated_at
+        ) ON TABLE public.organization_subscriptions TO authenticated;
+        GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.organization_subscriptions TO service_role;
+        CREATE POLICY "Contract owners can view own org subscriptions"
+          ON public.organization_subscriptions
+          FOR SELECT TO authenticated
+          USING (owner_id = auth.uid());
+        COMMIT;
+
+        SELECT jsonb_build_object(
+          'table_select', has_table_privilege('authenticated', 'public.organization_subscriptions', 'SELECT'),
+          'col_ext_id', has_column_privilege('authenticated', 'public.organization_subscriptions', 'external_subscription_id', 'SELECT'),
+          'col_metadata', has_column_privilege('authenticated', 'public.organization_subscriptions', 'metadata', 'SELECT'),
+          'col_status', has_column_privilege('authenticated', 'public.organization_subscriptions', 'status', 'SELECT'),
+          'policy_count', (SELECT count(*) FROM pg_policies WHERE schemaname = 'public' AND tablename = 'organization_subscriptions' AND policyname = 'Contract owners can view own org subscriptions')
+        )::text;
+      `),
+    ) as {
+      table_select: boolean;
+      col_ext_id: boolean;
+      col_metadata: boolean;
+      col_status: boolean;
+      policy_count: number;
+    };
+
+    expect(out).toEqual({
+      table_select: false,
+      col_ext_id: false,
+      col_metadata: false,
+      col_status: true,
+      policy_count: 1,
+    });
+  });
+
+  it("17. Aceite 8.D: Consistência 1:1 entre get_org_deployment_snapshot e enforcement (sem dupla contagem de aluno já ativo e com volume > 1.000 registros)", () => {
+    const admin = randomUUID();
+    const activeStudent = randomUUID();
+    const orgId = randomUUID();
+    const subId = randomUUID();
+    const activeStudentEmail = `active-dup-${activeStudent}@example.invalid`;
+
+    createAuthUser(admin, `adm-vol-${admin}@example.invalid`);
+    createAuthUser(activeStudent, activeStudentEmail);
+
+    sql(`
+      INSERT INTO public.organizations (id, name, slug, owner_id, status)
+      VALUES ('${orgId}', 'Rede Volume Alto C2.1', 'vol-${orgId}', '${admin}', 'active');
+
+      INSERT INTO public.institutional_memberships (organization_id, user_id, role, status) VALUES
+        ('${orgId}', '${admin}', 'org_admin', 'active'),
+        ('${orgId}', '${activeStudent}', 'student', 'active');
+
+      INSERT INTO public.organization_subscriptions (
+        id, organization_name, organization_id, plan_id, owner_id, status, billing_interval, max_seats, current_period_end
+      ) VALUES (
+        '${subId}', 'Rede Volume Alto C2.1', '${orgId}', '${advancedPlanId}', '${admin}', 'active', 'yearly', 1200, now() + interval '90 days'
+      );
+
+      -- Convite pendente duplicado para o mesmo e-mail de activeStudent (não deve reservar assento extra)
+      INSERT INTO public.institutional_invitations (organization_id, invited_email, role, invited_by, expires_at)
+      VALUES ('${orgId}', '  ${activeStudentEmail.toUpperCase()} ', 'student', '${admin}', now() + interval '7 days');
+
+      -- 1.050 convites pendentes válidos distintos (> 1.000 linhas do limite padrão PostgREST)
+      INSERT INTO public.institutional_invitations (organization_id, invited_email, role, invited_by, expires_at)
+      SELECT
+        '${orgId}',
+        'vol-student-' || g || '-${orgId}@example.invalid',
+        'student',
+        '${admin}',
+        now() + interval '7 days'
+      FROM generate_series(1, 1050) AS g;
+    `);
+
+    const snapshot = JSON.parse(
+      asAuthenticatedCommit(admin, `SELECT public.get_org_deployment_snapshot('${orgId}')::text`),
+    ) as {
+      contracted_seats: number;
+      occupied_student_seats: number;
+      reserved_student_seats: number;
+      available_student_seats: number;
+      is_quota_full: boolean;
+    };
+
+    // 1.200 contratadas, 1 ocupada, 1.050 reservadas (o convite para activeStudentEmail foi descontado) => 149 disponíveis
+    expect(snapshot.contracted_seats).toBe(1200);
+    expect(snapshot.occupied_student_seats).toBe(1);
+    expect(snapshot.reserved_student_seats).toBe(1050);
+    expect(snapshot.available_student_seats).toBe(149);
+    expect(snapshot.is_quota_full).toBe(false);
+  });
+
+  it("18. Aceite 8.F e 8.G: Estados contratuais na Central e reemissão de convites expirados preservando school_id e class_id", () => {
+    const owner = randomUUID();
+    const orgId = randomUUID();
+    const schoolId = randomUUID();
+    const classId = randomUUID();
+    const subId = randomUUID();
+    const expiredStudentEmail = `exp-scoped-${orgId}@example.invalid`;
+
+    createAuthUser(owner, `owner-fg-${owner}@example.invalid`);
+
+    sql(`
+      INSERT INTO public.organizations (id, name, slug, owner_id, status)
+      VALUES ('${orgId}', 'Rede Escopo e Estados', 'escopo-${orgId}', '${owner}', 'active');
+
+      INSERT INTO public.institutional_memberships (organization_id, user_id, role, status)
+      VALUES ('${orgId}', '${owner}', 'org_admin', 'active');
+
+      INSERT INTO public.schools (id, organization_id, name, municipality, state_code, status)
+      VALUES ('${schoolId}', '${orgId}', 'EMEF Escopo Preservado', 'Curitiba', 'PR', 'active');
+
+      INSERT INTO public.classes (id, school_id, name, year, semester, status)
+      VALUES ('${classId}', '${schoolId}', '8º Ano B', 2026, 2, 'active');
+    `);
+
+    // Estado 1: missing_contract (0 vagas contratadas, nunca 30 implícitas)
+    const snapMissing = JSON.parse(
+      asAuthenticatedCommit(owner, `SELECT public.get_org_deployment_snapshot('${orgId}')::text`),
+    ) as { contract_state: string; contracted_seats: number; has_active_contract: boolean };
+    expect(snapMissing.contract_state).toBe("missing_contract");
+    expect(snapMissing.contracted_seats).toBe(0);
+    expect(snapMissing.has_active_contract).toBe(false);
+
+    // Estado 2: association_pending (assinatura ativa do owner com organization_id = NULL)
+    sql(`
+      INSERT INTO public.organization_subscriptions (
+        id, organization_name, organization_id, plan_id, owner_id, status, billing_interval, max_seats, current_period_end
+      ) VALUES (
+        '${subId}', 'Rede Escopo e Estados', NULL, '${advancedPlanId}', '${owner}', 'active', 'monthly', 35, now() + interval '30 days'
+      );
+    `);
+    const snapPending = JSON.parse(
+      asAuthenticatedCommit(owner, `SELECT public.get_org_deployment_snapshot('${orgId}')::text`),
+    ) as {
+      contract_state: string;
+      contracted_seats: number;
+      unlinked_active_subscriptions_count: number;
+      unlinked_max_seats: number;
+    };
+    expect(snapPending.contract_state).toBe("association_pending");
+    expect(snapPending.contracted_seats).toBe(0);
+    expect(snapPending.unlinked_active_subscriptions_count).toBe(1);
+    expect(snapPending.unlinked_max_seats).toBe(35);
+
+    // Estado 3: expired_linked (assinatura vinculada mas expirada)
+    sql(`
+      UPDATE public.organization_subscriptions
+      SET organization_id = '${orgId}', status = 'expired', current_period_end = now() - interval '2 days'
+      WHERE id = '${subId}';
+    `);
+    const snapExpired = JSON.parse(
+      asAuthenticatedCommit(owner, `SELECT public.get_org_deployment_snapshot('${orgId}')::text`),
+    ) as { contract_state: string; contracted_seats: number; has_active_contract: boolean };
+    expect(snapExpired.contract_state).toBe("expired_linked");
+    expect(snapExpired.contracted_seats).toBe(0);
+    expect(snapExpired.has_active_contract).toBe(false);
+
+    // Estado 4: active_linked + reemissão de convite expirado preservando school_id e class_id
+    sql(`
+      UPDATE public.organization_subscriptions
+      SET status = 'active', current_period_end = now() + interval '30 days'
+      WHERE id = '${subId}';
+
+      INSERT INTO public.institutional_invitations (
+        organization_id, invited_email, role, school_id, class_id, invited_by, expires_at
+      ) VALUES (
+        '${orgId}', '${expiredStudentEmail}', 'student', '${schoolId}', '${classId}', '${owner}', now() - interval '1 day'
+      );
+    `);
+
+    const reissued = JSON.parse(
+      asAuthenticatedCommit(
+        owner,
+        `SELECT public.invite_member('${orgId}', '${expiredStudentEmail}', 'student', '${schoolId}', '${classId}')::text`,
+      ),
+    ) as {
+      invitation_id: string;
+      created: boolean;
+      school_id: string;
+      class_id: string;
+    };
+    expect(reissued.created).toBe(true);
+    expect(reissued.school_id).toBe(schoolId);
+    expect(reissued.class_id).toBe(classId);
+
+    const dbScope = JSON.parse(
+      sql(`
+        SELECT jsonb_build_object('school_id', school_id, 'class_id', class_id)::text
+        FROM public.institutional_invitations
+        WHERE id = '${reissued.invitation_id}';
+      `),
+    ) as { school_id: string; class_id: string };
+    expect(dbScope).toEqual({ school_id: schoolId, class_id: classId });
+  });
 });
+
 
 

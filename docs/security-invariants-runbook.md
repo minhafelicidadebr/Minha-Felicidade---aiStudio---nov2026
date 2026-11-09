@@ -717,3 +717,62 @@ A migration TRUST #48 continua **não aplicada remotamente**, na mesma condiçã
 das #43–#47. O replay local com Supabase CLI 2.115.0 aplicou **48/48** desde
 banco vazio; os cinco arquivos runtime aplicáveis passaram **121/121**
 (93 herdados + 28 novos de `input-integrity-runtime-contract.test.ts`).
+
+## Ordem de aplicação — migrations #49 a #52 (TRUST-1.6, TRUST-1.6.1, C2/C2.R e C2.1)
+
+49. `supabase/migrations/20260917120000_trust1_6_guardian_consent_ledger_completion.sql` —
+    TRUST-1.6 (R06/R07/R08/R09). Conclui o ledger de consentimento parental com
+    solicitação por token (`create_guardian_consent_request`,
+    `resolve_guardian_consent_token`, `decide_guardian_consent`), revogação
+    auditável e gate fail-closed.
+
+50. `supabase/migrations/20260921120000_trust1_6_1_notification_outbox_contract.sql` —
+    TRUST-1.6.1 (R33/R34). Consolida o contrato da `notification_outbox` sem
+    `EXCEPTION WHEN OTHERS` silencioso e garante enfileiramento transacional
+    auditável em fluxos institucionais e parentais.
+
+51. `supabase/migrations/20260925120000_c2_org_subscription_link_and_seats.sql` —
+    ONDA C2 / C2.R. Adiciona `organization_id` explícito em
+    `organization_subscriptions` (`REFERENCES public.organizations(id) ON DELETE SET NULL`),
+    backfill unívoco 1:1, ativação/renovação determinística em
+    `activate_subscription_from_intent`/`claim_escolar_subscription`/`claim_escolar_with_token`,
+    resolução de entitlements em `get_user_plan`/`get_my_plan` e triggers
+    transacionais `trg_enforce_institutional_membership_seats` e
+    `trg_enforce_institutional_invitation_seats`.
+
+52. `supabase/migrations/20261109120000_c2_1_org_contract_snapshot_and_least_privilege.sql` —
+    ONDA C2.1. Fecha o acesso amplo a `organization_subscriptions` e centraliza a
+    leitura operacional da rede no servidor:
+    - **§1 Convergência de upgrade:** reaplica de forma idempotente o fechamento de
+      `organization_members` e `create_organization` para bancos que já haviam
+      aplicado a versão inicial da #51.
+    - **§2 Menor privilégio em `organization_subscriptions`:** executa
+      `REVOKE ALL ON TABLE public.organization_subscriptions FROM PUBLIC, anon, authenticated`
+      seguido de `GRANT SELECT` explícito apenas nas colunas operacionais não
+      financeiras (excluindo `external_subscription_id` e `metadata`), e restringe
+      a policy de `SELECT` direto na tabela a `owner_id = auth.uid()`. Dessa forma,
+      `org_admin` não proprietário e consultas alternativas nunca leem
+      `external_subscription_id` nem `metadata`.
+    - **§3 Snapshot operacional autoritativo (`get_org_deployment_snapshot(uuid)`):**
+      `SECURITY DEFINER`, `SET search_path = public`, valida `is_org_admin(_organization_id)`
+      e retorna o estado contratual (`active_linked`, `association_pending`,
+      `expired_linked`, `missing_contract`), vagas contratadas, ocupadas,
+      reservadas (excluindo convites de estudantes já ativos via `auth.users`),
+      disponíveis, contagens de equipe e estrutura escolar sem truncamento de
+      1.000 linhas e sem expor dados financeiros ou PII.
+    - **§4 Preservação de escopo em `invite_member`:** valida pertencimento de
+      `_school_id`/`_class_id` à organização ativa e preserva `school_id`/`class_id`
+      na reemissão de convites expirados.
+
+    Verificação após aplicar:
+    ```sql
+    -- SELECT amplo de tabela revogado; colunas financeiras negadas (esperado: false | false | false | true)
+    SELECT has_table_privilege('authenticated', 'public.organization_subscriptions', 'SELECT'),
+           has_column_privilege('authenticated', 'public.organization_subscriptions', 'external_subscription_id', 'SELECT'),
+           has_column_privilege('authenticated', 'public.organization_subscriptions', 'metadata', 'SELECT'),
+           has_column_privilege('authenticated', 'public.organization_subscriptions', 'max_seats', 'SELECT');
+
+    -- RPC de snapshot operacional executável apenas por authenticated/service_role (esperado: false | true)
+    SELECT has_function_privilege('anon', 'public.get_org_deployment_snapshot(uuid)', 'EXECUTE'),
+           has_function_privilege('authenticated', 'public.get_org_deployment_snapshot(uuid)', 'EXECUTE');
+    ```

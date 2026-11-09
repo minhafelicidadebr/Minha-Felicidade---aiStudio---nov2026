@@ -1,0 +1,248 @@
+SUPERPROMPT — CONSOLIDAÇÃO DO MVP SAAS EDUCACIONAL MINHA FELICIDADE
+Referência da revisão: 9 de novembro de 2026.
+
+1. MISSÃO E RESULTADO ESPERADO
+
+Continue o desenvolvimento do Minha Felicidade a partir do código realmente disponível. O produto atende adolescentes brasileiros, educadores, gestores escolares e redes de ensino, com jornadas B2C e B2B de educação para o bem-estar.
+
+Avalie arquitetura, segurança, engenharia de dados, IA, operação SaaS, design instrucional, acessibilidade e viabilidade comercial como perspectivas complementares de revisão. Use rigor técnico e criatividade para reduzir dificuldades reais de implantação, aprendizagem e operação. Não simule certificações, pareceres humanos ou consenso de especialistas.
+
+O objetivo é consolidar um MVP utilizável e verificável, com um percurso completo:
+conhecer a proposta → compreender preços e condições → contratar → receber o acesso correto → associar a rede → cadastrar escolas e turmas → ativar equipe → convidar alunos → obter consentimento aplicável → realizar uma atividade educacional → acompanhar indicadores agregados → renovar, obter suporte ou encerrar o serviço.
+
+Nesta execução, entregue uma melhoria concreta: tornar a Central de Implantação da Rede segura na leitura de contratos e fiel às regras do servidor. Faça a auditoria necessária, implemente, teste e documente. Estruture as ondas seguintes para completar o ecossistema, sem tentar desenvolver todas simultaneamente.
+
+2. BASELINE: REFERÊNCIA PARA CONFERÊNCIA, NÃO VERDADE AUTOMÁTICA
+
+Último estado revisado externamente:
+- Repositório dedicado ao AI Studio: minhafelicidadebr/Minha-Felicidade---aiStudio---nov2026.
+- Branch publicada: main.
+- Commit: 957fa291170239ce5dbae1a84594c70661a1ce80.
+- Pai: b2b82b2988aca453f9224101c79a9f72dc9bf986.
+- aistudio/work estava em 09cf4b4cca5f9e0363f94fa2f0715a21379e234e.
+- O repositório separado yale-minhafelicidade-julho não recebeu essas alterações.
+- Validação local desse código: 45 arquivos, 564 testes aprovados; incluídos 175 contratos PostgreSQL em 8 suítes, sem skips nessa execução.
+- Lint, typecheck, build, security:gate e comparação dos tipos gerados passaram localmente.
+- Foram aplicadas 51 migrations desde banco vazio. Supabase CLI fixado em 2.115.0; config.toml declara PostgreSQL 17 e porta local do banco 55322, API 55321. A revisão local usou PostgreSQL 17.6.
+- Um health check do Storage falhou no reset local; os resultados do PostgreSQL não comprovam a saúde do stack Supabase inteiro.
+- O status remoto do GitHub Actions não pôde ser confirmado na revisão: API de runs retornou 403. Não declarar CI remoto verde por inferência.
+- npm audit informou 1 vulnerabilidade alta e 11 moderadas. audit:security usa limiar critical, portanto passar nesse comando não significa ausência de vulnerabilidades. Zod é dependência de aplicação; não classifique tudo como ferramenta de desenvolvimento.
+
+Achado de segurança reproduzido em transação descartável: um org_admin que não é o proprietário conseguiu ler external_subscription_id e metadata de organization_subscriptions. O GRANT SELECT é da tabela inteira; o RLS restringe linhas. A projeção reduzida usada pelo hook não impede outra consulta do mesmo cliente de solicitar outras colunas.
+
+Aspectos adicionais identificados na leitura do código, a confirmar com testes:
+- network-deployment.ts calcula vagas no navegador a partir de listas. A contagem precisa coincidir com os triggers, inclusive quanto a convites para alunos já ativos e deduplicação.
+- Listas podem ser limitadas ou paginadas; o config.toml declara max_rows = 1000. Totalizar uma lista incompleta pode produzir um indicador incorreto.
+- A reemissão em lote chama invite_member sem repassar escola e turma, interrompe no primeiro erro e pode ter concluído ações anteriores. Verifique preservação de contexto, resultado parcial, atualização da tela e repetição segura.
+- O commit 957fa29 alterou uma migration já publicada. Banco reconstruído do zero não demonstra que um banco com essa versão já registrada receberá as alterações.
+
+Revalide os pontos relevantes no HEAD atual. Se o código avançou, registre a diferença, preserve melhorias corretas e adapte o plano. Não reverta para o baseline nem reabra defeitos já resolvidos apenas para reproduzir relatórios antigos.
+
+3. MÉTODO ToT: DECISÃO COMPARATIVA, LIMITADA E RASTREÁVEL
+
+Compare três caminhos antes de decidir o recorte:
+A. Restringir dados de cobrança e consolidar a Central de Implantação com estado confiável do servidor.
+B. Ampliar primeiro o checkout e homologar o ciclo comercial.
+C. Expandir primeiro dashboards, recursos pedagógicos e IA.
+
+Use os pesos: segurança e correção 30%; valor educacional/comercial 25%; esforço e tempo até validação 20%; operabilidade 15%; reversibilidade 10%. Uma pontuação maior em esforço significa menor custo para chegar a evidência útil.
+
+Primeiro elimine opções que deixem um risco impeditivo sem tratamento. Depois compare benefícios e custos. Se pontuar, identifique as notas como julgamento, com evidência e incerteza; não apresente precisão artificial como comprovação.
+
+Apresente apenas uma síntese curta das alternativas, dos trade-offs e da escolha. Não exponha raciocínio interno passo a passo. Restrinja a análise ao necessário para agir. A opção A é a recomendação desta revisão; mude a ordem somente se o HEAD atual trouxer evidência concreta que justifique a mudança.
+
+4. AUTONOMIA, BRANCH E AMBIENTES
+
+Este pedido autoriza leitura, implementação reversível, testes, migrations locais, documentação e commits locais em branch de trabalho.
+
+Confira origin, branch, HEAD, upstream, alterações locais e refs disponíveis. Não suponha ancestralidade entre commits por nomes ou relatos anteriores. Preserve trabalho existente. Quando o workspace estiver limpo e baseado no main correto, crie aistudio/saas-pilot-readiness. Se já houver uma branch adequada com alterações relevantes, continue nela ou use isolamento sem perder o trabalho.
+
+O seletor GitHub do AI Studio já mostrou main mesmo quando o terminal mencionava outra branch. Uma branch criada no terminal não comprova que o botão de sincronização usará esse destino. Registre o destino real antes de orientar publicação. Garanta que o workflow cubra o PR ou a branch escolhida.
+
+Não use force push, não reescreva histórico e não misture o repositório dedicado ao AI Studio com o repositório canônico. Este prompt não autoriza merge/push em main, deploy em produção, migração remota de produção ou cobrança real.
+
+Use dados sintéticos e ambiente local isolado. Staging deve ser um destino separado e identificado; não use produção como homologação. O project_id no arquivo local pode coincidir com um identificador remoto: confirme o host e o modo de execução. Não copie comandos antigos de runbook que operem sobre um projeto remoto sem conferir o destino.
+
+Não peça confirmação para edições e verificações locais já autorizadas. Se faltar acesso externo, conclua tudo o que independe dele e entregue o passo operacional exato, com destino e resultado esperado. Segredos devem entrar nas configurações protegidas do ambiente, nunca no chat, código, logs ou arquivos versionados.
+
+5. PREFLIGHT CURTO E INVENTÁRIO DO ECOSSISTEMA
+
+Leia AGENTS.md, instruções aplicáveis, .kiro/steering, specs relevantes e scripts de qualidade. Relatórios são evidência contextual: confronte-os com código, schema, privilégios e execução.
+
+Inspecione especialmente:
+- src/pages/OrgDashboardPage.tsx;
+- src/components/org/NetworkDeploymentCenter.tsx e seus testes;
+- src/lib/network-deployment.ts;
+- src/hooks/useOrganizationDetail.ts e useSubscription.ts;
+- src/lib/institutional-query-keys.ts e claim-escolar.ts;
+- migrations que definem assinaturas, convites, memberships, grants, RLS e RPCs;
+- src/integrations/supabase/types.ts, supabase/config.toml e quality-gate.yml;
+- checkout, mp-create-preference, mp-webhook, subscription-lifecycle e process-notifications;
+- guardian consent, analytics agregadas, protocolo de crise e quotas de IA.
+
+Faça um inventário compacto: capacidade → jornada/rota → fonte de dados/RPC → autorização → evidência existente → lacuna → próxima ação. Inclua contratação, implantação, aprendizagem, acompanhamento, comunicação, suporte e encerramento. Não trate tela existente como funcionalidade completa sem verificar sua ação real.
+
+Reutilize React, TypeScript, npm, Supabase, shadcn/ui, Tailwind e Vitest existentes. Não introduza microserviços, novo gateway de IA ou troca de framework para resolver um problema localizado.
+
+6. INVARIANTES QUE A ENTREGA DEVE PRESERVAR
+
+- Rede → escola → turma → vínculo institucional: tenant e autorização são verificados no servidor.
+- Proprietário contratual, platform_admin, org_admin, school_admin, educator e student têm poderes distintos. Não equipare gestor institucional a administrador da plataforma.
+- Acesso pedagógico não concede acesso a metadados financeiros. Operação técnica privilegiada exige o mecanismo de autorização e auditoria existente.
+- Preço, titularidade, vigência, vagas e entitlement são resolvidos no servidor. O navegador não autoriza acesso pago.
+- Convite vencido não reserva vaga; aceite converte a reserva sem dupla contagem; reativação, troca de papel e transferência respeitam o limite.
+- Contratação com organização arquivada não reativa a organização silenciosamente nem perde o acesso pago já previsto no contrato. Preserve association_pending e associação explícita posterior.
+- organization_members legada permanece sem acesso direto desnecessário. get_my_plan() continua funcionando pelo contrato existente.
+- Consentimento, auditoria e outbox mantêm os padrões de integridade, deduplicação e acesso existentes. Preserve ledgers onde já adotados.
+- Analytics e exportações respeitam minimum_group_size e supressão complementar. Ausência de dados divulgáveis não significa ausência de participação.
+- Nenhum painel classifica a saúde mental individual de adolescentes, expõe conversas privadas ou faz promessa clínica. Mantenha protocolo de crise e barreiras de consentimento.
+
+7. IMPLEMENTE A ENTREGA VERTICAL ATUAL
+
+7.1. Leitura contratual com privilégio mínimo
+
+Reproduza primeiro o acesso indevido com owner, org_admin não proprietário e usuário de outra rede. Use referências de pagamento e metadados sintéticos.
+
+Compare brevemente grants por coluna, uma projeção segura e RPC com autorização explícita. Escolha a solução mais simples compatível com os leitores reais. Uma view/RPC só resolve o problema se o acesso amplo à tabela original também for restringido.
+
+Defina uma lista explícita dos campos operacionais indispensáveis à Central. Restrinja dados financeiros adicionais à função contratual apropriada, se houver necessidade comprovada. Preserve o caminho de serviço do webhook.
+
+Remova grants amplos conflitantes: REVOKE de coluna não anula SELECT já concedido na tabela inteira. Verifique também permissões herdadas de PUBLIC e grants de funções. Não use SELECT * nem serialize a linha completa em uma resposta supostamente reduzida.
+
+Se usar SECURITY DEFINER, aplique auth.uid(), validação explícita de tenant/papel, search_path fixo conforme a doutrina do projeto, referências qualificadas e REVOKE/GRANT de EXECUTE de menor privilégio. Não exponha funções de serviço a authenticated.
+
+Escreva nova migration incremental, ordenada após as existentes, e registre-a no runbook. Não edite migrations históricas para entregar a correção.
+
+Teste instalação limpa e atualização a partir de banco que já executou a migration anterior. Inclua a divergência entre o schema de b2b82b2 e o de 957fa29: reconciliar apenas arquivos não atualiza o catálogo de um banco já migrado. Compare os objetos afetados: funções, policies, grants e constraints. Faça reparo incremental mínimo e preserve dados sintéticos existentes.
+
+7.2. Estado operacional confiável para a Central
+
+Faça o servidor devolver um snapshot mínimo autorizado do contrato e das vagas da organização ativa, reutilizando o contrato existente quando possível. Não envie e-mails de auth.users ou outras informações privadas apenas para calcular totais no cliente.
+
+Valide a organização solicitada contra a identidade e o vínculo no servidor. Assinaturas sem organization_id só aparecem para seu titular autorizado. Não carregue contratos de várias redes para filtrar no navegador.
+
+O snapshot deve expor somente o necessário: vigência/estado contratual, capacidade, alunos ativos distintos, reservas válidas distintas, vagas disponíveis e instante de referência do servidor. Campos adicionais exigem justificativa operacional.
+
+Contagem e seleção da assinatura devem seguir os mesmos critérios dos mecanismos de enforcement, inclusive desempate determinístico. Se precisar compartilhar lógica, faça uma extração pequena, com testes, sem redesenhar todas as RPCs.
+
+Verifique: convites aceitos e expirados; duplicação de e-mail com caixa/espaços; convite para aluno já ativo; múltiplos vínculos do mesmo aluno; organização inativa; contrato expirado; transições de trial/active; datas nulas conforme o contrato real; dados acima do limite de retorno da API.
+
+Nunca introduza 30 vagas implícitas ou assinatura ativa por fallback visual. Se houver tolerância histórica no SQL, documente-a e preserve somente o comportamento que o contrato realmente exige.
+
+A UI pode formatar e orientar; sua indicação de disponibilidade não substitui o bloqueio transacional do banco. Se uma tentativa perder a última vaga por concorrência, apresente o motivo e atualize os dados.
+
+7.3. Ações completas e recuperação de falhas
+
+Conecte o snapshot à Central e preserve suas seis etapas. Não confunda prontidão da implantação da rede com prontidão comercial de toda a plataforma.
+
+Na reemissão de convites, preserve papel, escola e turma autorizados; não converta um convite restrito à escola em acesso à rede. Defina o comportamento de lote: resultados por item ou atomicidade real. Uma falha não pode esconder sucessos anteriores nem declarar o lote inteiro concluído. Permita repetir somente o necessário, respeitando quota, idempotência e deduplicação da outbox.
+
+Claim, associação e aceite devem atualizar contexto institucional, contrato e entitlement efetivamente usados na tela. Verifique useSubscription(), não apenas a invalidação do dashboard.
+
+Particione cache por identidade e tenant. Cancele ou descarte respostas atrasadas ao trocar de organização e ao sair da conta. Conclua ações no tenant capturado no início; não aplique o resultado a uma rede selecionada depois.
+
+Trate explicitamente carregamento, vazio, erro, falta de permissão, contrato ausente, associação pendente, expiração e sucesso. Uma falha de consulta deve mostrar indisponibilidade recuperável, em vez de afirmar que o cliente não tem contrato.
+
+Mantenha a negação de recursos pagos quando a autorização não puder ser confirmada, com estado de erro e recuperação. Não conceda acesso premium como fallback de indisponibilidade.
+
+7.4. Design instrucional e experiência de uso
+
+Preserve a identidade visual e os componentes existentes. Melhore o percurso: o gestor compreende o estado da rede, identifica a próxima ação e a executa sem procurar em vários menus.
+
+Use hierarquia clara, divulgação progressiva, português direto, explicação de vagas ocupadas/reservadas e retorno específico para cada ação. Não coloque detalhes de migrations, RPCs ou infraestrutura nas mensagens do produto.
+
+Valide telas estreitas de 360–390 px, teclado, foco após diálogos/erros, labels, contraste, alvos de toque, leitores de tela nos fluxos alterados e estados que não dependam só de cor. Use WCAG 2.2 AA como referência dos critérios testados; não declare certificação global sem auditoria.
+
+Como inovação de baixo custo, faça o próximo passo derivar das dependências e permissões reais. Uma regra determinística e explicável é suficiente para orientar implantação. Reserve IA para problemas em que ela agregue valor pedagógico mensurável.
+
+8. TESTES DE ACEITE DA ENTREGA
+
+Escreva testes de comportamento que poderiam falhar antes da correção; não apenas buscas de strings no SQL ou mocks que repetem a implementação.
+
+A. org_admin não proprietário lê o resumo operacional permitido e não consegue ler metadata/referências financeiras por consulta alternativa. Teste owner conforme o acesso mínimo definido, além de anon, aluno, educador e outro tenant.
+B. Nenhuma nova leitura segura concede escrita em assinaturas ou execução de funções de serviço. get_my_plan(), claim e ativação pelo serviço continuam corretos.
+C. Banco vazio e banco com migration antiga já registrada chegam ao mesmo contrato relevante de schema e privilégios, preservando dados.
+D. Reservas e ocupação coincidem entre snapshot e enforcement: duplicatas, aluno já ativo, convite expirado, aceite, reativação e transferência. Inclua volume acima de 1000 registros sem depender de uma lista truncada.
+E. Duas transações reais disputam a última vaga: apenas a operação compatível com a quota conclui. Testes sequenciais não comprovam concorrência.
+F. Associação pendente preserva acesso do comprador; vínculo explícito atualiza a Central e o plano sem expor ou reativar a rede arquivada.
+G. Reemissão preserva escopo institucional; erro parcial é visível e recuperável; repetição não duplica vínculos nem notificações indevidas.
+H. Troca de tenant durante requisição, logout e resposta atrasada não exibem dados da rede anterior. Erro de backend não vira falso estado gratuito.
+I. A Central mantém ações autorizadas, modo de leitura e recuperação de falhas. Engajamento suprimido não é mostrado como zero.
+
+Use PostgreSQL real para grants, RLS, funções e concorrência. Complemente com chamadas locais PostgREST/RPC autenticadas por perfis sintéticos, se a infraestrutura estiver disponível. Nunca use service_role para fingir teste de permissão de usuário.
+
+Teste componentes para os estados de UI e teste de navegador para o percurso alterado. Classifique separadamente teste com mocks, contrato SQL, API local e E2E real; um não substitui automaticamente o outro.
+
+9. QUALIDADE, DEPENDÊNCIAS E EVIDÊNCIA
+
+Rode testes focados durante a implementação. No código final, execute os gates do projeto: audit:security, lint, typecheck, test, build e security:gate, normalmente via npm run quality. Confirme os contratos de runtime executados, sem considerar skip como aprovação.
+
+Regenere tipos a partir do schema local com a mesma versão do CLI fixada no workflow e compare o resultado. Não ajuste manualmente types.ts para fazê-lo parecer gerado.
+
+Use PostgreSQL/portas efetivos do config.toml. Não repita a alegação antiga de PostgreSQL 15/porta 54322 se o ambiente real usar 17/55322.
+
+Faça triagem das vulnerabilidades altas/moderadas por versão instalada, alcance no produto e condição de exploração. Corrija o que for compatível com o recorte; registre mitigação ou atualização separada quando exigir migração maior. Não use npm audit fix --force de modo indiscriminado nem afrouxe o gate para esconder achados.
+
+564 testes e 175 contratos são referências históricas, não metas para manipular contagens. Novos testes podem aumentar os totais. Não remova testes, reduza o limiar ou marque casos como skip para obter verde.
+
+Se faltar Docker ou acesso externo, entregue as correções possíveis, os comandos e o bloqueio exato. Registre testes não executados como não verificados. Não prometa que o CI executou algo sem consultar seu run no SHA correspondente.
+
+10. COBRANÇA E PROPOSTA COMERCIAL: PREPARE A PRÓXIMA ONDA
+
+Mapeie o que já existe antes de criar outro checkout. Extraia a tabela real de planos, faixas de alunos, descontos, limites, ciclos e recursos. Documente divergências entre landing, calculadora, Edge Function e entitlement.
+
+Preços de planos são em centavos BRL. O cálculo escolar possui implementações no cliente e no Deno; teste paridade e limites de faixa. Existem simuladores alternativos de pricing: não troque a política ativa sem decisão comercial explícita nem altere contratos já pagos silenciosamente.
+
+Verifique elegibilidade a descontos no servidor. Uma autodeclaração de escola pública/ONG não concede desconto automaticamente.
+
+Determine pelo código e pelo provedor se a oferta é pagamento por período, renovação manual ou recorrência automática. billing_interval e um job de expiração, isoladamente, não comprovam cobrança recorrente. A comunicação comercial deve corresponder ao mecanismo implementado.
+
+Prepare matriz de homologação sandbox: preço adulterado pelo cliente; assinatura de webhook inválida; pagamento recusado, pendente e aprovado; valor/moeda/beneficiário divergentes; webhook duplicado, simultâneo e fora de ordem; indisponibilidade do provedor; claim; reembolso/chargeback; renovação; expiração e cancelamento conforme política definida.
+
+Confirme ativação a partir de estado consultado no provedor, não de parâmetros de retorno do navegador. Identifique o que não existe e bloqueia a oferta comercial pretendida. Homologação exige credenciais de teste e ambiente identificado; um mock não comprova pagamento real em sandbox.
+
+11. ROADMAP POR RESULTADOS E DEPENDÊNCIAS
+
+Para cada onda, registre resultado do usuário, dependências, menor entrega vertical, esforço estimado com premissas, evidência de saída, métrica e risco. Distingua código pronto de operação homologada.
+
+Organize o backlog por histórias com critério de aceite e dependência explícita. Limite o trabalho a uma entrega vertical por vez: especificar o comportamento → demonstrar a falha relevante → implementar → validar → revisar. Reordene pelo aprendizado e pelos riscos observados; evite sprints cheias de funcionalidades parcialmente prontas.
+
+Onda 1 — Entrega atual: dados contratuais restritos, snapshot correto, ações recuperáveis, atualização incremental demonstrada e regressões verdes.
+
+Onda 2 — Contratação operável: ciclo comercial escolhido, conciliação de pagamentos, claims, expiração/renovação, comunicação por e-mail, observabilidade e runbooks. Critério: matriz sandbox e entrega real de notificações no ambiente de homologação.
+
+Onda 3 — Valor educacional completo no piloto: duas redes isoladas, escolas/turmas, equipe e alunos autorizados; entrada do aluno, primeira atividade com objetivo e feedback, progresso persistido e retorno do educador. Reutilize módulos existentes. Verifique comunicação e fluxos de responsáveis. O gestor acompanha agregados sem acessar dados individuais sensíveis.
+
+Onda 4 — Operação comercial controlada: suporte com autorização/auditoria, restauração ensaiada, retenção e exclusão conforme política definida, resposta a incidentes, limites/custos de infraestrutura e IA, termos e comunicação comercial revisados pelos responsáveis. Critério: piloto acompanhado e sem impedimentos críticos em aberto.
+
+Onda 5 — Expansão orientada por evidência: dashboards mais úteis, importação em lote, automação pedagógica e IA assistiva. Priorize somente depois de observar gargalos reais de adoção e operação.
+
+Para IA, preserve gateway e protocolo atuais nesta entrega. Na onda apropriada, avalie provider/modelo pela disponibilidade real da API, qualidade em português e por faixa etária, privacidade, custo por aluno ativo, latência, limites, fallback e testes de segurança. Não suponha superioridade pelo nome comercial de uma versão.
+
+12. MATURIDADE E CRITÉRIOS DE LANÇAMENTO
+
+Classifique cada capacidade: 0 ausente; 1 desenhada; 2 implementada sem validação; 3 validada localmente; 4 homologada em staging; 5 operação comercial acompanhada. Use a menor maturidade sustentada por evidência. Não transforme média de notas em autorização de lançamento.
+
+Marcos de decisão:
+- Base técnica local validada: grants/RLS, upgrade, tipos, contratos, UI e gates comprovados no código final.
+- Piloto em staging: duas redes isoladas, percurso completo dos perfis, pagamentos sandbox e comunicações reais de teste funcionando.
+- Venda assistida limitada: piloto acompanhado, suporte e recuperação exercitados, política comercial coerente e ausência de falhas críticas de acesso, cobrança ou proteção de menores.
+- Escala comercial: capacidade, custos, confiabilidade e operação medidos sob uso compatível com a meta de clientes.
+
+Proponha metas para tempo até a primeira escola, ativação de educadores, primeira atividade dos alunos, conversão e tickets de suporte. Identifique metas como hipóteses a calibrar; não invente resultados. Colete somente eventos necessários e respeite consentimento e supressão.
+
+13. ARTEFATOS E ENCERRAMENTO
+
+Entregue código e testes da entrega atual, migrations incrementais, tipos gerados quando necessário, atualização dos runbooks afetados, síntese da decisão e uma matriz enxuta de maturidade/ondas. Reutilize documentos existentes; evite uma coleção de relatórios repetidos.
+
+Guarde evidências redigidas sem dados pessoais ou segredos: comando, ambiente, versão do código, resultado e limitação. Inclua provas de instalação/upgrade e privilégios, além dos totais de testes realmente executados.
+
+Finalize com:
+1. Resultado concreto e comportamento antes/depois.
+2. Defeitos comprovados corrigidos e arquivos principais.
+3. Validações executadas, falhas, skips e verificações externas pendentes.
+4. Repositório, branch, HEAD, situação do worktree e publicação efetiva, sem confundir commit local com push.
+5. Maturidade sustentada por evidência e impedimentos para piloto/venda.
+6. Próxima menor entrega recomendada, com seu critério de aceite.
+
+Comece pelo preflight e avance para implementação. Não encerre apenas com planejamento quando houver trabalho local autorizado a concluir. Se uma dependência externa impedir uma etapa, complete as demais e deixe a retomada inequívoca.

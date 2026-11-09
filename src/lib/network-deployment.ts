@@ -7,12 +7,40 @@ export interface OrganizationSubscriptionSnapshot {
     id: string;
     organization_name: string;
     organization_id: string | null;
-    owner_id: string;
+    owner_id?: string;
     status: string;
     billing_interval: string;
     max_seats: number;
     current_period_start: string | null;
     current_period_end: string | null;
+}
+
+export interface ServerDeploymentSnapshot {
+    organization_id: string;
+    reference_at: string;
+    contract_state:
+        | "active_linked"
+        | "association_pending"
+        | "expired_linked"
+        | "missing_contract";
+    has_active_contract: boolean;
+    contracted_seats: number;
+    occupied_student_seats: number;
+    reserved_student_seats: number;
+    available_student_seats: number;
+    is_quota_full: boolean;
+    expired_student_invitations_count: number;
+    active_org_admins_count: number;
+    active_school_admins_count: number;
+    active_educators_count: number;
+    valid_staff_invitations_count: number;
+    expired_staff_invitations_count: number;
+    schools_count: number;
+    classes_count: number;
+    schools_without_classes_count: number;
+    unlinked_active_subscriptions_count: number;
+    unlinked_max_seats: number;
+    subscription: OrganizationSubscriptionSnapshot | null;
 }
 
 export interface SeatAllocationSummary {
@@ -21,6 +49,7 @@ export interface SeatAllocationSummary {
     reservedStudentSeats: number;
     availableStudentSeats: number;
     expiredStudentInvitations: Invitation[];
+    expiredStudentInvitationsCount: number;
     validStudentInvitations: Invitation[];
     isQuotaFull: boolean;
     hasActiveContract: boolean;
@@ -31,7 +60,9 @@ export interface StaffActivationSummary {
     activeSchoolAdmins: number;
     activeEducators: number;
     validStaffInvitations: Invitation[];
+    validStaffInvitationsCount: number;
     expiredStaffInvitations: Invitation[];
+    expiredStaffInvitationsCount: number;
     hasPedagogicalTeam: boolean;
 }
 
@@ -52,6 +83,7 @@ export interface DeploymentStageItem {
     primaryActionId?:
         | "claim_subscription"
         | "associate_unlinked_subscription"
+        | "retry_contract"
         | "open_pricing"
         | "add_school"
         | "add_class"
@@ -92,6 +124,8 @@ export interface BuildNetworkDeploymentInput {
     invitations: Invitation[];
     linkedSubscription: OrganizationSubscriptionSnapshot | null;
     unlinkedSubscriptions: OrganizationSubscriptionSnapshot[];
+    serverSnapshot?: ServerDeploymentSnapshot | null;
+    activeStudentEmails?: Iterable<string>;
     subscriptionQueryError?: string | null;
     engagement?: OrgEngagementSummary | null;
     engagementLoading?: boolean;
@@ -119,16 +153,34 @@ export function computeSeatAllocation(
     invitations: Invitation[],
     linkedSubscription: OrganizationSubscriptionSnapshot | null,
     now: Date = new Date(),
+    options?: {
+        activeStudentEmails?: Iterable<string>;
+        serverSnapshot?: ServerDeploymentSnapshot | null;
+    },
 ): SeatAllocationSummary {
-    const hasActiveContract = isSubscriptionCurrentlyActive(linkedSubscription, now);
-    const contractedSeats = hasActiveContract ? Math.max(1, linkedSubscription?.max_seats ?? 30) : 0;
+    const snapshot = options?.serverSnapshot ?? null;
+    const activeEmailSet = new Set<string>();
+    if (options?.activeStudentEmails) {
+        for (const email of options.activeStudentEmails) {
+            activeEmailSet.add(normalizeEmail(email));
+        }
+    }
+
+    const effectiveSub = snapshot?.subscription ?? linkedSubscription;
+    const hasActiveContract = snapshot
+        ? snapshot.has_active_contract
+        : isSubscriptionCurrentlyActive(effectiveSub, now);
+    const contractedSeats = snapshot
+        ? snapshot.contracted_seats
+        : hasActiveContract
+            ? Math.max(1, effectiveSub?.max_seats ?? 30)
+            : 0;
 
     const activeStudentIds = new Set(
         members
             .filter((m) => m.role === "student" && m.status === "active")
             .map((m) => m.user_id),
     );
-    const occupiedStudentSeats = activeStudentIds.size;
 
     const validStudentInvitations: Invitation[] = [];
     const expiredStudentInvitations: Invitation[] = [];
@@ -142,6 +194,9 @@ export function computeSeatAllocation(
             expiredStudentInvitations.push(inv);
         } else {
             const norm = normalizeEmail(inv.invited_email);
+            if (activeEmailSet.has(norm)) {
+                continue;
+            }
             if (!reservedEmails.has(norm)) {
                 reservedEmails.add(norm);
                 validStudentInvitations.push(inv);
@@ -149,12 +204,21 @@ export function computeSeatAllocation(
         }
     }
 
-    const reservedStudentSeats = reservedEmails.size;
+    const occupiedStudentSeats = snapshot ? snapshot.occupied_student_seats : activeStudentIds.size;
+    const reservedStudentSeats = snapshot ? snapshot.reserved_student_seats : reservedEmails.size;
+    const expiredStudentInvitationsCount = snapshot
+        ? Math.max(expiredStudentInvitations.length, snapshot.expired_student_invitations_count)
+        : expiredStudentInvitations.length;
+
     const usedOrReserved = occupiedStudentSeats + reservedStudentSeats;
-    const availableStudentSeats = hasActiveContract
-        ? Math.max(0, contractedSeats - usedOrReserved)
-        : 0;
-    const isQuotaFull = hasActiveContract && usedOrReserved >= contractedSeats;
+    const availableStudentSeats = snapshot
+        ? snapshot.available_student_seats
+        : hasActiveContract
+            ? Math.max(0, contractedSeats - usedOrReserved)
+            : 0;
+    const isQuotaFull = snapshot
+        ? snapshot.is_quota_full
+        : hasActiveContract && usedOrReserved >= contractedSeats;
 
     return {
         contractedSeats,
@@ -162,6 +226,7 @@ export function computeSeatAllocation(
         reservedStudentSeats,
         availableStudentSeats,
         expiredStudentInvitations,
+        expiredStudentInvitationsCount,
         validStudentInvitations,
         isQuotaFull,
         hasActiveContract,
@@ -172,15 +237,16 @@ export function computeStaffActivation(
     members: Membership[],
     invitations: Invitation[],
     now: Date = new Date(),
+    serverSnapshot?: ServerDeploymentSnapshot | null,
 ): StaffActivationSummary {
     const activeMembers = members.filter((m) => m.status === "active");
-    const activeOrgAdmins = new Set(
+    const clientOrgAdmins = new Set(
         activeMembers.filter((m) => m.role === "org_admin").map((m) => m.user_id),
     ).size;
-    const activeSchoolAdmins = new Set(
+    const clientSchoolAdmins = new Set(
         activeMembers.filter((m) => m.role === "school_admin").map((m) => m.user_id),
     ).size;
-    const activeEducators = new Set(
+    const clientEducators = new Set(
         activeMembers.filter((m) => m.role === "educator").map((m) => m.user_id),
     ).size;
 
@@ -199,18 +265,35 @@ export function computeStaffActivation(
         }
     }
 
+    const activeOrgAdmins = serverSnapshot ? serverSnapshot.active_org_admins_count : clientOrgAdmins;
+    const activeSchoolAdmins = serverSnapshot
+        ? serverSnapshot.active_school_admins_count
+        : clientSchoolAdmins;
+    const activeEducators = serverSnapshot ? serverSnapshot.active_educators_count : clientEducators;
+    const validStaffInvitationsCount = serverSnapshot
+        ? Math.max(validStaffInvitations.length, serverSnapshot.valid_staff_invitations_count)
+        : validStaffInvitations.length;
+    const expiredStaffInvitationsCount = serverSnapshot
+        ? Math.max(expiredStaffInvitations.length, serverSnapshot.expired_staff_invitations_count)
+        : expiredStaffInvitations.length;
+
     return {
         activeOrgAdmins,
         activeSchoolAdmins,
         activeEducators,
         validStaffInvitations,
+        validStaffInvitationsCount,
         expiredStaffInvitations,
+        expiredStaffInvitationsCount,
         hasPedagogicalTeam: activeSchoolAdmins + activeEducators > 0,
     };
 }
 
 export function buildNetworkDeploymentModel(input: BuildNetworkDeploymentInput): NetworkDeploymentModel {
-    const now = input.now ?? new Date();
+    const snapshot = input.serverSnapshot ?? null;
+    const now =
+        input.now ??
+        (snapshot?.reference_at ? new Date(snapshot.reference_at) : new Date());
     const {
         org,
         schools,
@@ -225,11 +308,27 @@ export function buildNetworkDeploymentModel(input: BuildNetworkDeploymentInput):
         engagementError = null,
     } = input;
 
-    const seats = computeSeatAllocation(members, invitations, linkedSubscription, now);
-    const staff = computeStaffActivation(members, invitations, now);
+    const effectiveLinkedSub = snapshot?.subscription ?? linkedSubscription;
+    const seats = computeSeatAllocation(members, invitations, effectiveLinkedSub, now, {
+        activeStudentEmails: input.activeStudentEmails,
+        serverSnapshot: snapshot,
+    });
+    const staff = computeStaffActivation(members, invitations, now, snapshot);
     const schoolsWithoutClasses = schools.filter(
         (school) => !classes.some((cls) => cls.school_id === school.id),
     );
+    const schoolsCount = snapshot ? snapshot.schools_count : schools.length;
+    const classesCount = snapshot ? snapshot.classes_count : classes.length;
+    const schoolsWithoutClassesCount = snapshot
+        ? snapshot.schools_without_classes_count
+        : schoolsWithoutClasses.length;
+    const unlinkedCount = snapshot
+        ? snapshot.unlinked_active_subscriptions_count
+        : unlinkedSubscriptions.length;
+    const unlinkedMaxSeats = snapshot
+        ? snapshot.unlinked_max_seats
+        : (unlinkedSubscriptions[0]?.max_seats ?? 30);
+
     const allExpiredInvitations = [
         ...seats.expiredStudentInvitations,
         ...staff.expiredStaffInvitations,
@@ -248,36 +347,36 @@ export function buildNetworkDeploymentModel(input: BuildNetworkDeploymentInput):
         contractState = "unavailable";
         stage1Status = "indisponível";
         stage1Summary = "Estado contratual indisponível no momento";
-        stage1Detail = subscriptionQueryError || "Não foi possível consultar o contrato desta organização.";
-        stage1ActionLabel = undefined;
-        stage1ActionId = undefined;
-    } else if (seats.hasActiveContract && linkedSubscription) {
+        stage1Detail =
+            subscriptionQueryError || "Não foi possível consultar o contrato desta organização.";
+        stage1ActionLabel = "Tentar novamente";
+        stage1ActionId = "retry_contract";
+    } else if (seats.hasActiveContract && effectiveLinkedSub) {
         contractState = "active_linked";
         stage1Status = "concluído";
-        const intervalLabel = linkedSubscription.billing_interval === "yearly" ? "anual" : "mensal";
-        const periodEndLabel = linkedSubscription.current_period_end
-            ? new Date(linkedSubscription.current_period_end).toLocaleDateString("pt-BR")
+        const intervalLabel = effectiveLinkedSub.billing_interval === "yearly" ? "anual" : "mensal";
+        const periodEndLabel = effectiveLinkedSub.current_period_end
+            ? new Date(effectiveLinkedSub.current_period_end).toLocaleDateString("pt-BR")
             : "vigente";
         stage1Summary = `Plano Escolar ativo (${intervalLabel}) · ${seats.contractedSeats} vagas contratadas`;
         stage1Detail = `Assinatura vinculada à organização ${org.name} · vigência até ${periodEndLabel}.`;
         stage1ActionLabel = undefined;
         stage1ActionId = undefined;
-    } else if (unlinkedSubscriptions.length > 0) {
+    } else if (unlinkedCount > 0) {
         contractState = "association_pending";
         stage1Status = "pendente";
-        const candidate = unlinkedSubscriptions[0];
-        stage1Summary = `Assinatura ativa aguardando vínculo com a rede (${candidate.max_seats} vagas)`;
+        stage1Summary = `Assinatura ativa aguardando vínculo com a rede (${unlinkedMaxSeats} vagas)`;
         stage1Detail =
-            unlinkedSubscriptions.length === 1
+            unlinkedCount === 1
                 ? `Identificamos 1 contrato escolar pago em sua conta ainda sem organização vinculada. Vincule-o explicitamente a "${org.name}" para liberar as vagas.`
-                : `Identificamos ${unlinkedSubscriptions.length} contratos sem vínculo automático. Associe a assinatura correta para liberar os assentos de estudantes.`;
+                : `Identificamos ${unlinkedCount} contratos sem vínculo automático. Associe a assinatura correta para liberar os assentos de estudantes.`;
         stage1ActionLabel = "Vincular assinatura a esta rede";
         stage1ActionId = "associate_unlinked_subscription";
-    } else if (linkedSubscription) {
+    } else if (effectiveLinkedSub || snapshot?.contract_state === "expired_linked") {
         contractState = "expired_linked";
         stage1Status = "bloqueado";
-        const endedAt = linkedSubscription.current_period_end
-            ? new Date(linkedSubscription.current_period_end).toLocaleDateString("pt-BR")
+        const endedAt = effectiveLinkedSub?.current_period_end
+            ? new Date(effectiveLinkedSub.current_period_end).toLocaleDateString("pt-BR")
             : "encerrada";
         stage1Summary = `Assinatura vinculada expirada ou inativa (${endedAt})`;
         stage1Detail =
@@ -308,26 +407,29 @@ export function buildNetworkDeploymentModel(input: BuildNetworkDeploymentInput):
         stage2Status = "indisponível";
         stage2Summary = "Estrutura escolar indisponível";
         stage2Detail = "Aguardando carregamento da organização.";
-    } else if (schools.length === 0) {
+    } else if (schoolsCount === 0) {
         stage2Status = "pendente";
         stage2Summary = "Nenhuma escola cadastrada na rede";
-        stage2Detail = "Cadastre ao menos uma unidade escolar para organizar turmas, educadores e estudantes.";
+        stage2Detail =
+            "Cadastre ao menos uma unidade escolar para organizar turmas, educadores e estudantes.";
         stage2ActionLabel = "Cadastrar primeira escola";
         stage2ActionId = "add_school";
-    } else if (classes.length === 0) {
+    } else if (classesCount === 0) {
         stage2Status = "pendente";
-        stage2Summary = `${schools.length} ${schools.length === 1 ? "escola cadastrada" : "escolas cadastradas"} · 0 turmas`;
-        stage2Detail = `Crie a primeira turma em "${schools[0].name}" para alocar estudantes e educadores.`;
+        stage2Summary = `${schoolsCount} ${schoolsCount === 1 ? "escola cadastrada" : "escolas cadastradas"} · 0 turmas`;
+        stage2Detail = schools[0]
+            ? `Crie a primeira turma em "${schools[0].name}" para alocar estudantes e educadores.`
+            : "Crie a primeira turma na escola cadastrada para alocar estudantes e educadores.";
         stage2ActionLabel = "Criar primeira turma";
         stage2ActionId = "add_class";
     } else {
         stage2Status = "concluído";
-        stage2Summary = `${schools.length} ${schools.length === 1 ? "escola" : "escolas"} · ${classes.length} ${classes.length === 1 ? "turma ativa" : "turmas ativas"}`;
+        stage2Summary = `${schoolsCount} ${schoolsCount === 1 ? "escola" : "escolas"} · ${classesCount} ${classesCount === 1 ? "turma ativa" : "turmas ativas"}`;
         stage2Detail =
-            schoolsWithoutClasses.length > 0
-                ? `${schoolsWithoutClasses.length} ${schoolsWithoutClasses.length === 1 ? "escola ainda não possui" : "escolas ainda não possuem"} turmas cadastradas (${schoolsWithoutClasses.map((s) => s.name).join(", ")}).`
+            schoolsWithoutClassesCount > 0
+                ? `${schoolsWithoutClassesCount} ${schoolsWithoutClassesCount === 1 ? "escola ainda não possui" : "escolas ainda não possuem"} turmas cadastradas${schoolsWithoutClasses.length > 0 ? ` (${schoolsWithoutClasses.map((s) => s.name).join(", ")})` : ""}.`
                 : "Todas as escolas ativas contam com turmas configuradas.";
-        if (schoolsWithoutClasses.length > 0) {
+        if (schoolsWithoutClassesCount > 0) {
             stage2ActionLabel = "Adicionar turma pendente";
             stage2ActionId = "add_class";
         }
@@ -351,10 +453,16 @@ export function buildNetworkDeploymentModel(input: BuildNetworkDeploymentInput):
     let stage3ActionLabel: string | undefined;
     let stage3ActionId: DeploymentStageItem["primaryActionId"];
 
-    if (!org) {
+    if (!org || contractState === "unavailable") {
         stage3Status = "indisponível";
-        stage3Summary = "Controle de vagas indisponível";
-        stage3Detail = "Aguardando carregamento da organização.";
+        stage3Summary = "Controle de vagas indisponível no momento";
+        stage3Detail = subscriptionQueryError
+            ? "Não foi possível confirmar o saldo contratual de vagas devido a uma falha temporária de leitura."
+            : "Aguardando carregamento da organização.";
+        if (subscriptionQueryError) {
+            stage3ActionLabel = "Tentar novamente";
+            stage3ActionId = "retry_contract";
+        }
     } else if (!seats.hasActiveContract) {
         stage3Status = "bloqueado";
         stage3Summary = `0 vagas contratadas ativas · ${seats.occupiedStudentSeats} ocupadas · ${seats.reservedStudentSeats} reservadas`;
@@ -366,11 +474,11 @@ export function buildNetworkDeploymentModel(input: BuildNetworkDeploymentInput):
         stage3Status = seats.occupiedStudentSeats > 0 ? "concluído" : "bloqueado";
         stage3Summary = `Cota máxima atingida: ${seats.occupiedStudentSeats} ocupadas + ${seats.reservedStudentSeats} reservadas de ${seats.contractedSeats} contratadas (0 livres)`;
         stage3Detail =
-            seats.expiredStudentInvitations.length > 0
-                ? `Todas as ${seats.contractedSeats} vagas de estudantes estão ocupadas ou reservadas. Há ${seats.expiredStudentInvitations.length} convite(s) expirado(s) que não ocupam vaga.`
+            seats.expiredStudentInvitationsCount > 0
+                ? `Todas as ${seats.contractedSeats} vagas de estudantes estão ocupadas ou reservadas. Há ${seats.expiredStudentInvitationsCount} convite(s) expirado(s) que não ocupam vaga.`
                 : `Todas as ${seats.contractedSeats} vagas de estudantes estão ocupadas ou reservadas por convites pendentes válidos. Convites para educadores continuam liberados.`;
-        if (seats.expiredStudentInvitations.length > 0) {
-            stage3ActionLabel = `Reemitir expirados (${seats.expiredStudentInvitations.length})`;
+        if (seats.expiredStudentInvitationsCount > 0) {
+            stage3ActionLabel = `Reemitir expirados (${seats.expiredStudentInvitationsCount})`;
             stage3ActionId = "reissue_expired_invites";
         } else if (seats.occupiedStudentSeats === 0) {
             stage3ActionLabel = "Convidar equipe docente";
@@ -380,32 +488,32 @@ export function buildNetworkDeploymentModel(input: BuildNetworkDeploymentInput):
         stage3Status = "pendente";
         stage3Summary = `${seats.contractedSeats} contratadas · 0 ocupadas · 0 reservadas · ${seats.availableStudentSeats} disponíveis`;
         stage3Detail =
-            seats.expiredStudentInvitations.length > 0
-                ? `Existem ${seats.expiredStudentInvitations.length} convite(s) de estudante expirado(s) que liberaram reserva. Reemita-os ou convide novos alunos.`
+            seats.expiredStudentInvitationsCount > 0
+                ? `Existem ${seats.expiredStudentInvitationsCount} convite(s) de estudante expirado(s) que liberaram reserva. Reemita-os ou convide novos alunos.`
                 : "Envie os primeiros convites para estudantes reservarem e ativarem suas vagas na rede.";
         stage3ActionLabel =
-            seats.expiredStudentInvitations.length > 0
-                ? `Reemitir expirados (${seats.expiredStudentInvitations.length})`
+            seats.expiredStudentInvitationsCount > 0
+                ? `Reemitir expirados (${seats.expiredStudentInvitationsCount})`
                 : "Convidar estudantes";
         stage3ActionId =
-            seats.expiredStudentInvitations.length > 0
+            seats.expiredStudentInvitationsCount > 0
                 ? "reissue_expired_invites"
                 : "invite_student";
     } else {
         stage3Status = seats.occupiedStudentSeats > 0 ? "concluído" : "pendente";
         stage3Summary = `${seats.contractedSeats} contratadas · ${seats.occupiedStudentSeats} ocupadas · ${seats.reservedStudentSeats} reservadas · ${seats.availableStudentSeats} disponíveis`;
         stage3Detail =
-            seats.expiredStudentInvitations.length > 0
-                ? `${seats.expiredStudentInvitations.length} convite(s) de estudante expiraram e liberaram vaga automaticamente.`
+            seats.expiredStudentInvitationsCount > 0
+                ? `${seats.expiredStudentInvitationsCount} convite(s) de estudante expiraram e liberaram vaga automaticamente.`
                 : seats.occupiedStudentSeats > 0
                     ? "Vagas de estudantes ativas e contabilizadas dentro do limite contratado."
                     : "Convites de estudantes enviados e dentro do prazo de validade; aguardando primeiro aceite.";
         stage3ActionLabel =
-            seats.expiredStudentInvitations.length > 0
-                ? `Reemitir expirados (${seats.expiredStudentInvitations.length})`
+            seats.expiredStudentInvitationsCount > 0
+                ? `Reemitir expirados (${seats.expiredStudentInvitationsCount})`
                 : "Convidar mais estudantes";
         stage3ActionId =
-            seats.expiredStudentInvitations.length > 0
+            seats.expiredStudentInvitationsCount > 0
                 ? "reissue_expired_invites"
                 : "invite_student";
     }
@@ -436,8 +544,8 @@ export function buildNetworkDeploymentModel(input: BuildNetworkDeploymentInput):
         stage4Status = "concluído";
         stage4Summary = `${staff.activeOrgAdmins} gestor(es) · ${staff.activeSchoolAdmins} coord. escolar(es) · ${staff.activeEducators} educador(es) ativos`;
         stage4Detail =
-            staff.validStaffInvitations.length > 0
-                ? `${staff.validStaffInvitations.length} convite(s) adicional(is) para a equipe aguardando aceite.`
+            staff.validStaffInvitationsCount > 0
+                ? `${staff.validStaffInvitationsCount} convite(s) adicional(is) para a equipe aguardando aceite.`
                 : "Equipe pedagógica ativa e habilitada para conduzir atividades nas escolas.";
         stage4ActionLabel = "Convidar membro da equipe";
         stage4ActionId = "invite_staff";
@@ -445,8 +553,8 @@ export function buildNetworkDeploymentModel(input: BuildNetworkDeploymentInput):
         stage4Status = "pendente";
         stage4Summary = `${staff.activeOrgAdmins} gestor(es) ativo(s) · 0 coordenadores ou educadores ativos`;
         stage4Detail =
-            staff.validStaffInvitations.length > 0
-                ? `${staff.validStaffInvitations.length} convite(s) para educador/coordenador enviado(s) e aguardando aceite.`
+            staff.validStaffInvitationsCount > 0
+                ? `${staff.validStaffInvitationsCount} convite(s) para educador/coordenador enviado(s) e aguardando aceite.`
                 : "Convide ao menos um coordenador escolar ou educador para acompanhar as turmas no dia a dia.";
         stage4ActionLabel = "Convidar educador ou coordenador";
         stage4ActionId = "invite_staff";
@@ -470,14 +578,17 @@ export function buildNetworkDeploymentModel(input: BuildNetworkDeploymentInput):
     let stage5ActionLabel: string | undefined;
     let stage5ActionId: DeploymentStageItem["primaryActionId"];
 
-    if (!org) {
+    if (!org || contractState === "unavailable") {
         stage5Status = "indisponível";
         stage5Summary = "Dados de entrada de estudantes indisponíveis";
-        stage5Detail = "Aguardando carregamento da organização.";
+        stage5Detail = subscriptionQueryError
+            ? "A verificação de estudantes depende da leitura do contrato da organização."
+            : "Aguardando carregamento da organização.";
     } else if (!seats.hasActiveContract) {
         stage5Status = "bloqueado";
         stage5Summary = "Entrada de estudantes aguardando contrato ativo";
-        stage5Detail = "Assim que o contrato estiver ativo e vinculado na Etapa 1, os estudantes convidados poderão entrar e iniciar a jornada.";
+        stage5Detail =
+            "Assim que o contrato estiver ativo e vinculado na Etapa 1, os estudantes convidados poderão entrar e iniciar a jornada.";
     } else if (engagementError) {
         stage5Status = "indisponível";
         stage5Summary = `${seats.occupiedStudentSeats} estudante(s) ativo(s) · leitura de atividade indisponível`;
@@ -501,10 +612,14 @@ export function buildNetworkDeploymentModel(input: BuildNetworkDeploymentInput):
         stage5Detail = "Consultando registros agregados dos últimos 30 dias.";
     } else {
         const suppressed = new Set(engagement.suppressed_metrics ?? []);
-        const totalSessions = typeof engagement.total_sessions === "number" ? engagement.total_sessions : 0;
-        const totalExercises = typeof engagement.total_exercises === "number" ? engagement.total_exercises : 0;
-        const active7d = typeof engagement.active_users_7d === "number" ? engagement.active_users_7d : 0;
-        const hasRecordedActivity = totalSessions > 0 || totalExercises > 0 || active7d > 0 || suppressed.size > 0;
+        const totalSessions =
+            typeof engagement.total_sessions === "number" ? engagement.total_sessions : 0;
+        const totalExercises =
+            typeof engagement.total_exercises === "number" ? engagement.total_exercises : 0;
+        const active7d =
+            typeof engagement.active_users_7d === "number" ? engagement.active_users_7d : 0;
+        const hasRecordedActivity =
+            totalSessions > 0 || totalExercises > 0 || active7d > 0 || suppressed.size > 0;
 
         if (hasRecordedActivity) {
             stage5Status = "concluído";
@@ -513,7 +628,8 @@ export function buildNetworkDeploymentModel(input: BuildNetworkDeploymentInput):
                 stage5Detail = `Há participação registrada, mas os valores numéricos permanecem ocultos até atingir o mínimo de ${engagement.minimum_group_size} participantes distintos (anonimato k).`;
             } else {
                 stage5Summary = `${seats.occupiedStudentSeats} estudante(s) ativo(s) · ${totalSessions} sessões e ${totalExercises} exercícios (30d)`;
-                stage5Detail = "Atividade inicial dos estudantes confirmada em formato estritamente agregado e não clínico.";
+                stage5Detail =
+                    "Atividade inicial dos estudantes confirmada em formato estritamente agregado e não clínico.";
             }
         } else {
             stage5Status = "pendente";
@@ -547,14 +663,21 @@ export function buildNetworkDeploymentModel(input: BuildNetworkDeploymentInput):
         stage4.status === "concluído" &&
         seats.occupiedStudentSeats > 0;
 
-    if (!org) {
+    if (!org || contractState === "unavailable") {
         stage6Status = "indisponível";
         stage6Summary = "Diagnóstico de prontidão indisponível";
-        stage6Detail = "Aguardando carregamento da organização.";
+        stage6Detail = subscriptionQueryError
+            ? "Restabelecendo leitura do contrato da organização para calcular a prontidão."
+            : "Aguardando carregamento da organização.";
+        if (subscriptionQueryError) {
+            stage6ActionLabel = "Tentar novamente";
+            stage6ActionId = "retry_contract";
+        }
     } else if (stage1.status === "bloqueado") {
         stage6Status = "bloqueado";
         stage6Summary = "Implantação bloqueada por pendência contratual";
-        stage6Detail = "Regularize ou vincule a assinatura escolar na Etapa 1 para destravar a operação completa com estudantes.";
+        stage6Detail =
+            "Regularize ou vincule a assinatura escolar na Etapa 1 para destravar a operação completa com estudantes.";
         stage6ActionLabel = stage1.primaryActionLabel;
         stage6ActionId = stage1.primaryActionId;
     } else if (coreReady && stage5.status === "concluído") {
@@ -600,18 +723,20 @@ export function buildNetworkDeploymentModel(input: BuildNetworkDeploymentInput):
 
     const firstActionableStage =
         stages.find((s) => s.status === "bloqueado") ??
-        stages.find((s) => s.status === "pendente") ??
         stages.find((s) => s.status === "indisponível") ??
+        stages.find((s) => s.status === "pendente") ??
         stage6;
 
     const overallStatus: DeploymentStageStatus =
         stages.every((s) => s.status === "concluído")
             ? "concluído"
-            : stages.some((s) => s.status === "bloqueado")
-                ? "bloqueado"
-                : stages.some((s) => s.status === "indisponível") && completedCount === 0
-                    ? "indisponível"
-                    : "pendente";
+            : contractState === "unavailable"
+                ? "indisponível"
+                : stages.some((s) => s.status === "bloqueado")
+                    ? "bloqueado"
+                    : stages.some((s) => s.status === "indisponível") && completedCount === 0
+                        ? "indisponível"
+                        : "pendente";
 
     return {
         overallStatus,

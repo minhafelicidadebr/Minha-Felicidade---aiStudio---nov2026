@@ -125,3 +125,39 @@ describe("C2 / C2.R — Vínculo Explícito Assinatura <-> Organização, Renova
         expect(migration).toContain("REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE public.organization_subscriptions FROM authenticated;");
     });
 });
+
+describe("C2.1 — Menor Privilégio em organization_subscriptions, Snapshot Autoritativo e Preservação de Escopo", () => {
+    const c21Migration = read("supabase/migrations/20261109120000_c2_1_org_contract_snapshot_and_least_privilege.sql");
+    const types = read("src/integrations/supabase/types.ts");
+    const runbook = read("docs/security-invariants-runbook.md");
+    const orgDetailHook = read("src/hooks/useOrganizationDetail.ts");
+    const orgDashboardPage = read("src/pages/OrgDashboardPage.tsx");
+
+    it("revoga SELECT amplo de organization_subscriptions e restringe leitura direta por coluna e ao owner_id", () => {
+        expect(c21Migration).toContain("REVOKE ALL ON TABLE public.organization_subscriptions FROM PUBLIC, anon, authenticated;");
+        expect(c21Migration).toContain("GRANT SELECT (");
+        expect(c21Migration).not.toContain("GRANT SELECT ON TABLE public.organization_subscriptions TO authenticated");
+        expect(c21Migration).toContain('CREATE POLICY "Contract owners can view own org subscriptions"');
+        expect(c21Migration).toContain("USING (owner_id = auth.uid());");
+    });
+
+    it("define get_org_deployment_snapshot como SECURITY DEFINER com search_path fixo e permissão restrita a authenticated/service_role", () => {
+        expect(c21Migration).toContain("CREATE OR REPLACE FUNCTION public.get_org_deployment_snapshot(_organization_id uuid)");
+        expect(c21Migration).toContain("SECURITY DEFINER");
+        expect(c21Migration).toContain("SET search_path = public");
+        expect(c21Migration).toContain("REVOKE ALL ON FUNCTION public.get_org_deployment_snapshot(uuid) FROM PUBLIC, anon, authenticated;");
+        expect(c21Migration).toContain("GRANT EXECUTE ON FUNCTION public.get_org_deployment_snapshot(uuid) TO authenticated, service_role;");
+        expect(types).toContain("get_org_deployment_snapshot: {\n        Args: { _organization_id: string }\n        Returns: Json\n      }");
+        expect(runbook).toContain("20261109120000_c2_1_org_contract_snapshot_and_least_privilege.sql");
+    });
+
+    it("preserva school_id e class_id ao reemitir convite expirado em invite_member e no handler da Central de Implantação", () => {
+        expect(c21Migration).toContain("school_id = COALESCE(_school_id, school_id)");
+        expect(c21Migration).toContain("class_id = COALESCE(_class_id, class_id)");
+        expect(orgDetailHook).toContain('supabase.rpc("get_org_deployment_snapshot"');
+        expect(orgDetailHook).not.toContain('.from("organization_subscriptions")');
+        expect(orgDashboardPage).toContain("_school_id: invite.school_id ?? undefined");
+        expect(orgDashboardPage).toContain("_class_id: invite.class_id ?? undefined");
+    });
+});
+

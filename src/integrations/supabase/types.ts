@@ -1139,6 +1139,10 @@ export type Database = {
         Returns: Json
       }
       get_org_analytics_series: { Args: { _org_id: string }; Returns: Json }
+      get_org_deployment_snapshot: {
+        Args: { _organization_id: string }
+        Returns: Json
+      }
       get_org_engagement_summary: { Args: { _org_id: string }; Returns: Json }
       get_school_metrics: {
         Args: { _period?: string; _school_id: string }
