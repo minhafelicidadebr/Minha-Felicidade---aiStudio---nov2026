@@ -36,8 +36,12 @@ import {
 import { useDecisionActions } from "@/hooks/useDecisionActions";
 import { useOrganizationDetail } from "@/hooks/useOrganizationDetail";
 import OnboardingWizard from "@/components/org/OnboardingWizard";
+import NetworkDeploymentCenter from "@/components/org/NetworkDeploymentCenter";
 import OperationalMetrics from "@/components/org/OperationalMetrics";
 import EngagementMetrics from "@/components/org/EngagementMetrics";
+import { useOrgEngagementSummary } from "@/hooks/useOrgAnalytics";
+import { claimEscolarSubscription, claimEscolarWithToken } from "@/lib/claim-escolar";
+import { buildNetworkDeploymentModel } from "@/lib/network-deployment";
 import {
     assertInstitutionalPayload,
     institutionalQueryKeys,
@@ -68,8 +72,20 @@ export default function OrgDashboardPage() {
 
 function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashboardContextResult }) {
     const { activeOrganization, memberships, userId, selectionRequired } = dashboardContext;
-    const { org, schools, classes, members, invitations, loading, error, refetch } =
-        useOrganizationDetail(userId, activeOrganization?.id);
+    const {
+        org,
+        schools,
+        classes,
+        members,
+        invitations,
+        linkedSubscription,
+        unlinkedSubscriptions,
+        subscriptionQueryError,
+        loading,
+        error,
+        refetch,
+    } = useOrganizationDetail(userId, activeOrganization?.id);
+    const engagementSummaryQuery = useOrgEngagementSummary(userId, activeOrganization?.id ?? "");
     const { resendInvitations, escalateIndicator } = useDecisionActions(userId, activeOrganization?.id ?? null);
     const queryClient = useQueryClient();
     const { toast } = useToast();
@@ -103,8 +119,11 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
     const [className, setClassName] = useState("");
     const [addingClass, setAddingClass] = useState(false);
 
-    // Onboarding wizard dismissal
-    const [wizardDismissed, setWizardDismissed] = useState(false);
+    // Optional guided wizard modal & deployment action state
+    const [showWizardModal, setShowWizardModal] = useState(false);
+    const [busyDeploymentAction, setBusyDeploymentAction] = useState<string | null>(null);
+    const [deploymentActionError, setDeploymentActionError] = useState<string | null>(null);
+    const [deploymentActionSuccess, setDeploymentActionSuccess] = useState<string | null>(null);
 
     // Pilot report — PDF with data visualization
     const handleDownloadReport = async () => {
@@ -327,27 +346,166 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
         guardian: "Responsável",
     };
 
-    // Show onboarding wizard on first access (no schools yet)
-    const showWizard = schools.length === 0 && !wizardDismissed;
-
-    if (showWizard) {
-        return (
-            <RoleAwareAppShell title="Visão da rede" subtitle="Configuração inicial">
-                <div className="flex items-center justify-center py-12">
-                    <OnboardingWizard
-                        organizationId={org.id}
-                        orgName={org.name}
-                        onComplete={() => { setWizardDismissed(true); refetch(); }}
-                    />
-                </div>
-            </RoleAwareAppShell>
-        );
-    }
-
-    // ── Compute metrics ──────────────────────────────────────────────────────
+    // ── Compute metrics & deployment model ──────────────────────────────────
     const totalInvited = members.length + invitations.length;
     const activationRate = totalInvited > 0 ? Math.round((members.length / totalInvited) * 100) : 0;
     const now = new Date().toISOString();
+    const canResend = canResendInvitations(memberships, org.id);
+
+    const deploymentModel = buildNetworkDeploymentModel({
+        org,
+        schools,
+        classes,
+        members,
+        invitations,
+        linkedSubscription,
+        unlinkedSubscriptions,
+        subscriptionQueryError,
+        engagement: engagementSummaryQuery.data ?? null,
+        engagementLoading: engagementSummaryQuery.isLoading,
+        engagementError:
+            engagementSummaryQuery.isError && engagementSummaryQuery.error instanceof Error
+                ? engagementSummaryQuery.error.message
+                : engagementSummaryQuery.isError
+                    ? "Falha ao carregar métricas de engajamento."
+                    : null,
+    });
+
+    const handleClaimByEmail = async () => {
+        if (!org) return;
+        const operationOrganizationId = org.id;
+        setBusyDeploymentAction("claim_email");
+        setDeploymentActionError(null);
+        setDeploymentActionSuccess(null);
+        try {
+            const res = await claimEscolarSubscription();
+            if (!mounted.current) return;
+            if (!res.ok) {
+                const msg =
+                    res.reason === "no_claimable_intent"
+                        ? "Nenhum pagamento aprovado pendente foi localizado para o e-mail desta conta. Se comprou com outro e-mail, use o código de ativação."
+                        : res.reason === "email_unconfirmed"
+                            ? "Confirme o e-mail da sua conta antes de reivindicar a assinatura escolar."
+                            : `Não foi possível reivindicar a assinatura (${res.reason ?? "erro desconhecido"}).`;
+                setDeploymentActionError(msg);
+                return;
+            }
+            await invalidateOrganization(operationOrganizationId);
+            if (!mounted.current) return;
+            setDeploymentActionSuccess(
+                res.reason === "association_pending"
+                    ? "Pagamento aprovado ativado em sua conta. Agora clique em 'Vincular assinatura a esta rede' para associá-lo."
+                    : `Assinatura escolar vinculada com sucesso à organização ${org.name}.`,
+            );
+        } catch (e) {
+            if (mounted.current) {
+                setDeploymentActionError(e instanceof Error ? e.message : "Erro ao reivindicar assinatura.");
+            }
+        } finally {
+            if (mounted.current) setBusyDeploymentAction(null);
+        }
+    };
+
+    const handleClaimByToken = async (token: string) => {
+        if (!org) return;
+        const operationOrganizationId = org.id;
+        setBusyDeploymentAction("claim_token");
+        setDeploymentActionError(null);
+        setDeploymentActionSuccess(null);
+        try {
+            const res = await claimEscolarWithToken(token);
+            if (!mounted.current) return;
+            if (!res.ok) {
+                setDeploymentActionError(
+                    res.reason === "invalid_token"
+                        ? "Código de ativação inválido ou já utilizado."
+                        : `Não foi possível validar o código (${res.reason ?? "erro"}).`,
+                );
+                return;
+            }
+            await invalidateOrganization(operationOrganizationId);
+            if (!mounted.current) return;
+            setDeploymentActionSuccess(
+                res.reason === "association_pending"
+                    ? "Código validado e assinatura ativada. Vincule-a à organização ativa na Etapa 1."
+                    : `Assinatura associada com sucesso à rede ${org.name}.`,
+            );
+        } catch (e) {
+            if (mounted.current) {
+                setDeploymentActionError(e instanceof Error ? e.message : "Erro ao validar código de ativação.");
+            }
+        } finally {
+            if (mounted.current) setBusyDeploymentAction(null);
+        }
+    };
+
+    const handleAssociateSubscription = async () => {
+        if (!org) return;
+        const operationOrganizationId = org.id;
+        setBusyDeploymentAction("associate_subscription");
+        setDeploymentActionError(null);
+        setDeploymentActionSuccess(null);
+        try {
+            const { data, error: err } = await supabase.rpc("create_organization", {
+                _name: org.name,
+                _slug: org.slug ?? undefined,
+            });
+            if (err) throw err;
+            await invalidateOrganization(operationOrganizationId);
+            if (!mounted.current) return;
+            const payload = data as { organization_id?: string } | null;
+            if (payload?.organization_id === operationOrganizationId) {
+                setDeploymentActionSuccess(
+                    `Reconciliação executada para ${org.name}. Se você possui apenas uma organização ativa e uma assinatura pendente, o vínculo foi aplicado.`,
+                );
+            } else {
+                setDeploymentActionError(
+                    "Vínculo automático não pôde ser concluído devido a múltiplas organizações ativas com mesmo nome. Contate o suporte operacional.",
+                );
+            }
+        } catch (e) {
+            if (mounted.current) {
+                setDeploymentActionError(
+                    e instanceof Error ? e.message : "Não foi possível vincular a assinatura.",
+                );
+            }
+        } finally {
+            if (mounted.current) setBusyDeploymentAction(null);
+        }
+    };
+
+    const handleReissueExpiredInvites = async () => {
+        if (!org || deploymentModel.allExpiredInvitations.length === 0) return;
+        const operationOrganizationId = org.id;
+        setBusyDeploymentAction("reissue_expired");
+        setDeploymentActionError(null);
+        setDeploymentActionSuccess(null);
+        try {
+            let reissuedCount = 0;
+            for (const inv of deploymentModel.allExpiredInvitations) {
+                const { error: err } = await supabase.rpc("invite_member", {
+                    _organization_id: operationOrganizationId,
+                    _invited_email: inv.invited_email,
+                    _role: inv.role,
+                });
+                if (err) throw err;
+                reissuedCount += 1;
+            }
+            await invalidateOrganization(operationOrganizationId);
+            if (!mounted.current) return;
+            setDeploymentActionSuccess(
+                `${reissuedCount} convite(s) expirado(s) reemitido(s) com nova validade e enfileirado(s) para envio.`,
+            );
+        } catch (e) {
+            if (mounted.current) {
+                setDeploymentActionError(
+                    e instanceof Error ? e.message : "Erro ao reemitir convites expirados.",
+                );
+            }
+        } finally {
+            if (mounted.current) setBusyDeploymentAction(null);
+        }
+    };
 
     // ── Fila de decisões ─────────────────────────────────────────────────────
     // Cada item nasce de um dado observado. Nada é inventado para preencher a
@@ -357,7 +515,6 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
     // não pode reenviar vê o item, mas sem o controle. Mostrar um botão que
     // sempre falha é pior que não mostrar botão. A autoridade final continua no
     // banco, que verifica de novo e nega.
-    const canResend = canResendInvitations(memberships, org.id);
     const invitationSources = buildInvitationSources(invitations, schools);
     const decisionItems: DecisionItem[] = [
         ...buildInvitationDecisionItems({
@@ -405,6 +562,15 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
     // ── Action slot for the shell header ─────────────────────────────────────
     const headerActions = (
         <div className="flex items-center gap-2">
+            {schools.length === 0 && (
+                <button
+                    type="button"
+                    onClick={() => setShowWizardModal((prev) => !prev)}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border/60 px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                >
+                    Assistente guiado
+                </button>
+            )}
             <button
                 onClick={handleDownloadReport}
                 className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border/60 px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
@@ -428,6 +594,56 @@ function OrgDashboardContent({ dashboardContext }: { dashboardContext: UseDashbo
             action={headerActions}
         >
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                {showWizardModal && (
+                    <div className="mb-8 rounded-2xl border border-border/60 bg-card/80 p-6">
+                        <OnboardingWizard
+                            organizationId={org.id}
+                            orgName={org.name}
+                            onComplete={() => {
+                                setShowWizardModal(false);
+                                refetch();
+                            }}
+                        />
+                    </div>
+                )}
+
+                {/* Central de Implantação da Rede — 6 etapas derivadas do estado real */}
+                <NetworkDeploymentCenter
+                    orgId={org.id}
+                    orgName={org.name}
+                    firstSchoolId={schools[0]?.id ?? null}
+                    model={deploymentModel}
+                    canManage={canResend}
+                    busyAction={busyDeploymentAction}
+                    actionError={deploymentActionError}
+                    actionSuccess={deploymentActionSuccess}
+                    onClaimByEmail={handleClaimByEmail}
+                    onClaimByToken={handleClaimByToken}
+                    onAssociateSubscription={handleAssociateSubscription}
+                    onOpenAddSchool={() => {
+                        setShowAddSchool(true);
+                    }}
+                    onOpenAddClass={() => {
+                        const targetSchool =
+                            deploymentModel.schoolsWithoutClasses[0] ?? schools[0];
+                        if (targetSchool) {
+                            setAddingClassForSchool(targetSchool.id);
+                        } else {
+                            setShowAddSchool(true);
+                        }
+                    }}
+                    onOpenInviteStudent={() => {
+                        setInviteRole("student");
+                        setShowInvite(true);
+                    }}
+                    onOpenInviteStaff={() => {
+                        setInviteRole("educator");
+                        setShowInvite(true);
+                    }}
+                    onReissueExpiredInvites={handleReissueExpiredInvites}
+                    onRetryEngagement={() => void engagementSummaryQuery.refetch()}
+                    onDownloadReport={handleDownloadReport}
+                />
                 {/* Invite form */}
                 {showInvite && (
                     <motion.div

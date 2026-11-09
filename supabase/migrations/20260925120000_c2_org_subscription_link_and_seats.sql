@@ -85,6 +85,13 @@ DROP POLICY IF EXISTS "Owners can view own org subscriptions" ON public.organiza
 DROP POLICY IF EXISTS "Teachers/managers can view org subscriptions" ON public.organization_subscriptions;
 DROP POLICY IF EXISTS "Owners and org admins can view org subscriptions" ON public.organization_subscriptions;
 
+-- Tabela legada organization_members não possui leitores diretos no cliente; acesso
+-- ocorre exclusivamente via get_my_plan()/get_user_plan() (SECURITY DEFINER) e service_role.
+DROP POLICY IF EXISTS "Members can view own membership" ON public.organization_members;
+DROP POLICY IF EXISTS "Org owners can manage members" ON public.organization_members;
+REVOKE ALL ON TABLE public.organization_members FROM PUBLIC, anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.organization_members TO service_role;
+
 CREATE POLICY "Owners and org admins can view org subscriptions"
 ON public.organization_subscriptions
 FOR SELECT TO authenticated
@@ -169,6 +176,10 @@ BEGIN
         UPDATE public.organization_subscriptions
         SET organization_id = _org_id, updated_at = now()
         WHERE id = _sub_id;
+
+        INSERT INTO public.data_access_logs (actor_user_id, action, resource, purpose, scope, row_count)
+        VALUES (_uid, 'UPDATE', 'organization_subscriptions', 'associate_organization_subscription',
+          jsonb_build_object('scope_type', 'self', 'organization_id', _org_id, 'linked_subscription_id', _sub_id), 1);
       END IF;
     END IF;
 

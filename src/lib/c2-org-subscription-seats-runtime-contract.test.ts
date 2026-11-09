@@ -704,7 +704,30 @@ suite("ONDA C2 / C2.R — Vínculo assinatura<->organização, entitlements e as
       /Student seat limit reached/i,
     );
 
-    // 8G: Suspender o estudante ativo stu1 continua permitido (libera a vaga)
+    // 8G: Tentativa de transferir membership ativa de outra organização para orgId lotada (1/1) -> BLOQUEADO pelo trigger
+    const orgSource = randomUUID();
+    const subSource = randomUUID();
+    sql(`
+      INSERT INTO public.organizations (id, name, slug, owner_id, status)
+      VALUES ('${orgSource}', 'Escola Origem Transferência', 'src-${orgSource}', '${admin}', 'active');
+      INSERT INTO public.institutional_memberships (organization_id, user_id, role, status)
+      VALUES ('${orgSource}', '${admin}', 'org_admin', 'active');
+      INSERT INTO public.organization_subscriptions (
+        id, organization_name, organization_id, plan_id, owner_id, status, billing_interval, max_seats, current_period_end
+      ) VALUES (
+        '${subSource}', 'Escola Origem Transferência', '${orgSource}', '${advancedPlanId}', '${admin}', 'active', 'monthly', 5, now() + interval '30 days'
+      );
+      INSERT INTO public.institutional_memberships (organization_id, user_id, role, status)
+      VALUES ('${orgSource}', '${stu3}', 'student', 'active');
+    `);
+    expectAuthenticatedFailure(
+      admin,
+      `UPDATE public.institutional_memberships SET organization_id = '${orgId}'
+       WHERE organization_id = '${orgSource}' AND user_id = '${stu3}'`,
+      /Student seat limit reached/i,
+    );
+
+    // 8H: Suspender o estudante ativo stu1 continua permitido (libera a vaga)
     asAuthenticatedCommit(
       admin,
       `UPDATE public.institutional_memberships SET status = 'suspended'
@@ -868,20 +891,24 @@ suite("ONDA C2 / C2.R — Vínculo assinatura<->organização, entitlements e as
     expect(subOrgAfterCreate).toBe("NULL");
   });
 
-  it("11. Regressão Defeito #4 (C2.R): leitura de organization_subscriptions e organization_members como authenticated não dispara recursão de RLS", () => {
+  it("11. Regressão Defeito #4 e Bloqueio D (C2.R): leitura de organization_subscriptions sob RLS sem recursão, bloqueio direto a organization_members e entitlement via get_my_plan()", () => {
     const owner = randomUUID();
     const orgAdmin2 = randomUUID();
     const student = randomUUID();
+    const outsiderAdmin = randomUUID();
     const orgId = randomUUID();
+    const orgOther = randomUUID();
     const subId = randomUUID();
 
     createAuthUser(owner, `c2r-rls-owner-${owner}@example.invalid`);
     createAuthUser(orgAdmin2, `c2r-rls-adm2-${orgAdmin2}@example.invalid`);
     createAuthUser(student, `c2r-rls-stu-${student}@example.invalid`);
+    createAuthUser(outsiderAdmin, `c2r-rls-out-${outsiderAdmin}@example.invalid`);
 
     sql(`
-      INSERT INTO public.organizations (id, name, slug, owner_id, status)
-      VALUES ('${orgId}', 'Escola Sem Recursão RLS', 'rls-${orgId}', '${owner}', 'active');
+      INSERT INTO public.organizations (id, name, slug, owner_id, status) VALUES
+        ('${orgId}', 'Escola Sem Recursão RLS', 'rls-${orgId}', '${owner}', 'active'),
+        ('${orgOther}', 'Outra Rede Isolada', 'rls-other-${orgOther}', '${outsiderAdmin}', 'active');
 
       INSERT INTO public.organization_subscriptions (
         id, organization_name, organization_id, plan_id, owner_id, status, billing_interval, max_seats, current_period_end
@@ -893,13 +920,14 @@ suite("ONDA C2 / C2.R — Vínculo assinatura<->organização, entitlements e as
       INSERT INTO public.institutional_memberships (organization_id, user_id, role, status) VALUES
         ('${orgId}', '${owner}', 'org_admin', 'active'),
         ('${orgId}', '${orgAdmin2}', 'org_admin', 'active'),
-        ('${orgId}', '${student}', 'student', 'active');
+        ('${orgId}', '${student}', 'student', 'active'),
+        ('${orgOther}', '${outsiderAdmin}', 'org_admin', 'active');
 
       INSERT INTO public.organization_members (org_subscription_id, user_id, status)
       VALUES ('${subId}', '${student}', 'active');
     `);
 
-    // Owner e co-org_admin leem a assinatura sem erro de recursão (42P17)
+    // Owner e co-org_admin leem a assinatura vinculada sem erro de recursão (42P17) nem falta de privilégio (42501)
     expect(
       Number(asAuthenticatedCommit(owner, `SELECT count(*) FROM public.organization_subscriptions WHERE id = '${subId}'`)),
     ).toBe(1);
@@ -907,24 +935,46 @@ suite("ONDA C2 / C2.R — Vínculo assinatura<->organização, entitlements e as
       Number(asAuthenticatedCommit(orgAdmin2, `SELECT count(*) FROM public.organization_subscriptions WHERE id = '${subId}'`)),
     ).toBe(1);
 
-    // Owner gerencia/lê organization_members sem recursão
-    expect(
-      Number(asAuthenticatedCommit(owner, `SELECT count(*) FROM public.organization_members WHERE org_subscription_id = '${subId}'`)),
-    ).toBe(1);
-
-    // Estudante lê sua própria linha de organization_members sem recursão, não lê linha financeira bruta de organization_subscriptions,
-    // mas recebe normalmente seu entitlement 'advanced' via get_my_plan()
-    expect(
-      Number(asAuthenticatedCommit(student, `SELECT count(*) FROM public.organization_members WHERE org_subscription_id = '${subId}'`)),
-    ).toBe(1);
+    // Estudante e gestor de outro tenant não leem linhas financeiras brutas de organization_subscriptions (isolamento cross-tenant)
     expect(
       Number(asAuthenticatedCommit(student, `SELECT count(*) FROM public.organization_subscriptions WHERE id = '${subId}'`)),
     ).toBe(0);
-    const studentPlan = JSON.parse(asAuthenticatedCommit(student, `SELECT public.get_my_plan()::text`)) as { plan_slug: string };
+    expect(
+      Number(asAuthenticatedCommit(outsiderAdmin, `SELECT count(*) FROM public.organization_subscriptions WHERE id = '${subId}'`)),
+    ).toBe(0);
+
+    // Escrita direta em organization_subscriptions por usuário autenticado é negada (menor privilégio)
+    expectAuthenticatedFailure(
+      owner,
+      `UPDATE public.organization_subscriptions SET max_seats = 999 WHERE id = '${subId}'`,
+      /permission denied for table organization_subscriptions/i,
+    );
+
+    // Tabela legada organization_members permanece fechada para acesso direto pelo cliente (authenticated),
+    // sendo consultada exclusivamente via get_my_plan()/get_user_plan() (SECURITY DEFINER)
+    expectAuthenticatedFailure(
+      owner,
+      `SELECT count(*) FROM public.organization_members WHERE org_subscription_id = '${subId}'`,
+      /permission denied for table organization_members/i,
+    );
+    expectAuthenticatedFailure(
+      student,
+      `SELECT count(*) FROM public.organization_members WHERE org_subscription_id = '${subId}'`,
+      /permission denied for table organization_members/i,
+    );
+
+    // Estudante recebe normalmente seu entitlement 'advanced' via contrato real get_my_plan()
+    const studentPlan = JSON.parse(asAuthenticatedCommit(student, `SELECT public.get_my_plan()::text`)) as {
+      plan_slug: string;
+      source: string;
+      organization_id: string;
+    };
     expect(studentPlan.plan_slug).toBe("advanced");
+    expect(studentPlan.source).toBe("organization");
+    expect(studentPlan.organization_id).toBe(orgId);
   });
 
-  it("12. Regressão Bloqueio A: convite expirado de A não burla cota (max_seats = 1) quando B tem reserva válida pendente", () => {
+  it("12. Regressão Bloqueio A: convite expirado de A não burla cota (max_seats = 1) quando B tem reserva válida pendente, e aceite de B converte reserva em assento ativo", () => {
     const admin = randomUUID();
     const stuA = randomUUID();
     const stuB = randomUUID();
@@ -968,17 +1018,49 @@ suite("ONDA C2 / C2.R — Vínculo assinatura<->organização, entitlements e as
       /Student seat limit reached.*occupied or reserved/i,
     );
 
-    // O estudante B (com convite válido) consegue aceitar sua reserva e ocupar a vaga
-    const invBToken = sql(`SELECT token FROM public.institutional_invitations WHERE organization_id = '${orgId}' AND lower(trim(invited_email)) = lower(trim('${emailB}')) LIMIT 1`);
-    const acceptRes = JSON.parse(asAuthenticatedCommit(stuB, `SELECT public.accept_invitation('${invBToken}')::text`)) as { ok: boolean };
-    expect(acceptRes.ok).toBe(true);
+    // O estudante B (com convite válido) consegue aceitar sua reserva pelo contrato real de accept_invitation
+    const invBToken = sql(
+      `SELECT token::text FROM public.institutional_invitations WHERE organization_id = '${orgId}' AND lower(trim(invited_email)) = lower(trim('${emailB}')) LIMIT 1`,
+    );
+    const acceptRes = JSON.parse(
+      asAuthenticatedCommit(stuB, `SELECT public.accept_invitation('${invBToken}')::text`),
+    ) as { organization_id: string; role: string; membership_created: boolean };
+    expect(acceptRes).toEqual({
+      organization_id: orgId,
+      role: "student",
+      membership_created: true,
+    });
+
+    // Verifica membership ativa criada para B, convite marcado como aceito e ausência de membership para A
+    const bActiveMemberships = Number(
+      sql(
+        `SELECT count(*) FROM public.institutional_memberships WHERE organization_id = '${orgId}' AND user_id = '${stuB}' AND role = 'student' AND status = 'active';`,
+      ),
+    );
+    expect(bActiveMemberships).toBe(1);
+
+    const aActiveMemberships = Number(
+      sql(
+        `SELECT count(*) FROM public.institutional_memberships WHERE organization_id = '${orgId}' AND user_id = '${stuA}' AND status = 'active';`,
+      ),
+    );
+    expect(aActiveMemberships).toBe(0);
+
+    const bInviteAccepted = sql(
+      `SELECT (accepted_at IS NOT NULL)::text FROM public.institutional_invitations WHERE token = '${invBToken}';`,
+    );
+    expect(bInviteAccepted).toBe("true");
 
     const bPlan = JSON.parse(asAuthenticatedCommit(stuB, `SELECT public.get_my_plan()::text`)) as { plan_slug: string };
     expect(bPlan.plan_slug).toBe("advanced");
+
+    const aPlan = JSON.parse(asAuthenticatedCommit(stuA, `SELECT public.get_my_plan()::text`)) as { plan_slug: string };
+    expect(aPlan.plan_slug).toBe("free");
   });
 
-  it("13. Regressão Bloqueio B: claim com organização anterior arquivada ativa assinatura com association_pending e garante entitlement 'advanced' via owner_id", () => {
+  it("13. Regressão Bloqueio B: claim com organização anterior arquivada ativa assinatura com association_pending, preserva entitlement 'advanced' do comprador e permite associação explícita auditável posterior", () => {
     const buyer = randomUUID();
+    const archivedStudent = randomUUID();
     const buyerEmail = `buyer-arch-${buyer}@example.invalid`;
     const orgArchived = randomUUID();
     const subOld = randomUUID();
@@ -986,11 +1068,16 @@ suite("ONDA C2 / C2.R — Vínculo assinatura<->organização, entitlements e as
     const extRef = randomUUID();
 
     createAuthUser(buyer, buyerEmail);
+    createAuthUser(archivedStudent, `stu-arch-${archivedStudent}@example.invalid`);
 
     sql(`
       -- Organização existente do comprador está arquivada
       INSERT INTO public.organizations (id, name, slug, owner_id, status) VALUES
         ('${orgArchived}', 'Escola Anterior Arquivada', 'arch-${orgArchived}', '${buyer}', 'archived');
+
+      INSERT INTO public.institutional_memberships (organization_id, user_id, role, status) VALUES
+        ('${orgArchived}', '${buyer}', 'org_admin', 'active'),
+        ('${orgArchived}', '${archivedStudent}', 'student', 'active');
 
       -- Assinatura antiga vinculada à organização arquivada
       INSERT INTO public.organization_subscriptions (
@@ -999,13 +1086,13 @@ suite("ONDA C2 / C2.R — Vínculo assinatura<->organização, entitlements e as
         '${subOld}', 'Escola Anterior Arquivada', '${orgArchived}', '${advancedPlanId}', '${buyer}', 'expired', 'monthly', 30, now() - interval '10 days'
       );
 
-      -- Intenção de compra escolar aprovada aguardando claim
+      -- Intenção de compra escolar aprovada aguardando claim (usando colunas reais do schema: amount_brl_cents)
       INSERT INTO public.purchase_intents (
         id, external_reference, contact_name, contact_email, plan_slug, billing_interval, seats_students,
-        kind, is_public_ngo, total_cents, status, mp_payment_id, user_id
+        kind, amount_brl_cents, status, mp_payment_id, user_id
       ) VALUES (
         '${intentId}', '${extRef}', 'Rede Nova do Comprador', '${buyerEmail}', 'advanced', 'yearly', 50,
-        'escolar', false, 500000, 'approved', 'mp-arch-claim-${buyer}', NULL
+        'escolar', 500000, 'approved', 'mp-arch-claim-${buyer}', NULL
       );
     `);
 
@@ -1014,33 +1101,116 @@ suite("ONDA C2 / C2.R — Vínculo assinatura<->organização, entitlements e as
     const claimRes = JSON.parse(asAuthenticatedCommit(buyer, `SELECT public.claim_escolar_subscription()::text`)) as {
       ok: boolean;
       reason: string;
+      org_name: string;
       organization_id: string | null;
     };
 
-    expect(claimRes.ok).toBe(true);
-    expect(claimRes.reason).toBe("association_pending");
-    expect(claimRes.organization_id).toBeNull();
+    expect(claimRes).toEqual({
+      ok: true,
+      reason: "association_pending",
+      org_name: "Rede Nova do Comprador",
+      organization_id: null,
+    });
 
-    // Verificação crítica do Bloqueio B: get_my_plan() NÃO pode retornar 'free'!
-    // Como owner_id = buyer e a assinatura está ativa, get_user_plan resolve 'advanced'
+    // Intenção foi consumida pelo comprador com amount_brl_cents preservado
+    const consumedIntent = JSON.parse(
+      sql(
+        `SELECT jsonb_build_object('user_id', user_id, 'status', status, 'amount_brl_cents', amount_brl_cents)::text FROM public.purchase_intents WHERE id = '${intentId}';`,
+      ),
+    ) as { user_id: string; status: string; amount_brl_cents: number };
+    expect(consumedIntent).toEqual({
+      user_id: buyer,
+      status: "approved",
+      amount_brl_cents: 500000,
+    });
+
+    // Assinatura foi ativada com organization_id = NULL e max_seats = 50 (sem reativar silenciosamente a org arquivada)
+    const subRow = JSON.parse(
+      sql(
+        `SELECT jsonb_build_object('status', status, 'organization_id', organization_id, 'max_seats', max_seats)::text FROM public.organization_subscriptions WHERE id = '${subOld}';`,
+      ),
+    ) as { status: string; organization_id: string | null; max_seats: number };
+    expect(subRow).toEqual({
+      status: "active",
+      organization_id: null,
+      max_seats: 50,
+    });
+
+    // Membro da organização arquivada NÃO ganha plano 'advanced'
+    const archivedStudentPlan = JSON.parse(
+      asAuthenticatedCommit(archivedStudent, `SELECT public.get_my_plan()::text`),
+    ) as { plan_slug: string };
+    expect(archivedStudentPlan.plan_slug).toBe("free");
+
+    // Verificação crítica do Bloqueio B: o comprador recebe 'advanced' imediatamente via owner_id
     const buyerPlan = JSON.parse(asAuthenticatedCommit(buyer, `SELECT public.get_my_plan()::text`)) as {
       plan_slug: string;
       source: string;
       status: string;
+      organization_id: string | null;
     };
     expect(buyerPlan.plan_slug).toBe("advanced");
     expect(buyerPlan.source).toBe("organization");
     expect(buyerPlan.status).toBe("active");
+    expect(buyerPlan.organization_id).toBeNull();
+
+    // Associação posterior explícita e auditável de uma organização ativa do comprador
+    const newActiveOrg = JSON.parse(
+      asAuthenticatedCommit(
+        buyer,
+        `SELECT public.create_organization('Rede Nova do Comprador', 'rede-nova-${buyer}')::text`,
+      ),
+    ) as { organization_id: string; created: boolean };
+    expect(newActiveOrg.created).toBe(true);
+
+    const linkedOrgAfterCreate = sql(
+      `SELECT organization_id::text FROM public.organization_subscriptions WHERE id = '${subOld}';`,
+    );
+    expect(linkedOrgAfterCreate).toBe(newActiveOrg.organization_id);
+
+    const auditCount = Number(
+      sql(
+        `SELECT count(*) FROM public.data_access_logs WHERE actor_user_id = '${buyer}' AND purpose = 'create_organization' AND scope->>'linked_subscription_id' = '${subOld}';`,
+      ),
+    );
+    expect(auditCount).toBe(1);
   });
 
-  it("14. Regressão Bloqueio D: GRANT SELECT em organization_subscriptions permite leitura por authenticated sob RLS sem erro 42501", () => {
+  it("14. Regressão Bloqueio D: privilégios de tabela em organization_subscriptions e organization_members estão alinhados ao menor privilégio", () => {
     const userRandom = randomUUID();
     createAuthUser(userRandom, `anon-read-${userRandom}@example.invalid`);
 
-    // A consulta como authenticated não lança "permission denied for table organization_subscriptions"
+    // Consulta como authenticated em organization_subscriptions respeita RLS sem erro 42501
     const count = Number(asAuthenticatedCommit(userRandom, `SELECT count(*) FROM public.organization_subscriptions`));
-    expect(typeof count).toBe("number");
-    expect(count).toBeGreaterThanOrEqual(0);
+    expect(count).toBe(0);
+
+    // Verificação direta no catálogo de privilégios do PostgreSQL
+    const privs = JSON.parse(
+      sql(`
+        SELECT jsonb_build_object(
+          'org_sub_auth_select', has_table_privilege('authenticated', 'public.organization_subscriptions', 'SELECT'),
+          'org_sub_auth_insert', has_table_privilege('authenticated', 'public.organization_subscriptions', 'INSERT'),
+          'org_sub_auth_update', has_table_privilege('authenticated', 'public.organization_subscriptions', 'UPDATE'),
+          'org_sub_auth_delete', has_table_privilege('authenticated', 'public.organization_subscriptions', 'DELETE'),
+          'org_sub_anon_select', has_table_privilege('anon', 'public.organization_subscriptions', 'SELECT'),
+          'org_mem_auth_select', has_table_privilege('authenticated', 'public.organization_members', 'SELECT'),
+          'org_mem_anon_select', has_table_privilege('anon', 'public.organization_members', 'SELECT'),
+          'org_mem_service_select', has_table_privilege('service_role', 'public.organization_members', 'SELECT')
+        )::text;
+      `),
+    ) as Record<string, boolean>;
+
+    expect(privs).toEqual({
+      org_sub_auth_select: true,
+      org_sub_auth_insert: false,
+      org_sub_auth_update: false,
+      org_sub_auth_delete: false,
+      org_sub_anon_select: false,
+      org_mem_auth_select: false,
+      org_mem_anon_select: false,
+      org_mem_service_select: true,
+    });
   });
 });
+
 

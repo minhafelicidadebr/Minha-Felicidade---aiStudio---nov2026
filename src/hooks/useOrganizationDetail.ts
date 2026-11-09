@@ -4,6 +4,7 @@ import {
     assertInstitutionalPayload,
     institutionalQueryKeys,
 } from "@/lib/institutional-query-keys";
+import type { OrganizationSubscriptionSnapshot } from "@/lib/network-deployment";
 
 export interface Organization {
     id: string;
@@ -58,6 +59,9 @@ interface OrganizationDetailData {
     classes: ClassRoom[];
     members: Membership[];
     invitations: Invitation[];
+    linkedSubscription: OrganizationSubscriptionSnapshot | null;
+    unlinkedSubscriptions: OrganizationSubscriptionSnapshot[];
+    subscriptionQueryError: string | null;
 }
 
 async function fetchOrganizationDetail(organizationId: string): Promise<OrganizationDetailData> {
@@ -72,7 +76,7 @@ async function fetchOrganizationDetail(organizationId: string): Promise<Organiza
     if (!orgData) throw new Error("Organização não disponível para esta conta.");
     assertInstitutionalPayload(organizationId, orgData.id, "organization");
 
-    const [schoolsResult, membersResult, invitationsResult] = await Promise.all([
+    const [schoolsResult, membersResult, invitationsResult, subscriptionsResult] = await Promise.all([
         supabase
             .from("schools")
             .select("*")
@@ -88,6 +92,11 @@ async function fetchOrganizationDetail(organizationId: string): Promise<Organiza
             .select("*")
             .eq("organization_id", organizationId)
             .is("accepted_at", null),
+        supabase
+            .from("organization_subscriptions")
+            .select(
+                "id, organization_name, organization_id, owner_id, status, billing_interval, max_seats, current_period_start, current_period_end",
+            ),
     ]);
 
     if (schoolsResult.error) throw schoolsResult.error;
@@ -106,12 +115,35 @@ async function fetchOrganizationDetail(organizationId: string): Promise<Organiza
         classes = (data ?? []) as ClassRoom[];
     }
 
+    const subRows = (subscriptionsResult.data ?? []) as OrganizationSubscriptionSnapshot[];
+    const linkedCandidates = subRows
+        .filter((s) => s.organization_id === organizationId)
+        .sort((a, b) => {
+            const aActive = a.status === "active" || a.status === "trialing" ? 0 : 1;
+            const bActive = b.status === "active" || b.status === "trialing" ? 0 : 1;
+            if (aActive !== bActive) return aActive - bActive;
+            const aEnd = a.current_period_end ? new Date(a.current_period_end).getTime() : 0;
+            const bEnd = b.current_period_end ? new Date(b.current_period_end).getTime() : 0;
+            return bEnd - aEnd;
+        });
+
+    const linkedSubscription = linkedCandidates[0] ?? null;
+    const unlinkedSubscriptions = subRows.filter(
+        (s) =>
+            s.organization_id === null &&
+            (s.status === "active" || s.status === "trialing") &&
+            (!s.current_period_end || new Date(s.current_period_end).getTime() > Date.now()),
+    );
+
     return {
         org: orgData as Organization,
         schools,
         classes,
         members: (membersResult.data ?? []) as Membership[],
         invitations: (invitationsResult.data ?? []) as Invitation[],
+        linkedSubscription,
+        unlinkedSubscriptions,
+        subscriptionQueryError: subscriptionsResult.error ? subscriptionsResult.error.message : null,
     };
 }
 
@@ -121,6 +153,9 @@ export interface UseOrganizationDetailResult {
     classes: ClassRoom[];
     members: Membership[];
     invitations: Invitation[];
+    linkedSubscription: OrganizationSubscriptionSnapshot | null;
+    unlinkedSubscriptions: OrganizationSubscriptionSnapshot[];
+    subscriptionQueryError: string | null;
     loading: boolean;
     error: string | null;
     refetch: () => void;
@@ -146,6 +181,9 @@ export function useOrganizationDetail(
         classes: query.data?.classes ?? [],
         members: query.data?.members ?? [],
         invitations: query.data?.invitations ?? [],
+        linkedSubscription: query.data?.linkedSubscription ?? null,
+        unlinkedSubscriptions: query.data?.unlinkedSubscriptions ?? [],
+        subscriptionQueryError: query.data?.subscriptionQueryError ?? null,
         loading: enabled && query.isLoading,
         error: query.error ? (query.error as Error).message : null,
         refetch: () => void query.refetch(),

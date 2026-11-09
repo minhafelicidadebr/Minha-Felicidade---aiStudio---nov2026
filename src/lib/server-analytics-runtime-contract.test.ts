@@ -56,9 +56,9 @@ function seed(): void {
         ('${ORG_RAW_B}','${ADMIN_B}','org_admin','active'),
         ('${ORG_RAW_A}','${STUDENT}','student','active');
       INSERT INTO public.nps_responses (organization_id,user_id,score,feedback,context,created_at)
-        VALUES ('${ORG_RAW_A}','${STUDENT}',9,'feedback privado sintético','general',now()-interval '1 day');
+        VALUES ('${ORG_RAW_A}','${STUDENT}',9,'feedback privado sintético','general',date_trunc('week', now()) + interval '1 minute');
       INSERT INTO public.engagement_events (organization_id,user_id,event_type,metadata,created_at)
-        VALUES ('${ORG_RAW_A}','${STUDENT}','session_start','{"private":"synthetic"}',now()-interval '1 day');
+        VALUES ('${ORG_RAW_A}','${STUDENT}','session_start','{"private":"synthetic"}',date_trunc('week', now()) + interval '1 minute');
     `);
 
     const contributorCounts: Array<[string, number]> = [
@@ -74,18 +74,18 @@ function seed(): void {
     }
     for (const [orgId, count] of [[ORG.n1, 1], [ORG.n4, 4], [ORG.n5, 5]] as Array<[string, number]>) {
         sql(`INSERT INTO public.nps_responses (organization_id,user_id,score,created_at)
-             SELECT '${orgId}', md5('${orgId}' || g::text)::uuid, 8 + (g % 3), now()-interval '1 day'
+             SELECT '${orgId}', md5('${orgId}' || g::text)::uuid, 8 + (g % 3), date_trunc('week', now()) + interval '1 minute'
              FROM generate_series(1,${count}) g;`);
     }
     sql(`
       INSERT INTO public.nps_responses (organization_id,user_id,score,created_at)
-      SELECT '${ORG.repeated}', md5('${ORG.repeated}' || '1')::uuid, 9, now() - (g || ' hours')::interval
+      SELECT '${ORG.repeated}', md5('${ORG.repeated}' || '1')::uuid, 9, date_trunc('week', now()) + (g || ' minutes')::interval
       FROM generate_series(1,5) g;
       INSERT INTO public.engagement_events (organization_id,user_id,event_type,created_at)
-      SELECT '${ORG.engagement2}', md5('${ORG.engagement2}' || ((g % 2)+1)::text)::uuid, 'session_start', now()-interval '1 day'
+      SELECT '${ORG.engagement2}', md5('${ORG.engagement2}' || ((g % 2)+1)::text)::uuid, 'session_start', date_trunc('week', now()) + interval '1 minute'
       FROM generate_series(1,20) g;
       INSERT INTO public.engagement_events (organization_id,user_id,event_type,created_at)
-      SELECT '${ORG.engagement5}', md5('${ORG.engagement5}' || g::text)::uuid, 'session_start', now()-interval '1 day'
+      SELECT '${ORG.engagement5}', md5('${ORG.engagement5}' || g::text)::uuid, 'session_start', date_trunc('week', now()) + interval '1 minute'
       FROM generate_series(1,5) g;
     `);
 }
